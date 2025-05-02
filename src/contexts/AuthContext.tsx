@@ -1,15 +1,19 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile } from '@/types/supabase-types';
 import { toast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
   user: User | null;
+  profile: Profile | null;
   loading: boolean;
+  session: Session | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, name: string, password: string) => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
 }
 
@@ -25,44 +29,86 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Check if user is already logged in (from localStorage)
   useEffect(() => {
-    const storedUser = localStorage.getItem('invoiceUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        // Fetch user profile after session is set
+        if (currentSession?.user) {
+          setTimeout(() => {
+            fetchUserProfile(currentSession.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      
+      if (currentSession?.user) {
+        fetchUserProfile(currentSession.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return;
+      }
+      
+      setProfile(data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
-    // Mock authentication - In production this would call an API
     try {
       setLoading(true);
-      // For demo purposes only - in real app this would be validated on server
-      if (email === 'demo@example.com' && password === 'password') {
-        const mockUser: User = {
-          id: 'user-1',
-          email: email,
-          name: 'Demo User',
-          role: 'admin'
-        };
-        setUser(mockUser);
-        localStorage.setItem('invoiceUser', JSON.stringify(mockUser));
-        toast({
-          title: "Success",
-          description: "You have successfully signed in!",
-        });
-        navigate('/app');
-      } else {
-        throw new Error('Invalid email or password');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
       }
-    } catch (error) {
+
+      toast({
+        title: "Success",
+        description: "You have successfully signed in!",
+      });
+
+      navigate('/app');
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred during sign in",
+        description: error?.message || "An error occurred during sign in",
         variant: "destructive",
       });
     } finally {
@@ -73,24 +119,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUp = async (email: string, name: string, password: string) => {
     try {
       setLoading(true);
-      // Mock sign-up - In production this would call an API
-      const mockUser: User = {
-        id: 'user-' + Date.now(),
-        email: email,
-        name: name,
-        role: 'admin'
-      };
-      setUser(mockUser);
-      localStorage.setItem('invoiceUser', JSON.stringify(mockUser));
-      toast({
-        title: "Account created",
-        description: "Your account has been created successfully!",
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
       });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Your account has been created! Please check your email for verification.",
+      });
+      
+      // In development, we might want to sign in automatically since email verification might be disabled
       navigate('/app');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred during sign up",
+        description: error?.message || "An error occurred during sign up",
         variant: "destructive",
       });
     } finally {
@@ -98,31 +151,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signOut = () => {
-    setUser(null);
-    localStorage.removeItem('invoiceUser');
-    navigate('/');
-  };
-
-  const forgotPassword = async (email: string) => {
+  const signOut = async () => {
     try {
-      // Mock password reset - In production this would call an API
-      toast({
-        title: "Password reset email sent",
-        description: "If an account with that email exists, we've sent a password reset link.",
-      });
-    } catch (error) {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      navigate('/');
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An error occurred. Please try again.",
+        description: error?.message || "An error occurred during sign out",
         variant: "destructive",
       });
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Password Reset Email Sent",
+        description: "If an account with that email exists, we've sent a password reset link.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.message || "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
+    profile,
     loading,
+    session,
     signIn,
     signUp,
     signOut,

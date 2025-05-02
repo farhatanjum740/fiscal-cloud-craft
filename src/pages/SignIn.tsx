@@ -7,15 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignIn = () => {
   const { signIn, loading } = useAuth();
-  const [email, setEmail] = useState("demo@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signIn(email, password);
+    setError("");
+    try {
+      await signIn(email, password);
+    } catch (err) {
+      // Error will be handled by the auth context
+    }
   };
 
   return (
@@ -27,6 +34,11 @@ const SignIn = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -81,11 +93,6 @@ const SignIn = () => {
               >
                 Sign up now
               </Link>
-            </div>
-            <div className="mt-6 text-center text-xs text-gray-500">
-              <p>Demo credentials:</p>
-              <p>Email: demo@example.com</p>
-              <p>Password: password</p>
             </div>
           </CardFooter>
         </form>

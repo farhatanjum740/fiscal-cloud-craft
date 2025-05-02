@@ -14,7 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -25,32 +24,31 @@ import {
   Users, 
   Package, 
   Building, 
-  Settings, 
   LogOut 
 } from 'lucide-react';
 
 const AppLayout = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [isInitializing, setIsInitializing] = useState(true);
   
   // Protect the route - redirect if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       navigate('/signin');
     }
-    if (!loading) {
-      setIsInitializing(false);
-    }
   }, [user, loading, navigate]);
   
   // Show loading state
-  if (loading || isInitializing) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect due to the useEffect
   }
 
   return (
@@ -132,7 +130,7 @@ const AppSidebar = ({ signOut }: { signOut: () => void }) => {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <Button 
-          onClick={signOut}
+          onClick={() => signOut()}
           variant="outline" 
           className="w-full bg-sidebar-accent hover:bg-sidebar-accent/70"
         >

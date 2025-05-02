@@ -9,19 +9,20 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Settings, LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function AppHeader() {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   
-  const userInitials = user?.name
-    ? user.name
+  const userInitials = profile?.full_name
+    ? profile.full_name
         .split(' ')
         .map((n) => n[0])
         .join('')
         .toUpperCase()
-    : 'U';
+    : user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
     <header className="border-b flex items-center h-14 px-4 gap-4 bg-background">
@@ -30,10 +31,14 @@ export function AppHeader() {
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
           <Avatar className="h-8 w-8">
-            <AvatarFallback>{userInitials}</AvatarFallback>
+            {profile?.avatar_url ? (
+              <AvatarImage src={profile.avatar_url} alt={profile.full_name || ""} />
+            ) : (
+              <AvatarFallback>{userInitials}</AvatarFallback>
+            )}
           </Avatar>
           <span className="font-medium hidden sm:inline-block">
-            {user?.name}
+            {profile?.full_name || user?.email}
           </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -48,7 +53,7 @@ export function AppHeader() {
             <span>Settings</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOut}>
+          <DropdownMenuItem onClick={() => signOut()}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sign out</span>
           </DropdownMenuItem>
