@@ -13,6 +13,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Common GST rates in India
+const gstRates = [
+  { value: "0", label: "0%" },
+  { value: "5", label: "5%" },
+  { value: "12", label: "12%" },
+  { value: "18", label: "18%" },
+  { value: "28", label: "28%" }
+];
+
+// Common units
+const unitOptions = [
+  { value: "piece", label: "Piece" },
+  { value: "hour", label: "Hour" },
+  { value: "day", label: "Day" },
+  { value: "kg", label: "Kilogram" },
+  { value: "meter", label: "Meter" },
+  { value: "liter", label: "Liter" },
+  { value: "set", label: "Set" },
+  { value: "service", label: "Service" },
+];
 
 const ProductEditor = () => {
   const { id } = useParams();
@@ -24,7 +52,7 @@ const ProductEditor = () => {
     description: "",
     hsnCode: "",
     price: 0,
-    unit: "",
+    unit: "piece",
     gstRate: 18,
     category: "",
   });
@@ -164,27 +192,40 @@ const ProductEditor = () => {
             
             <div className="space-y-2">
               <Label htmlFor="unit">Unit *</Label>
-              <Input
-                id="unit"
-                placeholder="E.g., hour, piece, kg"
+              <Select 
                 value={product.unit}
-                onChange={(e) => handleInputChange("unit", e.target.value)}
-                required
-              />
+                onValueChange={(value) => handleInputChange("unit", value)}
+              >
+                <SelectTrigger id="unit">
+                  <SelectValue placeholder="Select unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {unitOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="gstRate">GST Rate (%) *</Label>
-              <Input
-                id="gstRate"
-                type="number"
-                min="0"
-                max="28"
-                placeholder="Enter GST rate"
-                value={product.gstRate}
-                onChange={(e) => handleInputChange("gstRate", parseInt(e.target.value))}
-                required
-              />
+              <Select 
+                value={product.gstRate.toString()}
+                onValueChange={(value) => handleInputChange("gstRate", parseInt(value))}
+              >
+                <SelectTrigger id="gstRate">
+                  <SelectValue placeholder="Select GST rate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {gstRates.map((rate) => (
+                    <SelectItem key={rate.value} value={rate.value}>
+                      {rate.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="text-xs text-gray-500">
                 Common rates: 0%, 5%, 12%, 18%, 28%
               </p>
