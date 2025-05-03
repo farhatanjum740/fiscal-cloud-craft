@@ -30,7 +30,6 @@ export const useInvoice = (id?: string) => {
     notes: "",
     status: "draft",
     financialYear: "",
-    invoicePrefix: "",
   });
   
   const [subtotal, setSubtotal] = useState(0);
@@ -125,7 +124,6 @@ export const useInvoice = (id?: string) => {
             setInvoice(prev => ({ 
               ...prev, 
               financialYear: settingsData.current_financial_year,
-              invoicePrefix: settingsData.invoice_prefix || ""
             }));
           }
         }
@@ -166,7 +164,6 @@ export const useInvoice = (id?: string) => {
               notes: invoiceData.notes || "",
               status: invoiceData.status,
               financialYear: invoiceData.financial_year,
-              invoicePrefix: invoiceData.invoice_prefix || "",
             });
           }
         }
@@ -204,7 +201,7 @@ export const useInvoice = (id?: string) => {
         .rpc('get_next_invoice_number', {
           p_company_id: company.id,
           p_financial_year: invoice.financialYear,
-          p_prefix: invoice.invoicePrefix || ""
+          p_prefix: ""
         });
       
       if (error) throw error;
@@ -418,16 +415,30 @@ export const useInvoice = (id?: string) => {
         terms_and_conditions: invoice.termsAndConditions,
         notes: invoice.notes,
         financial_year: invoice.financialYear,
-        invoice_prefix: invoice.invoicePrefix
+        invoice_prefix: "" // Remove the prefix option
       };
       
       let invoiceId: string;
       
       if (isEditing && id) {
-        // Update existing invoice
+        // Update existing invoice but don't change the invoice number
+        const { data: existingInvoice, error: fetchError } = await supabase
+          .from('invoices')
+          .select('invoice_number')
+          .eq('id', id)
+          .single();
+          
+        if (fetchError) throw fetchError;
+        
+        // Preserve the original invoice number
+        const updateData = {
+          ...invoiceData,
+          invoice_number: existingInvoice.invoice_number
+        };
+        
         const { error: updateError } = await supabase
           .from('invoices')
-          .update(invoiceData)
+          .update(updateData)
           .eq('id', id);
           
         if (updateError) throw updateError;
@@ -465,13 +476,12 @@ export const useInvoice = (id?: string) => {
         
       if (itemsError) throw itemsError;
       
-      // Update company settings with the current financial year and invoice prefix
+      // Update company settings with the current financial year
       if (companySettings) {
         const { error: settingsError } = await supabase
           .from('company_settings')
           .update({
             current_financial_year: invoice.financialYear,
-            invoice_prefix: invoice.invoicePrefix,
             updated_at: new Date().toISOString()
           })
           .eq('id', companySettings.id);
@@ -485,7 +495,6 @@ export const useInvoice = (id?: string) => {
             company_id: company.id,
             user_id: user.id,
             current_financial_year: invoice.financialYear,
-            invoice_prefix: invoice.invoicePrefix,
             invoice_counter: 1
           });
           

@@ -64,7 +64,7 @@ const InvoiceInfo = ({
               </div>
             </div>
             
-            {!isEditing && invoiceItems.length > 0 && (
+            {!isEditing && invoiceItems && invoiceItems.length > 0 && (
               <>
                 <h4 className="font-medium mt-4">Invoice Items</h4>
                 <div className="border rounded-md overflow-hidden">

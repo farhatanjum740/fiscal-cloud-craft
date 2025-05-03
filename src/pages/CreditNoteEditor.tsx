@@ -83,7 +83,7 @@ const CreditNoteEditor = () => {
                 <CreditNoteDetails
                   creditNote={creditNote}
                   setCreditNote={setCreditNote}
-                  invoiceOptions={invoiceOptions}
+                  invoiceOptions={invoiceOptions || []}
                   isEditing={isEditing}
                   isGeneratingNumber={isGeneratingNumber}
                   handleInvoiceChange={handleInvoiceChange}
@@ -94,7 +94,7 @@ const CreditNoteEditor = () => {
             
             <InvoiceInfo
               invoice={invoice}
-              invoiceItems={invoiceItems}
+              invoiceItems={invoiceItems || []}
               selectedItems={selectedItems}
               toggleItemSelection={toggleItemSelection}
               addSelectedItems={addSelectedItems}

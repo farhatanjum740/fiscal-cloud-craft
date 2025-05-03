@@ -76,43 +76,30 @@ const InvoiceDetails = ({
           </Select>
         </div>
         
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2 col-span-1">
-            <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
+        <div className="space-y-2">
+          <Label htmlFor="invoiceNumber">Invoice Number</Label>
+          <div className="flex gap-2">
             <Input
-              id="invoicePrefix"
-              value={invoice.invoicePrefix}
-              onChange={(e) => setInvoice(prev => ({ ...prev, invoicePrefix: e.target.value }))}
-              placeholder="INV"
+              id="invoiceNumber"
+              value={invoice.invoiceNumber}
+              readOnly={true}
+              className="flex-1 bg-gray-50"
             />
-          </div>
-          
-          <div className="space-y-2 col-span-2">
-            <Label htmlFor="invoiceNumber">Invoice Number</Label>
-            <div className="flex gap-2">
-              <Input
-                id="invoiceNumber"
-                value={invoice.invoiceNumber}
-                onChange={(e) => setInvoice(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                readOnly={isEditing}
-                className="flex-1"
-              />
-              {!isEditing && (
-                <Button 
-                  variant="outline" 
-                  onClick={generateInvoiceNumber}
-                  disabled={isGeneratingInvoiceNumber || !invoice.financialYear}
-                  className="whitespace-nowrap"
-                >
-                  {isGeneratingInvoiceNumber ? "Generating..." : (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Generate
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+            {!isEditing && (
+              <Button 
+                variant="outline" 
+                onClick={generateInvoiceNumber}
+                disabled={isGeneratingInvoiceNumber || !invoice.financialYear}
+                className="whitespace-nowrap"
+              >
+                {isGeneratingInvoiceNumber ? "Generating..." : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Generate
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
         
@@ -183,7 +170,7 @@ const InvoiceDetails = ({
         <div className="space-y-2">
           <Label htmlFor="customer">Customer</Label>
           <CommandSelect
-            options={customers.map(customer => ({ 
+            options={(customers || []).map(customer => ({ 
               value: customer.id, 
               label: customer.name 
             }))}

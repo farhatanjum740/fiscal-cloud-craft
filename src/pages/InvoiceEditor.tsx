@@ -61,7 +61,7 @@ const InvoiceEditor = () => {
               invoice={invoice}
               setInvoice={setInvoice}
               financialYears={financialYears}
-              customers={customers}
+              customers={customers || []}
               isEditing={isEditing}
               isGeneratingInvoiceNumber={isGeneratingInvoiceNumber}
               generateInvoiceNumber={generateInvoiceNumber}
@@ -72,7 +72,7 @@ const InvoiceEditor = () => {
           
           <InvoiceItems
             items={invoice.items}
-            products={products}
+            products={products || []}
             subtotal={subtotal}
             gstDetails={gstDetails}
             total={total}

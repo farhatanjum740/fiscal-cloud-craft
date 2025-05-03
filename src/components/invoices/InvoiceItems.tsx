@@ -84,7 +84,7 @@ const InvoiceItems = ({
                   <TableRow key={item.id}>
                     <TableCell>
                       <CommandSelect
-                        options={products.map(product => ({ 
+                        options={(products || []).map(product => ({ 
                           value: product.id, 
                           label: product.name 
                         }))}
