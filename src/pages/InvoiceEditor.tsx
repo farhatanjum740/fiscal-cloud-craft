@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -189,18 +188,9 @@ const InvoiceEditor = () => {
             if (invoiceItemsError) throw invoiceItemsError;
             
             // Transform invoice items data to match our InvoiceItem type
-            const transformedItems: InvoiceItem[] = (invoiceItemsData || []).map((item: any) => ({
-              id: item.id,
-              productId: item.product_id || "",
-              productName: item.product_name,
-              description: item.description || "",
-              hsnCode: item.hsn_code || "",
-              quantity: item.quantity,
-              price: item.price,
-              unit: item.unit,
-              gstRate: item.gst_rate,
-              discountRate: item.discount_rate,
-            }));
+            const transformedItems: InvoiceItem[] = (invoiceItemsData || []).map(
+              (item) => mapInvoiceItemToFrontend(item)
+            );
             
             // Set invoice state
             setInvoice({
@@ -339,11 +329,13 @@ const InvoiceEditor = () => {
       id: `item-${Date.now()}`,
       productId: "",
       productName: "",
+      description: "",
+      hsnCode: "",
       quantity: 1,
       price: 0,
-      hsnCode: "",
-      gstRate: 18,
       unit: "",
+      gstRate: 18,
+      discountRate: 0,
     };
     
     setInvoice(prev => ({
@@ -500,18 +492,9 @@ const InvoiceEditor = () => {
       }
       
       // Insert invoice items
-      const invoiceItemsData = invoice.items.map(item => ({
-        invoice_id: invoiceId,
-        product_id: item.productId || null,
-        product_name: item.productName,
-        description: item.description,
-        hsn_code: item.hsnCode,
-        quantity: item.quantity,
-        price: item.price,
-        unit: item.unit,
-        gst_rate: item.gstRate,
-        discount_rate: item.discountRate,
-      }));
+      const invoiceItemsData = invoice.items.map(item => 
+        mapFrontendToInvoiceItem(item, invoiceId)
+      );
       
       const { error: itemsError } = await supabase
         .from('invoice_items')

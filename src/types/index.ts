@@ -68,6 +68,7 @@ export interface Product {
 }
 
 // Using the FrontendInvoiceItem type from supabase-types.ts
+import type { FrontendInvoiceItem } from './supabase-types';
 export type { FrontendInvoiceItem as InvoiceItem } from './supabase-types';
 
 export interface Invoice {
@@ -78,7 +79,7 @@ export interface Invoice {
   invoiceNumber: string;
   invoiceDate: Date;
   dueDate?: Date;
-  items: InvoiceItem[];
+  items: FrontendInvoiceItem[];
   termsAndConditions?: string;
   notes?: string;
   subtotal: number;
