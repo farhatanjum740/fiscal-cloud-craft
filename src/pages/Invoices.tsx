@@ -43,7 +43,7 @@ const Invoices = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Fetch invoices
@@ -123,7 +123,7 @@ const Invoices = () => {
       invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (invoice.customers?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesStatus = statusFilter === "" || invoice.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   }) || [];
@@ -171,7 +171,7 @@ const Invoices = () => {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
