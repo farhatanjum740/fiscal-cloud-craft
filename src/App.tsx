@@ -8,6 +8,7 @@ import AppLayout from "./layouts/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/Invoices";
 import InvoiceEditor from "./pages/InvoiceEditor";
+import CreditNoteEditor from "./pages/CreditNoteEditor";
 import Customers from "./pages/Customers";
 import CustomerEditor from "./pages/CustomerEditor";
 import Products from "./pages/Products";
@@ -39,6 +40,10 @@ const App = () => (
               <Route path="invoices" element={<Invoices />} />
               <Route path="invoices/new" element={<InvoiceEditor />} />
               <Route path="invoices/edit/:id" element={<InvoiceEditor />} />
+              <Route path="invoices/view/:id" element={<InvoiceEditor />} />
+              <Route path="credit-notes/new" element={<CreditNoteEditor />} />
+              <Route path="credit-notes/edit/:id" element={<CreditNoteEditor />} />
+              <Route path="credit-notes/view/:id" element={<CreditNoteEditor />} />
               <Route path="customers" element={<Customers />} />
               <Route path="customers/new" element={<CustomerEditor />} />
               <Route path="customers/edit/:id" element={<CustomerEditor />} />

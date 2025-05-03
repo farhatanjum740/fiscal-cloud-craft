@@ -45,8 +45,18 @@ export function CommandSelect({
   maxHeight = 300,
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
   
   const selectedOption = options.find((option) => option.value === value);
+
+  // Filter options based on search query
+  const filteredOptions = React.useMemo(() => {
+    if (!searchQuery) return options;
+    
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [options, searchQuery]);
 
   return (
     <Popover open={open && !disabled} onOpenChange={setOpen}>
@@ -68,16 +78,21 @@ export function CommandSelect({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" style={{ minWidth: "var(--radix-popover-trigger-width)" }}>
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput 
+            placeholder={searchPlaceholder} 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-            {options.map((option) => (
+            {filteredOptions.map((option) => (
               <CommandItem
                 key={option.value}
                 value={option.value}
                 onSelect={() => {
-                  onValueChange(option.value);
+                  onValueChange(option.value === value ? "" : option.value);
                   setOpen(false);
+                  setSearchQuery("");
                 }}
               >
                 <Check

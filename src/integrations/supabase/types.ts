@@ -87,6 +87,186 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          current_financial_year: string
+          id: string
+          invoice_counter: number | null
+          invoice_prefix: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          current_financial_year?: string
+          id?: string
+          invoice_counter?: number | null
+          invoice_prefix?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          current_financial_year?: string
+          id?: string
+          invoice_counter?: number | null
+          invoice_prefix?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_note_items: {
+        Row: {
+          created_at: string | null
+          credit_note_id: string
+          gst_rate: number
+          hsn_code: string | null
+          id: string
+          invoice_item_id: string
+          price: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credit_note_id: string
+          gst_rate: number
+          hsn_code?: string | null
+          id?: string
+          invoice_item_id: string
+          price: number
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credit_note_id?: string
+          gst_rate?: number
+          hsn_code?: string | null
+          id?: string
+          invoice_item_id?: string
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_note_items_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notes: {
+        Row: {
+          cgst: number | null
+          company_id: string
+          created_at: string | null
+          credit_note_date: string
+          credit_note_number: string
+          financial_year: string
+          id: string
+          igst: number | null
+          invoice_id: string
+          reason: string | null
+          sgst: number | null
+          status: string
+          subtotal: number
+          total_amount: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cgst?: number | null
+          company_id: string
+          created_at?: string | null
+          credit_note_date: string
+          credit_note_number: string
+          financial_year: string
+          id?: string
+          igst?: number | null
+          invoice_id: string
+          reason?: string | null
+          sgst?: number | null
+          status?: string
+          subtotal: number
+          total_amount: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cgst?: number | null
+          company_id?: string
+          created_at?: string | null
+          credit_note_date?: string
+          credit_note_number?: string
+          financial_year?: string
+          id?: string
+          igst?: number | null
+          invoice_id?: string
+          reason?: string | null
+          sgst?: number | null
+          status?: string
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           billing_address_line1: string | null
@@ -223,10 +403,12 @@ export type Database = {
           created_at: string | null
           customer_id: string
           due_date: string | null
+          financial_year: string
           id: string
           igst: number | null
           invoice_date: string
           invoice_number: string
+          invoice_prefix: string | null
           notes: string | null
           sgst: number | null
           status: string
@@ -243,10 +425,12 @@ export type Database = {
           created_at?: string | null
           customer_id: string
           due_date?: string | null
+          financial_year?: string
           id?: string
           igst?: number | null
           invoice_date: string
           invoice_number: string
+          invoice_prefix?: string | null
           notes?: string | null
           sgst?: number | null
           status: string
@@ -263,10 +447,12 @@ export type Database = {
           created_at?: string | null
           customer_id?: string
           due_date?: string | null
+          financial_year?: string
           id?: string
           igst?: number | null
           invoice_date?: string
           invoice_number?: string
+          invoice_prefix?: string | null
           notes?: string | null
           sgst?: number | null
           status?: string
@@ -362,7 +548,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_financial_year: {
+        Args: { input_date?: string }
+        Returns: string
+      }
+      get_next_invoice_number: {
+        Args: {
+          p_company_id: string
+          p_financial_year: string
+          p_prefix?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

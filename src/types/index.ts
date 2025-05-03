@@ -18,6 +18,15 @@ export interface Company {
   bankDetails: BankDetails;
 }
 
+export interface CompanySettings {
+  id: string;
+  companyId: string;
+  userId: string;
+  currentFinancialYear: string;
+  invoicePrefix: string;
+  invoiceCounter: number;
+}
+
 export interface Address {
   line1: string;
   line2?: string;
@@ -89,6 +98,41 @@ export interface Invoice {
     igst?: number;
   };
   totalAmount: number;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled';
+  status: 'draft' | 'pending' | 'paid' | 'cancelled';
   template?: 'standard' | 'modern' | 'minimal';
+  financialYear: string;
+  invoicePrefix?: string;
+}
+
+export interface CreditNote {
+  id: string;
+  userId: string;
+  companyId: string;
+  invoiceId: string;
+  creditNoteNumber: string;
+  creditNoteDate: Date;
+  financialYear: string;
+  reason?: string;
+  items: CreditNoteItem[];
+  subtotal: number;
+  taxAmount: {
+    cgst?: number;
+    sgst?: number;
+    igst?: number;
+  };
+  totalAmount: number;
+  status: 'draft' | 'issued' | 'cancelled';
+}
+
+export interface CreditNoteItem {
+  id: string;
+  invoiceItemId: string;
+  productId?: string;
+  productName: string;
+  description?: string;
+  hsnCode?: string;
+  quantity: number;
+  price: number;
+  unit: string;
+  gstRate: number;
 }

@@ -33,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
@@ -53,23 +53,61 @@ const InvoiceEditor = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [company, setCompany] = useState<any>(null);
+  const [companySettings, setCompanySettings] = useState<any>(null);
+  const [financialYears, setFinancialYears] = useState<string[]>([]);
   
   const [invoice, setInvoice] = useState({
     customerId: "",
-    invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    invoiceNumber: "",
     invoiceDate: new Date(),
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     items: [] as InvoiceItem[],
     termsAndConditions: "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
     notes: "",
     status: "draft",
+    financialYear: "",
+    invoicePrefix: "",
   });
   
   const [subtotal, setSubtotal] = useState(0);
   const [gstDetails, setGstDetails] = useState({ cgst: 0, sgst: 0, igst: 0 });
   const [total, setTotal] = useState(0);
+  const [isGeneratingInvoiceNumber, setIsGeneratingInvoiceNumber] = useState(false);
   
-  // Fetch customers, products and company data
+  // Generate list of financial years (current ± 5 years)
+  useEffect(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    const startYear = currentMonth >= 3 ? currentYear - 5 : currentYear - 6;
+    const endYear = currentMonth >= 3 ? currentYear + 1 : currentYear;
+    
+    const years: string[] = [];
+    for (let i = startYear; i <= endYear; i++) {
+      years.push(`${i}-${i + 1}`);
+    }
+    
+    setFinancialYears(years.reverse());
+    
+    // Set default financial year
+    const defaultFinancialYear = getCurrentFinancialYear(currentDate);
+    setInvoice(prev => ({ ...prev, financialYear: defaultFinancialYear }));
+  }, []);
+  
+  // Get current financial year
+  const getCurrentFinancialYear = (date: Date) => {
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    
+    if (month >= 3) { // April to March
+      return `${year}-${year + 1}`;
+    } else {
+      return `${year - 1}-${year}`;
+    }
+  };
+  
+  // Fetch customers, products, company data, and company settings
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
@@ -109,6 +147,24 @@ const InvoiceEditor = () => {
         
         if (companyData) {
           setCompany(companyData);
+          
+          // Fetch company settings
+          const { data: settingsData, error: settingsError } = await supabase
+            .from('company_settings')
+            .select('*')
+            .eq('company_id', companyData.id)
+            .maybeSingle();
+            
+          if (settingsError) throw settingsError;
+          
+          if (settingsData) {
+            setCompanySettings(settingsData);
+            setInvoice(prev => ({ 
+              ...prev, 
+              financialYear: settingsData.current_financial_year,
+              invoicePrefix: settingsData.invoice_prefix || ""
+            }));
+          }
         }
         
         // If editing, fetch invoice data
@@ -131,16 +187,32 @@ const InvoiceEditor = () => {
               
             if (invoiceItemsError) throw invoiceItemsError;
             
+            // Transform invoice items data to match our InvoiceItem type
+            const transformedItems: InvoiceItem[] = (invoiceItemsData || []).map((item: any) => ({
+              id: item.id,
+              productId: item.product_id || "",
+              productName: item.product_name,
+              description: item.description || "",
+              hsnCode: item.hsn_code || "",
+              quantity: item.quantity,
+              price: item.price,
+              unit: item.unit,
+              gstRate: item.gst_rate,
+              discountRate: item.discount_rate,
+            }));
+            
             // Set invoice state
             setInvoice({
               customerId: invoiceData.customer_id,
               invoiceNumber: invoiceData.invoice_number,
               invoiceDate: new Date(invoiceData.invoice_date),
               dueDate: invoiceData.due_date ? new Date(invoiceData.due_date) : new Date(new Date().setDate(new Date().getDate() + 30)),
-              items: invoiceItemsData || [],
+              items: transformedItems,
               termsAndConditions: invoiceData.terms_and_conditions || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
               notes: invoiceData.notes || "",
               status: invoiceData.status,
+              financialYear: invoiceData.financial_year,
+              invoicePrefix: invoiceData.invoice_prefix || "",
             });
           }
         }
@@ -158,6 +230,51 @@ const InvoiceEditor = () => {
     
     fetchData();
   }, [user, id, isEditing]);
+  
+  // Generate invoice number
+  const generateInvoiceNumber = async () => {
+    if (!company) {
+      toast({
+        title: "Error",
+        description: "Company profile is required to generate invoice number",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsGeneratingInvoiceNumber(true);
+      
+      // Call the database function to get a new invoice number
+      const { data, error } = await supabase
+        .rpc('get_next_invoice_number', {
+          p_company_id: company.id,
+          p_financial_year: invoice.financialYear,
+          p_prefix: invoice.invoicePrefix || ""
+        });
+      
+      if (error) throw error;
+      
+      setInvoice(prev => ({
+        ...prev,
+        invoiceNumber: data
+      }));
+      
+      toast({
+        title: "Success",
+        description: "Invoice number generated successfully",
+      });
+    } catch (error: any) {
+      console.error("Error generating invoice number:", error);
+      toast({
+        title: "Error",
+        description: `Failed to generate invoice number: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingInvoiceNumber(false);
+    }
+  };
   
   // Get customer by ID
   const getCustomerById = (id: string) => {
@@ -204,6 +321,16 @@ const InvoiceEditor = () => {
     setTotal(calcSubtotal + cgst + sgst + igst);
     
   }, [invoice.items, invoice.customerId, customers, company]);
+  
+  // Handle financial year change
+  const handleFinancialYearChange = (year: string) => {
+    setInvoice(prev => ({ ...prev, financialYear: year }));
+    
+    // Clear invoice number if changing financial year
+    if (year !== invoice.financialYear) {
+      setInvoice(prev => ({ ...prev, invoiceNumber: "" }));
+    }
+  };
   
   // Add a new item to the invoice
   const addItem = () => {
@@ -293,6 +420,24 @@ const InvoiceEditor = () => {
       return;
     }
     
+    if (!invoice.invoiceNumber) {
+      toast({
+        title: "Error",
+        description: "Please generate an invoice number.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!invoice.financialYear) {
+      toast({
+        title: "Error",
+        description: "Please select a financial year.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -316,6 +461,8 @@ const InvoiceEditor = () => {
         status: invoice.status,
         terms_and_conditions: invoice.termsAndConditions,
         notes: invoice.notes,
+        financial_year: invoice.financialYear,
+        invoice_prefix: invoice.invoicePrefix
       };
       
       let invoiceId: string;
@@ -371,6 +518,33 @@ const InvoiceEditor = () => {
         
       if (itemsError) throw itemsError;
       
+      // Update company settings with the current financial year and invoice prefix
+      if (companySettings) {
+        const { error: settingsError } = await supabase
+          .from('company_settings')
+          .update({
+            current_financial_year: invoice.financialYear,
+            invoice_prefix: invoice.invoicePrefix,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', companySettings.id);
+          
+        if (settingsError) throw settingsError;
+      } else if (company) {
+        // Create company settings if they don't exist
+        const { error: createSettingsError } = await supabase
+          .from('company_settings')
+          .insert({
+            company_id: company.id,
+            user_id: user.id,
+            current_financial_year: invoice.financialYear,
+            invoice_prefix: invoice.invoicePrefix,
+            invoice_counter: 1
+          });
+          
+        if (createSettingsError) throw createSettingsError;
+      }
+      
       toast({
         title: "Invoice Saved",
         description: "Your invoice has been saved successfully!",
@@ -421,12 +595,60 @@ const InvoiceEditor = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                  <Input
-                    id="invoiceNumber"
-                    value={invoice.invoiceNumber}
-                    onChange={(e) => setInvoice(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                  />
+                  <Label htmlFor="financialYear">Financial Year</Label>
+                  <Select 
+                    value={invoice.financialYear} 
+                    onValueChange={handleFinancialYearChange}
+                  >
+                    <SelectTrigger id="financialYear">
+                      <SelectValue placeholder="Select financial year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {financialYears.map((year) => (
+                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2 col-span-1">
+                    <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
+                    <Input
+                      id="invoicePrefix"
+                      value={invoice.invoicePrefix}
+                      onChange={(e) => setInvoice(prev => ({ ...prev, invoicePrefix: e.target.value }))}
+                      placeholder="INV"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="invoiceNumber">Invoice Number</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="invoiceNumber"
+                        value={invoice.invoiceNumber}
+                        onChange={(e) => setInvoice(prev => ({ ...prev, invoiceNumber: e.target.value }))}
+                        readOnly={isEditing}
+                        className="flex-1"
+                      />
+                      {!isEditing && (
+                        <Button 
+                          variant="outline" 
+                          onClick={generateInvoiceNumber}
+                          disabled={isGeneratingInvoiceNumber || !invoice.financialYear}
+                          className="whitespace-nowrap"
+                        >
+                          {isGeneratingInvoiceNumber ? "Generating..." : (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Generate
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
