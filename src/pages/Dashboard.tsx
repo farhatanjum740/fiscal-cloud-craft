@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { FileText, Users, Package, TrendingUp, ChartBar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
@@ -16,19 +18,64 @@ const Dashboard = () => {
     pendingInvoices: 0
   });
 
-  // Mock data fetching
+  // Fetch dashboard stats
+  const { data: dashboardData } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const [invoicesResult, customersResult, productsResult, revenueResult] = await Promise.all([
+        supabase.from('invoices').select('id').eq('user_id', user.id),
+        supabase.from('customers').select('id').eq('user_id', user.id),
+        supabase.from('products').select('id').eq('user_id', user.id),
+        supabase.from('invoices').select('total_amount').eq('user_id', user.id).eq('status', 'paid')
+      ]);
+      
+      const pendingInvoicesResult = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'pending');
+      
+      return {
+        totalInvoices: invoicesResult.data?.length || 0,
+        totalCustomers: customersResult.data?.length || 0,
+        totalProducts: productsResult.data?.length || 0,
+        totalRevenue: revenueResult.data?.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0) || 0,
+        pendingInvoices: pendingInvoicesResult.data?.length || 0
+      };
+    },
+    enabled: !!user
+  });
+
+  // Recent invoices query
+  const { data: recentInvoices } = useQuery({
+    queryKey: ['recent-invoices'],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          customers(name)
+        `)
+        .eq('user_id', user.id)
+        .order('invoice_date', { ascending: false })
+        .limit(5);
+        
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
+
+  // Update stats when dashboardData changes
   useEffect(() => {
-    // In a real app, this would fetch data from an API
-    setTimeout(() => {
-      setStats({
-        totalInvoices: 24,
-        totalCustomers: 12,
-        totalProducts: 36,
-        totalRevenue: 135000,
-        pendingInvoices: 5
-      });
-    }, 500);
-  }, []);
+    if (dashboardData) {
+      setStats(dashboardData);
+    }
+  }, [dashboardData]);
 
   // Get the appropriate display name for the welcome message
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'there';
@@ -84,18 +131,26 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">INV-2023-{1000 + i}</p>
-                    <p className="text-sm text-gray-500">Customer {i + 1}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">₹{(Math.round(Math.random() * 100000)).toLocaleString()}</p>
-                    <p className="text-sm text-gray-500">Due in {Math.floor(Math.random() * 30)} days</p>
-                  </div>
+              {!recentInvoices || recentInvoices.length === 0 ? (
+                <div className="py-8 text-center text-gray-500">
+                  No invoices yet. Create your first invoice.
                 </div>
-              ))}
+              ) : (
+                recentInvoices.map((invoice) => (
+                  <div key={invoice.id} className="flex justify-between items-center py-2 border-b">
+                    <div>
+                      <p className="font-medium">{invoice.invoice_number}</p>
+                      <p className="text-sm text-gray-500">{invoice.customers?.name || 'Unknown Customer'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">₹{invoice.total_amount.toLocaleString()}</p>
+                      <p className="text-sm text-gray-500">
+                        {invoice.due_date ? `Due ${formatDate(invoice.due_date)}` : 'No due date'}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
             <div className="mt-4">
               <Link to="/app/invoices">
@@ -135,6 +190,15 @@ const Dashboard = () => {
       </div>
     </div>
   );
+};
+
+// Helper function to format dates
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-IN', {
+    month: 'short',
+    day: 'numeric',
+  });
 };
 
 const StatCard = ({ 

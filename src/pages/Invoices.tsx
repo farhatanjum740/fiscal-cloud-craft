@@ -34,65 +34,103 @@ import {
   Eye,
   Trash2
 } from "lucide-react";
-
-// Mock invoice data
-const mockInvoices = [
-  { 
-    id: "inv-001", 
-    invoiceNumber: "INV-2023-1001", 
-    customer: "ABC Technologies", 
-    date: "2023-04-15", 
-    amount: 12500, 
-    status: "paid" 
-  },
-  { 
-    id: "inv-002", 
-    invoiceNumber: "INV-2023-1002", 
-    customer: "XYZ Corp", 
-    date: "2023-04-18", 
-    amount: 8750, 
-    status: "pending" 
-  },
-  { 
-    id: "inv-003", 
-    invoiceNumber: "INV-2023-1003", 
-    customer: "Global Solutions", 
-    date: "2023-04-22", 
-    amount: 22000, 
-    status: "paid" 
-  },
-  { 
-    id: "inv-004", 
-    invoiceNumber: "INV-2023-1004", 
-    customer: "Local Systems", 
-    date: "2023-04-25", 
-    amount: 5200, 
-    status: "pending" 
-  },
-  { 
-    id: "inv-005", 
-    invoiceNumber: "INV-2023-1005", 
-    customer: "Tech Giants", 
-    date: "2023-05-01", 
-    amount: 35000, 
-    status: "draft" 
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Invoices = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Fetch invoices
+  const { data: invoices, isLoading } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          customers(name)
+        `)
+        .eq('user_id', user.id)
+        .order('invoice_date', { ascending: false });
+        
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+  
+  // Delete invoice mutation
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      // First delete invoice items
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', id);
+        
+      if (itemsError) throw itemsError;
+      
+      // Then delete the invoice
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({
+        title: "Invoice Deleted",
+        description: "The invoice has been deleted successfully.",
+      });
+      setIsDeleting(false);
+    },
+    onError: (error) => {
+      console.error('Error deleting invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete the invoice.",
+        variant: "destructive",
+      });
+      setIsDeleting(false);
+    }
+  });
+  
+  // Handle invoice deletion
+  const handleDeleteInvoice = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this invoice? This will also delete all items in this invoice.")) {
+      setIsDeleting(true);
+      deleteInvoiceMutation.mutate(id);
+    }
+  };
   
   // Filter invoices based on search and status filter
-  const filteredInvoices = mockInvoices.filter(invoice => {
+  const filteredInvoices = invoices?.filter(invoice => {
     const matchesSearch = 
-      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customer.toLowerCase().includes(searchTerm.toLowerCase());
+      invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (invoice.customers?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
       
     const matchesStatus = statusFilter === "" || invoice.status === statusFilter;
     
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
+  
+  if (!user) {
+    return <div className="flex justify-center items-center h-64">Please log in to view invoices</div>;
+  }
   
   return (
     <div className="space-y-6">
@@ -133,7 +171,7 @@ const Invoices = () => {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="">All statuses</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
@@ -155,7 +193,13 @@ const Invoices = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-32">
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredInvoices.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center h-32">
                       No invoices found.
@@ -164,10 +208,10 @@ const Invoices = () => {
                 ) : (
                   filteredInvoices.map((invoice) => (
                     <TableRow key={invoice.id}>
-                      <TableCell>{invoice.invoiceNumber}</TableCell>
-                      <TableCell>{invoice.customer}</TableCell>
-                      <TableCell>{formatDate(invoice.date)}</TableCell>
-                      <TableCell>₹{invoice.amount.toLocaleString()}</TableCell>
+                      <TableCell>{invoice.invoice_number}</TableCell>
+                      <TableCell>{invoice.customers?.name || 'Unknown'}</TableCell>
+                      <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
+                      <TableCell>₹{invoice.total_amount.toLocaleString()}</TableCell>
                       <TableCell>
                         <StatusBadge status={invoice.status} />
                       </TableCell>
@@ -183,7 +227,13 @@ const Invoices = () => {
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-600">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                          onClick={() => handleDeleteInvoice(invoice.id)}
+                          disabled={isDeleting}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>

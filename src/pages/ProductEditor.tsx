@@ -20,6 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Common GST rates in India
 const gstRates = [
@@ -45,34 +48,108 @@ const unitOptions = [
 const ProductEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const isEditing = !!id;
   
   const [product, setProduct] = useState({
     name: "",
     description: "",
-    hsnCode: "",
+    hsn_code: "",
     price: 0,
     unit: "piece",
-    gstRate: 18,
+    gst_rate: 18,
     category: "",
+    user_id: ""
   });
   
-  useEffect(() => {
-    if (isEditing && id) {
-      // In a real app, this would fetch the product from an API
-      // For now, use mock data
-      const mockProduct = {
-        name: "Web Development",
-        description: "Professional web development services",
-        hsnCode: "998313",
-        price: 5000,
-        unit: "hour",
-        gstRate: 18,
-        category: "Services",
-      };
-      setProduct(mockProduct);
+  const [loading, setLoading] = useState(false);
+  
+  // Fetch product if editing
+  const { data: productData, isLoading } = useQuery({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      if (!id || !user) return null;
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id && !!user,
+  });
+  
+  // Mutation for save/update product
+  const mutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      let result;
+      if (isEditing) {
+        result = await supabase
+          .from('products')
+          .update(data)
+          .eq('id', id)
+          .select();
+      } else {
+        result = await supabase
+          .from('products')
+          .insert(data)
+          .select();
+      }
+      
+      if (result.error) throw result.error;
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      if (id) queryClient.invalidateQueries({ queryKey: ['product', id] });
+      
+      toast({
+        title: `Product ${isEditing ? 'Updated' : 'Created'}`,
+        description: `${product.name} has been ${isEditing ? 'updated' : 'added'} successfully.`,
+      });
+      
+      navigate("/app/products");
+    },
+    onError: (error) => {
+      console.error('Error saving product:', error);
+      toast({
+        title: "Error",
+        description: `Failed to ${isEditing ? 'update' : 'create'} product. Please try again.`,
+        variant: "destructive",
+      });
+      setLoading(false);
     }
-  }, [id, isEditing]);
+  });
+  
+  // Set product data if editing
+  useEffect(() => {
+    if (productData) {
+      setProduct({
+        name: productData.name || '',
+        description: productData.description || '',
+        hsn_code: productData.hsn_code || '',
+        price: productData.price || 0,
+        unit: productData.unit || 'piece',
+        gst_rate: productData.gst_rate || 18,
+        category: productData.category || '',
+        user_id: productData.user_id
+      });
+    }
+  }, [productData]);
+  
+  // Set user_id when user loads
+  useEffect(() => {
+    if (user && !isEditing) {
+      setProduct(prev => ({ ...prev, user_id: user.id }));
+    }
+  }, [user, isEditing]);
   
   const handleInputChange = (field: string, value: string | number) => {
     setProduct((prev) => ({
@@ -83,25 +160,39 @@ const ProductEditor = () => {
   
   const handleSave = () => {
     // Validate the form
-    if (!product.name || !product.hsnCode) {
+    if (!product.name) {
       toast({
         title: "Error",
-        description: "Product name and HSN/SAC code are required.",
+        description: "Product name is required.",
         variant: "destructive",
       });
       return;
     }
     
-    // In a real app, this would save to the database
-    console.log("Saving product:", product);
+    setLoading(true);
     
-    toast({
-      title: `Product ${isEditing ? 'Updated' : 'Created'}`,
-      description: `${product.name} has been ${isEditing ? 'updated' : 'added'} successfully.`,
-    });
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save products.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
     
-    navigate("/app/products");
+    // Save to database
+    const productData = {
+      ...product,
+      user_id: user.id,
+    };
+    
+    mutation.mutate(productData);
   };
+  
+  if (isLoading && isEditing) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
   
   return (
     <div className="space-y-6">
@@ -113,8 +204,8 @@ const ProductEditor = () => {
           <Button variant="outline" onClick={() => navigate("/app/products")}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Product
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save Product"}
           </Button>
         </div>
       </div>
@@ -143,7 +234,7 @@ const ProductEditor = () => {
             <Textarea
               id="description"
               placeholder="Enter product description"
-              value={product.description}
+              value={product.description || ''}
               onChange={(e) => handleInputChange("description", e.target.value)}
               rows={3}
             />
@@ -151,13 +242,12 @@ const ProductEditor = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="hsnCode">HSN/SAC Code *</Label>
+              <Label htmlFor="hsn_code">HSN/SAC Code</Label>
               <Input
-                id="hsnCode"
+                id="hsn_code"
                 placeholder="Enter HSN/SAC code"
-                value={product.hsnCode}
-                onChange={(e) => handleInputChange("hsnCode", e.target.value)}
-                required
+                value={product.hsn_code || ''}
+                onChange={(e) => handleInputChange("hsn_code", e.target.value)}
               />
               <p className="text-xs text-gray-500">
                 Enter the Harmonized System Nomenclature code for this product or service
@@ -169,7 +259,7 @@ const ProductEditor = () => {
               <Input
                 id="category"
                 placeholder="E.g., Services, Goods, etc."
-                value={product.category}
+                value={product.category || ''}
                 onChange={(e) => handleInputChange("category", e.target.value)}
               />
             </div>
@@ -210,12 +300,12 @@ const ProductEditor = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="gstRate">GST Rate (%) *</Label>
+              <Label htmlFor="gst_rate">GST Rate (%) *</Label>
               <Select 
-                value={product.gstRate.toString()}
-                onValueChange={(value) => handleInputChange("gstRate", parseInt(value))}
+                value={product.gst_rate.toString()}
+                onValueChange={(value) => handleInputChange("gst_rate", parseInt(value))}
               >
-                <SelectTrigger id="gstRate">
+                <SelectTrigger id="gst_rate">
                   <SelectValue placeholder="Select GST rate" />
                 </SelectTrigger>
                 <SelectContent>
@@ -238,8 +328,8 @@ const ProductEditor = () => {
         <Button variant="outline" onClick={() => navigate("/app/products")}>
           Cancel
         </Button>
-        <Button onClick={handleSave}>
-          Save Product
+        <Button onClick={handleSave} disabled={loading}>
+          {loading ? "Saving..." : "Save Product"}
         </Button>
       </div>
     </div>

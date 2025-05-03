@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -14,7 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building, Upload } from "lucide-react";
-import type { Address, BankDetails } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Company, Address, BankDetails } from "@/types";
 
 // List of Indian states for the dropdown
 const indianStates = [
@@ -28,36 +31,154 @@ const indianStates = [
 ];
 
 const CompanyProfile = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
   const [company, setCompany] = useState({
-    name: "My Business",
+    name: "",
     logo: "",
-    gstin: "27AAAAA0000A1Z5",
-    pan: "AAAAA0000A",
+    gstin: "",
+    pan: "",
     address: {
-      line1: "123 Business Park",
-      line2: "Tech Hub",
-      city: "Mumbai",
-      state: "Maharashtra",
-      pincode: "400001"
+      line1: "",
+      line2: "",
+      city: "",
+      state: "",
+      pincode: ""
     } as Address,
     registeredAddress: {
-      line1: "123 Business Park",
-      line2: "Tech Hub",
-      city: "Mumbai",
-      state: "Maharashtra",
-      pincode: "400001"
+      line1: "",
+      line2: "",
+      city: "",
+      state: "",
+      pincode: ""
     } as Address,
     useMainAddress: true,
     bankDetails: {
-      accountName: "My Business",
-      accountNumber: "1234567890",
-      bankName: "State Bank of India",
-      ifscCode: "SBIN0000123",
-      branch: "Mumbai Main"
+      accountName: "",
+      accountNumber: "",
+      bankName: "",
+      ifscCode: "",
+      branch: ""
     } as BankDetails,
   });
   
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  
+  // Fetch company data
+  const { data: companyData, isLoading } = useQuery({
+    queryKey: ['company'],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error) {
+        // If no company found, return null rather than throwing an error
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        throw new Error(error.message);
+      }
+      
+      return data;
+    },
+    enabled: !!user,
+  });
+  
+  // Mutation to create/update company
+  const mutation = useMutation({
+    mutationFn: async (companyData: any) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      // Check if company exists
+      const { data: existingCompany } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      let result;
+      
+      if (existingCompany) {
+        // Update existing company
+        result = await supabase
+          .from('companies')
+          .update(companyData)
+          .eq('id', existingCompany.id)
+          .select()
+          .single();
+      } else {
+        // Create new company
+        result = await supabase
+          .from('companies')
+          .insert(companyData)
+          .select()
+          .single();
+      }
+      
+      if (result.error) throw result.error;
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company'] });
+      toast({
+        title: "Profile Updated",
+        description: "Your company profile has been updated successfully.",
+      });
+      setLoading(false);
+    },
+    onError: (error) => {
+      console.error('Error saving company:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save company profile. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  });
+  
+  // Set company data from API
+  useEffect(() => {
+    if (companyData) {
+      setCompany({
+        name: companyData.name || '',
+        logo: companyData.logo || '',
+        gstin: companyData.gstin || '',
+        pan: companyData.pan || '',
+        address: {
+          line1: companyData.address_line1 || '',
+          line2: companyData.address_line2 || '',
+          city: companyData.city || '',
+          state: companyData.state || '',
+          pincode: companyData.pincode || ''
+        },
+        registeredAddress: {
+          line1: companyData.registered_address_line1 || '',
+          line2: companyData.registered_address_line2 || '',
+          city: companyData.registered_city || '',
+          state: companyData.registered_state || '',
+          pincode: companyData.registered_pincode || ''
+        },
+        useMainAddress: !companyData.registered_address_line1 || 
+          (companyData.address_line1 === companyData.registered_address_line1 && 
+           companyData.city === companyData.registered_city),
+        bankDetails: {
+          accountName: companyData.bank_account_name || '',
+          accountNumber: companyData.bank_account_number || '',
+          bankName: companyData.bank_name || '',
+          ifscCode: companyData.bank_ifsc_code || '',
+          branch: companyData.bank_branch || ''
+        }
+      });
+    }
+  }, [companyData]);
   
   const handleInputChange = (
     field: string,
@@ -127,25 +248,73 @@ const CompanyProfile = () => {
     }
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate the form
-    if (!company.name || !company.gstin) {
+    if (!company.name) {
       toast({
         title: "Error",
-        description: "Company name and GSTIN are required.",
+        description: "Company name is required.",
         variant: "destructive",
       });
       return;
     }
     
-    // In a real app, this would save to the database
-    console.log("Saving company profile:", company);
+    setLoading(true);
     
-    toast({
-      title: "Profile Updated",
-      description: "Your company profile has been updated successfully.",
-    });
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save company profile.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+    
+    // Map company data to Supabase format
+    const companyData = {
+      user_id: user.id,
+      name: company.name,
+      logo: company.logo,
+      gstin: company.gstin || null,
+      pan: company.pan || null,
+      // Address
+      address_line1: company.address.line1 || null,
+      address_line2: company.address.line2 || null,
+      city: company.address.city || null,
+      state: company.address.state || null,
+      pincode: company.address.pincode || null,
+      // Registered address
+      registered_address_line1: company.useMainAddress 
+        ? company.address.line1 
+        : company.registeredAddress.line1 || null,
+      registered_address_line2: company.useMainAddress 
+        ? company.address.line2 
+        : company.registeredAddress.line2 || null,
+      registered_city: company.useMainAddress 
+        ? company.address.city 
+        : company.registeredAddress.city || null,
+      registered_state: company.useMainAddress 
+        ? company.address.state 
+        : company.registeredAddress.state || null,
+      registered_pincode: company.useMainAddress 
+        ? company.address.pincode 
+        : company.registeredAddress.pincode || null,
+      // Bank details
+      bank_account_name: company.bankDetails.accountName || null,
+      bank_account_number: company.bankDetails.accountNumber || null,
+      bank_name: company.bankDetails.bankName || null,
+      bank_ifsc_code: company.bankDetails.ifscCode || null,
+      bank_branch: company.bankDetails.branch || null,
+    };
+    
+    // Call mutation to save data
+    mutation.mutate(companyData);
   };
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
   
   return (
     <div className="space-y-6">
@@ -154,8 +323,8 @@ const CompanyProfile = () => {
           <Building className="h-8 w-8 mr-2" />
           Company Profile
         </h1>
-        <Button onClick={handleSave}>
-          Save Changes
+        <Button onClick={handleSave} disabled={loading}>
+          {loading ? "Saving..." : "Save Changes"}
         </Button>
       </div>
       
@@ -230,7 +399,6 @@ const CompanyProfile = () => {
                   placeholder="E.g., 27AAAAA0000A1Z5"
                   value={company.gstin}
                   onChange={(e) => handleInputChange("gstin", e.target.value)}
-                  required
                 />
               </div>
               
@@ -504,8 +672,8 @@ const CompanyProfile = () => {
       </Card>
       
       <div className="flex justify-end">
-        <Button onClick={handleSave}>
-          Save Changes
+        <Button onClick={handleSave} disabled={loading}>
+          {loading ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>

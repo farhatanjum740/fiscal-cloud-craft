@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,65 +25,85 @@ import {
   Edit,
   Trash2
 } from "lucide-react";
-
-// Mock product data
-const mockProducts = [
-  { 
-    id: "p1", 
-    name: "Web Development", 
-    price: 5000, 
-    hsnCode: "998313", 
-    gstRate: 18, 
-    unit: "hour", 
-    category: "Services" 
-  },
-  { 
-    id: "p2", 
-    name: "Mobile App Development", 
-    price: 7500, 
-    hsnCode: "998314", 
-    gstRate: 18, 
-    unit: "hour", 
-    category: "Services" 
-  },
-  { 
-    id: "p3", 
-    name: "Hosting Services", 
-    price: 1200, 
-    hsnCode: "998315", 
-    gstRate: 18, 
-    unit: "month", 
-    category: "Services" 
-  },
-  { 
-    id: "p4", 
-    name: "Domain Registration", 
-    price: 800, 
-    hsnCode: "998316", 
-    gstRate: 18, 
-    unit: "year", 
-    category: "Services" 
-  },
-  { 
-    id: "p5", 
-    name: "SEO Services", 
-    price: 3500, 
-    hsnCode: "998317", 
-    gstRate: 18, 
-    unit: "month", 
-    category: "Services" 
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Product } from "@/types";
 
 const Products = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Fetch products
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+  
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({
+        title: "Product Deleted",
+        description: "The product has been deleted successfully.",
+      });
+      setIsDeleting(false);
+    },
+    onError: (error) => {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete the product. It might be referenced in invoices.",
+        variant: "destructive",
+      });
+      setIsDeleting(false);
+    }
+  });
+  
+  // Handle product deletion
+  const handleDeleteProduct = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      setIsDeleting(true);
+      deleteProductMutation.mutate(id);
+    }
+  };
   
   // Filter products based on search
-  const filteredProducts = mockProducts.filter(product =>
+  const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.hsnCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    (product.hsn_code && product.hsn_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+  ) || [];
+  
+  if (!user) {
+    return <div className="flex justify-center items-center h-64">Please log in to view products</div>;
+  }
   
   return (
     <div className="space-y-6">
@@ -134,7 +154,13 @@ const Products = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center h-32">
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredProducts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center h-32">
                       No products found.
@@ -144,9 +170,9 @@ const Products = () => {
                   filteredProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.hsnCode}</TableCell>
+                      <TableCell>{product.hsn_code}</TableCell>
                       <TableCell>{product.price.toLocaleString()}</TableCell>
-                      <TableCell>{product.gstRate}%</TableCell>
+                      <TableCell>{product.gst_rate}%</TableCell>
                       <TableCell>{product.unit}</TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell className="text-right space-x-1">
@@ -155,7 +181,13 @@ const Products = () => {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-600">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                          onClick={() => handleDeleteProduct(product.id)}
+                          disabled={isDeleting}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
