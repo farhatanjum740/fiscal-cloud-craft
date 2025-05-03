@@ -7,7 +7,7 @@ import { FileText, Users, Package, TrendingUp, ChartBar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [stats, setStats] = useState({
     totalInvoices: 0,
     totalCustomers: 0,
@@ -30,10 +30,13 @@ const Dashboard = () => {
     }, 500);
   }, []);
 
+  // Get the appropriate display name for the welcome message
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'there';
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Welcome back, {user?.name}</h1>
+        <h1 className="text-3xl font-bold">Welcome back, {displayName}</h1>
         <Link to="/app/invoices/new">
           <Button>Create New Invoice</Button>
         </Link>
