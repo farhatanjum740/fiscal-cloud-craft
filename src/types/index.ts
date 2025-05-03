@@ -67,18 +67,8 @@ export interface Product {
   category?: string;
 }
 
-export interface InvoiceItem {
-  id: string;
-  productId: string;
-  productName: string;
-  description?: string;
-  hsnCode: string;
-  quantity: number;
-  price: number;
-  unit: string;
-  gstRate: number;
-  discountRate?: number;
-}
+// Using the FrontendInvoiceItem type from supabase-types.ts
+export type { FrontendInvoiceItem as InvoiceItem } from './supabase-types';
 
 export interface Invoice {
   id: string;

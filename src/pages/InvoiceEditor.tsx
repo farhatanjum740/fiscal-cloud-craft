@@ -41,6 +41,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { CommandSelect } from "@/components/ui/command-select";
 import type { InvoiceItem } from "@/types";
+import { mapInvoiceItemToFrontend, mapFrontendToInvoiceItem } from "@/types/supabase-types";
 
 const InvoiceEditor = () => {
   const { id } = useParams();

@@ -39,3 +39,43 @@ export type UpdateInvoice = UpdateTables<'invoices'>;
 export type UpdateInvoiceItem = UpdateTables<'invoice_items'>;
 export type UpdateCreditNote = UpdateTables<'credit_notes'>;
 export type UpdateCreditNoteItem = UpdateTables<'credit_note_items'>;
+
+// Specific type helpers for frontend
+export interface FrontendInvoiceItem {
+  id: string;
+  productId: string;
+  productName: string;
+  description?: string;
+  hsnCode: string;
+  quantity: number;
+  price: number;
+  unit: string;
+  gstRate: number;
+  discountRate?: number;
+}
+
+export const mapInvoiceItemToFrontend = (item: InvoiceItem): FrontendInvoiceItem => ({
+  id: item.id,
+  productId: item.product_id || "",
+  productName: item.product_name,
+  description: item.description || "",
+  hsnCode: item.hsn_code || "",
+  quantity: Number(item.quantity),
+  price: Number(item.price),
+  unit: item.unit,
+  gstRate: Number(item.gst_rate),
+  discountRate: item.discount_rate ? Number(item.discount_rate) : undefined
+});
+
+export const mapFrontendToInvoiceItem = (item: FrontendInvoiceItem, invoiceId: string): Omit<InsertInvoiceItem, 'id'> => ({
+  invoice_id: invoiceId,
+  product_id: item.productId || null,
+  product_name: item.productName,
+  description: item.description,
+  hsn_code: item.hsnCode,
+  quantity: item.quantity,
+  price: item.price,
+  unit: item.unit,
+  gst_rate: item.gstRate,
+  discount_rate: item.discountRate
+});
