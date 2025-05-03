@@ -16,6 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Address } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // List of Indian states for the dropdown
 const indianStates = [
@@ -31,8 +33,10 @@ const indianStates = [
 const CustomerEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const isEditing = !!id;
   
+  const [loading, setLoading] = useState(false);
   const [customer, setCustomer] = useState({
     name: "",
     email: "",
@@ -57,34 +61,64 @@ const CustomerEditor = () => {
   });
   
   useEffect(() => {
-    if (isEditing && id) {
-      // In a real app, this would fetch the customer from an API
-      // For now, use mock data
-      const mockCustomer = {
-        name: "ABC Technologies",
-        email: "contact@abctech.com",
-        phone: "9876543210",
-        gstin: "27AAAAA0000A1Z5",
-        category: "IT Services",
-        billingAddress: {
-          line1: "123 Tech Park",
-          line2: "Sector 1",
-          city: "Mumbai",
-          state: "Maharashtra",
-          pincode: "400001",
-        },
-        shippingAddress: {
-          line1: "123 Tech Park",
-          line2: "Sector 1",
-          city: "Mumbai",
-          state: "Maharashtra",
-          pincode: "400001",
-        },
-        useShippingForBilling: true,
-      };
-      setCustomer(mockCustomer);
-    }
-  }, [id, isEditing]);
+    const fetchCustomer = async () => {
+      if (isEditing && id && user) {
+        try {
+          const { data, error } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .single();
+            
+          if (error) {
+            throw error;
+          }
+          
+          if (data) {
+            // Transform database format to component format
+            setCustomer({
+              name: data.name || '',
+              email: data.email || '',
+              phone: data.phone || '',
+              gstin: data.gstin || '',
+              category: data.category || '',
+              billingAddress: {
+                line1: data.billing_address_line1 || '',
+                line2: data.billing_address_line2 || '',
+                city: data.billing_city || '',
+                state: data.billing_state || 'Maharashtra',
+                pincode: data.billing_pincode || '',
+              },
+              shippingAddress: {
+                line1: data.shipping_address_line1 || '',
+                line2: data.shipping_address_line2 || '',
+                city: data.shipping_city || '',
+                state: data.shipping_state || 'Maharashtra',
+                pincode: data.shipping_pincode || '',
+              },
+              // If shipping and billing addresses match, set useShippingForBilling to true
+              useShippingForBilling: 
+                data.billing_address_line1 === data.shipping_address_line1 &&
+                data.billing_address_line2 === data.shipping_address_line2 &&
+                data.billing_city === data.shipping_city &&
+                data.billing_state === data.shipping_state &&
+                data.billing_pincode === data.shipping_pincode
+            });
+          }
+        } catch (error: any) {
+          console.error("Error fetching customer:", error);
+          toast({
+            title: "Error",
+            description: `Failed to load customer: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    
+    fetchCustomer();
+  }, [id, isEditing, user]);
   
   const handleInputChange = (
     field: string,
@@ -136,7 +170,7 @@ const CustomerEditor = () => {
     });
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate the form
     if (!customer.name) {
       toast({
@@ -147,15 +181,76 @@ const CustomerEditor = () => {
       return;
     }
     
-    // In a real app, this would save to the database
-    console.log("Saving customer:", customer);
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save a customer.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    toast({
-      title: `Customer ${isEditing ? 'Updated' : 'Created'}`,
-      description: `${customer.name} has been ${isEditing ? 'updated' : 'added'} successfully.`,
-    });
+    setLoading(true);
     
-    navigate("/app/customers");
+    try {
+      // Transform component format to database format
+      const customerData = {
+        user_id: user.id,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        gstin: customer.gstin,
+        category: customer.category,
+        // Billing address
+        billing_address_line1: customer.billingAddress.line1,
+        billing_address_line2: customer.billingAddress.line2,
+        billing_city: customer.billingAddress.city,
+        billing_state: customer.billingAddress.state,
+        billing_pincode: customer.billingAddress.pincode,
+        // Shipping address
+        shipping_address_line1: customer.shippingAddress.line1,
+        shipping_address_line2: customer.shippingAddress.line2,
+        shipping_city: customer.shippingAddress.city,
+        shipping_state: customer.shippingAddress.state,
+        shipping_pincode: customer.shippingAddress.pincode,
+      };
+      
+      let result;
+      
+      if (isEditing) {
+        // Update existing customer
+        result = await supabase
+          .from('customers')
+          .update(customerData)
+          .eq('id', id)
+          .eq('user_id', user.id);
+      } else {
+        // Insert new customer
+        result = await supabase
+          .from('customers')
+          .insert(customerData);
+      }
+      
+      if (result.error) {
+        throw result.error;
+      }
+      
+      toast({
+        title: `Customer ${isEditing ? 'Updated' : 'Created'}`,
+        description: `${customer.name} has been ${isEditing ? 'updated' : 'added'} successfully.`,
+      });
+      
+      navigate("/app/customers");
+    } catch (error: any) {
+      console.error("Error saving customer:", error);
+      toast({
+        title: "Error",
+        description: `Failed to save customer: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -165,11 +260,11 @@ const CustomerEditor = () => {
           {isEditing ? "Edit Customer" : "Add New Customer"}
         </h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/app/customers")}>
+          <Button variant="outline" onClick={() => navigate("/app/customers")} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Customer
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save Customer"}
           </Button>
         </div>
       </div>
@@ -421,11 +516,11 @@ const CustomerEditor = () => {
       </div>
       
       <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={() => navigate("/app/customers")}>
+        <Button variant="outline" onClick={() => navigate("/app/customers")} disabled={loading}>
           Cancel
         </Button>
-        <Button onClick={handleSave}>
-          Save Customer
+        <Button onClick={handleSave} disabled={loading}>
+          {loading ? "Saving..." : "Save Customer"}
         </Button>
       </div>
     </div>
