@@ -47,8 +47,8 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
-  // Handle undefined options safely
-  const safeOptions = options || [];
+  // Handle undefined options safely by ensuring options is always an array
+  const safeOptions = Array.isArray(options) ? options : [];
   
   const selectedOption = safeOptions.find((option) => option.value === value);
 

@@ -43,6 +43,9 @@ const InvoiceItems = ({
   updateItem,
   handleProductSelect,
 }: InvoiceItemsProps) => {
+  // Ensure products is always an array
+  const safeProducts = Array.isArray(products) ? products : [];
+  
   return (
     <Card>
       <CardHeader>
@@ -84,7 +87,7 @@ const InvoiceItems = ({
                   <TableRow key={item.id}>
                     <TableCell>
                       <CommandSelect
-                        options={(products || []).map(product => ({ 
+                        options={safeProducts.map(product => ({ 
                           value: product.id, 
                           label: product.name 
                         }))}

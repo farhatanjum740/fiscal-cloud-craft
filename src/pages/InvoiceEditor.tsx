@@ -34,6 +34,10 @@ const InvoiceEditor = () => {
     saveInvoice
   } = useInvoice(id);
   
+  // Ensure customers and products are always arrays
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const safeProducts = Array.isArray(products) ? products : [];
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -60,8 +64,8 @@ const InvoiceEditor = () => {
             <InvoiceDetails
               invoice={invoice}
               setInvoice={setInvoice}
-              financialYears={financialYears}
-              customers={customers || []}
+              financialYears={financialYears || []}
+              customers={safeCustomers}
               isEditing={isEditing}
               isGeneratingInvoiceNumber={isGeneratingInvoiceNumber}
               generateInvoiceNumber={generateInvoiceNumber}
@@ -71,8 +75,8 @@ const InvoiceEditor = () => {
           </div>
           
           <InvoiceItems
-            items={invoice.items}
-            products={products || []}
+            items={invoice.items || []}
+            products={safeProducts}
             subtotal={subtotal}
             gstDetails={gstDetails}
             total={total}
