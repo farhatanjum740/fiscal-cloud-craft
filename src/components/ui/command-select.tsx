@@ -47,17 +47,20 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
-  // Handle undefined options safely by ensuring options is always an array
+  // Handle undefined options safely by ensuring options is always a valid array
   const safeOptions = Array.isArray(options) ? options : [];
   
-  const selectedOption = safeOptions.find((option) => option.value === value);
+  // Find selected option safely
+  const selectedOption = safeOptions.find((option) => option && option.value === value);
 
-  // Filter options based on search query
+  // Filter options based on search query - with additional safety checks
   const filteredOptions = React.useMemo(() => {
     if (!searchQuery) return safeOptions;
     
-    return safeOptions.filter((option) =>
-      option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    return safeOptions.filter((option) => 
+      option && 
+      option.label && 
+      option.label.toLowerCase().includes((searchQuery || "").toLowerCase())
     );
   }, [safeOptions, searchQuery]);
 
@@ -88,7 +91,7 @@ export function CommandSelect({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-            {filteredOptions.map((option) => (
+            {filteredOptions.map((option) => option && (
               <CommandItem
                 key={option.value}
                 value={option.value}
