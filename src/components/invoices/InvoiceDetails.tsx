@@ -59,6 +59,14 @@ const InvoiceDetails = ({
   // Ensure customers and financialYears are always arrays
   const safeCustomers = Array.isArray(customers) ? customers : [];
   const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
+  
+  // Convert customers to the format expected by CommandSelect
+  const customerOptions = safeCustomers.map(customer => {
+    return {
+      value: customer?.id || "",
+      label: customer?.name || "Unknown Customer"
+    };
+  }).filter(option => option.value !== "");
 
   return (
     <Card>
@@ -166,10 +174,7 @@ const InvoiceDetails = ({
         <div className="space-y-2">
           <Label htmlFor="customer">Customer</Label>
           <CommandSelect
-            options={safeCustomers.map(customer => ({ 
-              value: customer.id, 
-              label: customer.name 
-            }))}
+            options={customerOptions}
             value={invoice.customerId || ""}
             onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
             placeholder="Select a customer"

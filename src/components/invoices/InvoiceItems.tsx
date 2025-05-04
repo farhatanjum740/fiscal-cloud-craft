@@ -47,6 +47,14 @@ const InvoiceItems = ({
   const safeItems = Array.isArray(items) ? items : [];
   const safeProducts = Array.isArray(products) ? products : [];
   
+  // Convert products to the format expected by CommandSelect
+  const productOptions = safeProducts.map(product => {
+    return {
+      value: product?.id || "",
+      label: product?.name || "Unknown Product"
+    };
+  }).filter(option => option.value !== "");
+  
   return (
     <Card>
       <CardHeader>
@@ -88,10 +96,7 @@ const InvoiceItems = ({
                   <TableRow key={item.id}>
                     <TableCell>
                       <CommandSelect
-                        options={safeProducts.map(product => ({ 
-                          value: product.id, 
-                          label: product.name 
-                        }))}
+                        options={productOptions}
                         value={item.productId || ""}
                         onValueChange={(value) => handleProductSelect(item.id, value)}
                         placeholder="Select product"

@@ -47,20 +47,30 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
-  // Handle undefined options safely by ensuring options is always a valid array
-  const safeOptions = Array.isArray(options) ? options : [];
+  // Always ensure options is a valid array with valid items
+  const safeOptions = React.useMemo(() => {
+    if (!Array.isArray(options)) return [];
+    return options.filter((option): option is CommandSelectItem => 
+      option !== null && 
+      option !== undefined && 
+      typeof option === 'object' && 
+      typeof option.value === 'string' && 
+      typeof option.label === 'string'
+    );
+  }, [options]);
   
   // Find selected option safely
-  const selectedOption = safeOptions.find((option) => option && option.value === value);
+  const selectedOption = React.useMemo(() => {
+    return safeOptions.find((option) => option.value === value);
+  }, [safeOptions, value]);
 
-  // Filter options based on search query - with additional safety checks
+  // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
     if (!searchQuery) return safeOptions;
     
+    const normalizedQuery = (searchQuery || "").toLowerCase();
     return safeOptions.filter((option) => 
-      option && 
-      option.label && 
-      option.label.toLowerCase().includes((searchQuery || "").toLowerCase())
+      option.label.toLowerCase().includes(normalizedQuery)
     );
   }, [safeOptions, searchQuery]);
 
@@ -78,7 +88,7 @@ export function CommandSelect({
             className
           )}
         >
-          {value && selectedOption ? selectedOption.label : placeholder}
+          {selectedOption ? selectedOption.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -87,11 +97,11 @@ export function CommandSelect({
           <CommandInput 
             placeholder={searchPlaceholder} 
             value={searchQuery}
-            onValueChange={setSearchQuery}
+            onValueChange={(value) => setSearchQuery(value || "")}
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-            {filteredOptions.map((option) => option && (
+            {filteredOptions.map((option) => (
               <CommandItem
                 key={option.value}
                 value={option.value}
