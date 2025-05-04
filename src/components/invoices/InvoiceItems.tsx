@@ -43,7 +43,8 @@ const InvoiceItems = ({
   updateItem,
   handleProductSelect,
 }: InvoiceItemsProps) => {
-  // Ensure products is always an array
+  // Ensure items and products are always arrays
+  const safeItems = Array.isArray(items) ? items : [];
   const safeProducts = Array.isArray(products) ? products : [];
   
   return (
@@ -76,14 +77,14 @@ const InvoiceItems = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.length === 0 ? (
+              {safeItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center h-32">
                     No items added yet. Click "Add Item" to add products or services.
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map((item) => (
+                safeItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <CommandSelect
@@ -110,7 +111,7 @@ const InvoiceItems = ({
                       <Input 
                         type="number"
                         min="1"
-                        value={item.quantity} 
+                        value={item.quantity || 1} 
                         onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))} 
                         className="w-[80px]" 
                       />
@@ -126,7 +127,7 @@ const InvoiceItems = ({
                       <Input 
                         type="number"
                         min="0"
-                        value={item.price} 
+                        value={item.price || 0} 
                         onChange={(e) => updateItem(item.id, "price", Number(e.target.value))} 
                         className="w-[100px]" 
                       />
@@ -135,13 +136,13 @@ const InvoiceItems = ({
                       <Input 
                         type="number"
                         min="0"
-                        value={item.gstRate} 
+                        value={item.gstRate || 0} 
                         onChange={(e) => updateItem(item.id, "gstRate", Number(e.target.value))} 
                         className="w-[80px]" 
                       />
                     </TableCell>
                     <TableCell>
-                      {(item.price * item.quantity).toFixed(2)}
+                      {((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                     </TableCell>
                     <TableCell>
                       <Button 

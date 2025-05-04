@@ -75,7 +75,7 @@ export function CommandSelect({
             className
           )}
         >
-          {value ? selectedOption?.label || placeholder : placeholder}
+          {value && selectedOption ? selectedOption.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

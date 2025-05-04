@@ -56,6 +56,10 @@ const InvoiceDetails = ({
     }
   }, [invoice.financialYear, isEditing, generateInvoiceNumber]);
 
+  // Ensure customers and financialYears are always arrays
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
+
   return (
     <Card>
       <CardHeader>
@@ -68,14 +72,14 @@ const InvoiceDetails = ({
         <div className="space-y-2">
           <Label htmlFor="financialYear">Financial Year</Label>
           <Select 
-            value={invoice.financialYear} 
+            value={invoice.financialYear || ""} 
             onValueChange={handleFinancialYearChange}
           >
             <SelectTrigger id="financialYear">
               <SelectValue placeholder="Select financial year" />
             </SelectTrigger>
             <SelectContent>
-              {financialYears.map((year) => (
+              {safeFinancialYears.map((year) => (
                 <SelectItem key={year} value={year}>{year}</SelectItem>
               ))}
             </SelectContent>
@@ -87,7 +91,7 @@ const InvoiceDetails = ({
           <div className="flex gap-2">
             <Input
               id="invoiceNumber"
-              value={invoice.invoiceNumber}
+              value={invoice.invoiceNumber || ""}
               readOnly={true}
               className="flex-1 bg-gray-50"
             />
@@ -162,11 +166,11 @@ const InvoiceDetails = ({
         <div className="space-y-2">
           <Label htmlFor="customer">Customer</Label>
           <CommandSelect
-            options={(customers || []).map(customer => ({ 
+            options={safeCustomers.map(customer => ({ 
               value: customer.id, 
               label: customer.name 
             }))}
-            value={invoice.customerId}
+            value={invoice.customerId || ""}
             onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
             placeholder="Select a customer"
             searchPlaceholder="Search customers..."
@@ -176,7 +180,7 @@ const InvoiceDetails = ({
 
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select value={invoice.status} onValueChange={(value) => setInvoice(prev => ({ ...prev, status: value }))}>
+          <Select value={invoice.status || ""} onValueChange={(value) => setInvoice(prev => ({ ...prev, status: value }))}>
             <SelectTrigger id="status">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
