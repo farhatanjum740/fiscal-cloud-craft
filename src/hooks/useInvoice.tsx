@@ -8,7 +8,9 @@ import type { InvoiceItem } from "@/types";
 import { format } from "date-fns";
 
 export const useInvoice = (id?: string) => {
+  console.log("useInvoice hook initialized with id:", id);
   const { user } = useAuth();
+  console.log("Current user:", user);
   const isEditing = !!id;
   
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,7 @@ export const useInvoice = (id?: string) => {
   
   // Generate list of financial years (current ± 5 years)
   useEffect(() => {
+    console.log("Generating financial years list...");
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
@@ -50,10 +53,12 @@ export const useInvoice = (id?: string) => {
       years.push(`${i}-${i + 1}`);
     }
     
+    console.log("Generated financial years:", years);
     setFinancialYears(years.reverse());
     
     // Set default financial year
     const defaultFinancialYear = getCurrentFinancialYear(currentDate);
+    console.log("Default financial year:", defaultFinancialYear);
     setInvoice(prev => ({ ...prev, financialYear: defaultFinancialYear }));
   }, []);
   
@@ -72,28 +77,43 @@ export const useInvoice = (id?: string) => {
   // Fetch customers, products, company data, and company settings
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
+      console.log("fetchData started, user:", user?.id);
+      if (!user) {
+        console.log("No user found, aborting fetch");
+        return;
+      }
       
       setLoadingData(true);
       try {
+        console.log("Fetching customers...");
         // Fetch customers
         const { data: customersData, error: customersError } = await supabase
           .from('customers')
           .select('*')
           .eq('user_id', user.id);
           
-        if (customersError) throw customersError;
+        if (customersError) {
+          console.error("Error fetching customers:", customersError);
+          throw customersError;
+        }
+        console.log("Customers data fetched:", customersData);
         setCustomers(customersData || []);
         
+        console.log("Fetching products...");
         // Fetch products
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('*')
           .eq('user_id', user.id);
           
-        if (productsError) throw productsError;
+        if (productsError) {
+          console.error("Error fetching products:", productsError);
+          throw productsError;
+        }
+        console.log("Products data fetched:", productsData);
         setProducts(productsData || []);
         
+        console.log("Fetching company info...");
         // Fetch company info (taking the first one for simplicity)
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
@@ -104,12 +124,15 @@ export const useInvoice = (id?: string) => {
           
         if (companyError && companyError.code !== 'PGRST116') {
           // PGRST116 is "no rows returned" which we can handle
+          console.error("Error fetching company:", companyError);
           throw companyError;
         }
         
+        console.log("Company data fetched:", companyData);
         if (companyData) {
           setCompany(companyData);
           
+          console.log("Fetching company settings for company ID:", companyData.id);
           // Fetch company settings
           const { data: settingsData, error: settingsError } = await supabase
             .from('company_settings')
@@ -117,19 +140,28 @@ export const useInvoice = (id?: string) => {
             .eq('company_id', companyData.id)
             .maybeSingle();
             
-          if (settingsError) throw settingsError;
+          if (settingsError) {
+            console.error("Error fetching company settings:", settingsError);
+            throw settingsError;
+          }
           
+          console.log("Company settings data fetched:", settingsData);
           if (settingsData) {
             setCompanySettings(settingsData);
             setInvoice(prev => ({ 
               ...prev, 
               financialYear: settingsData.current_financial_year,
             }));
+          } else {
+            console.log("No company settings found");
           }
+        } else {
+          console.log("No company data found");
         }
         
         // If editing, fetch invoice data
         if (isEditing && id) {
+          console.log("Fetching invoice data for edit mode, id:", id);
           const { data: invoiceData, error: invoiceError } = await supabase
             .from('invoices')
             .select('*')
@@ -137,21 +169,31 @@ export const useInvoice = (id?: string) => {
             .eq('user_id', user.id)
             .single();
             
-          if (invoiceError) throw invoiceError;
+          if (invoiceError) {
+            console.error("Error fetching invoice:", invoiceError);
+            throw invoiceError;
+          }
           
+          console.log("Invoice data fetched:", invoiceData);
           if (invoiceData) {
             // Fetch invoice items
+            console.log("Fetching invoice items for invoice ID:", id);
             const { data: invoiceItemsData, error: invoiceItemsError } = await supabase
               .from('invoice_items')
               .select('*')
               .eq('invoice_id', id);
               
-            if (invoiceItemsError) throw invoiceItemsError;
+            if (invoiceItemsError) {
+              console.error("Error fetching invoice items:", invoiceItemsError);
+              throw invoiceItemsError;
+            }
             
+            console.log("Invoice items data fetched:", invoiceItemsData);
             // Transform invoice items data to match our InvoiceItem type
             const transformedItems: InvoiceItem[] = (invoiceItemsData || []).map(
               (item) => mapInvoiceItemToFrontend(item)
             );
+            console.log("Transformed invoice items:", transformedItems);
             
             // Set invoice state
             setInvoice({
@@ -165,16 +207,19 @@ export const useInvoice = (id?: string) => {
               status: invoiceData.status,
               financialYear: invoiceData.financial_year,
             });
+          } else {
+            console.log("No invoice data found");
           }
         }
       } catch (error: any) {
-        console.error("Error fetching data:", error);
+        console.error("Error in fetchData:", error);
         toast({
           title: "Error",
           description: `Failed to load data: ${error.message}`,
           variant: "destructive",
         });
       } finally {
+        console.log("fetchData completed");
         setLoadingData(false);
       }
     };
@@ -184,7 +229,9 @@ export const useInvoice = (id?: string) => {
   
   // Generate invoice number
   const generateInvoiceNumber = useCallback(async () => {
+    console.log("generateInvoiceNumber called, company:", company?.id);
     if (!company) {
+      console.log("No company data, cannot generate invoice number");
       toast({
         title: "Error",
         description: "Company profile is required to generate invoice number",
@@ -195,6 +242,7 @@ export const useInvoice = (id?: string) => {
     
     try {
       setIsGeneratingInvoiceNumber(true);
+      console.log("Generating invoice number for financial year:", invoice.financialYear);
       
       // Call the database function to get a new invoice number
       const { data, error } = await supabase
@@ -204,8 +252,12 @@ export const useInvoice = (id?: string) => {
           p_prefix: ""
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error from get_next_invoice_number RPC:", error);
+        throw error;
+      }
       
+      console.log("Invoice number generated:", data);
       setInvoice(prev => ({
         ...prev,
         invoiceNumber: data
@@ -224,19 +276,29 @@ export const useInvoice = (id?: string) => {
   
   // Get customer by ID
   const getCustomerById = (id: string) => {
-    return customers.find(customer => customer.id === id);
+    console.log("Looking for customer with ID:", id);
+    console.log("Available customers:", customers);
+    const foundCustomer = customers.find(customer => customer.id === id);
+    console.log("Found customer:", foundCustomer);
+    return foundCustomer;
   };
   
   // Calculate totals whenever invoice items change or customer changes
   useEffect(() => {
+    console.log("Calculating totals...");
+    console.log("Current invoice items:", invoice.items);
+    console.log("Current customer ID:", invoice.customerId);
+    
     const calcSubtotal = invoice.items.reduce((acc, item) => {
       return acc + (item.price * item.quantity);
     }, 0);
     
+    console.log("Calculated subtotal:", calcSubtotal);
     setSubtotal(calcSubtotal);
     
     // Get customer and determine if we should use CGST+SGST or IGST
     const customer = getCustomerById(invoice.customerId);
+    console.log("Customer for GST calculation:", customer);
     
     let cgst = 0;
     let sgst = 0;
@@ -246,40 +308,52 @@ export const useInvoice = (id?: string) => {
       const gstAmount = (item.price * item.quantity * item.gstRate) / 100;
       
       if (customer && company) {
+        console.log("Customer state:", customer.shipping_state);
+        console.log("Company state:", company.state);
         // Compare customer's shipping state with company's state
         // If they match, use CGST+SGST, otherwise use IGST
         if (customer.shipping_state === company.state) {
           // Intra-state: Use CGST + SGST
           cgst += gstAmount / 2;
           sgst += gstAmount / 2;
+          console.log("Intra-state GST applied");
         } else {
           // Inter-state: Use IGST
           igst += gstAmount;
+          console.log("Inter-state GST applied");
         }
       } else {
         // Default to intra-state if customer or company not found
         cgst += gstAmount / 2;
         sgst += gstAmount / 2;
+        console.log("Default intra-state GST applied (customer or company missing)");
       }
     });
     
+    console.log("GST calculations:", { cgst, sgst, igst });
     setGstDetails({ cgst, sgst, igst });
-    setTotal(calcSubtotal + cgst + sgst + igst);
+    
+    const finalTotal = calcSubtotal + cgst + sgst + igst;
+    console.log("Final total:", finalTotal);
+    setTotal(finalTotal);
     
   }, [invoice.items, invoice.customerId, customers, company]);
   
   // Handle financial year change
   const handleFinancialYearChange = (year: string) => {
+    console.log("Financial year changing to:", year);
     setInvoice(prev => ({ ...prev, financialYear: year }));
     
     // Clear invoice number if changing financial year
     if (year !== invoice.financialYear) {
+      console.log("Clearing invoice number due to financial year change");
       setInvoice(prev => ({ ...prev, invoiceNumber: "" }));
     }
   };
   
   // Add a new item to the invoice
   const addItem = () => {
+    console.log("Adding new invoice item");
     const newItem: InvoiceItem = {
       id: `item-${Date.now()}`,
       productId: "",
@@ -301,6 +375,7 @@ export const useInvoice = (id?: string) => {
   
   // Remove an item from the invoice
   const removeItem = (id: string) => {
+    console.log("Removing invoice item with ID:", id);
     setInvoice(prev => ({
       ...prev,
       items: prev.items.filter(item => item.id !== id)
@@ -309,6 +384,7 @@ export const useInvoice = (id?: string) => {
   
   // Update an item in the invoice
   const updateItem = (id: string, field: keyof InvoiceItem, value: any) => {
+    console.log(`Updating item ${id}, field ${String(field)} to:`, value);
     setInvoice(prev => ({
       ...prev,
       items: prev.items.map(item => 
@@ -319,7 +395,10 @@ export const useInvoice = (id?: string) => {
   
   // Handle product selection
   const handleProductSelect = (id: string, productId: string) => {
+    console.log(`Product selection for item ${id}, product ID: ${productId}`);
     const selectedProduct = products.find(p => p.id === productId);
+    console.log("Selected product:", selectedProduct);
+    
     if (selectedProduct) {
       updateItem(id, "productId", productId);
       updateItem(id, "productName", selectedProduct.name);
@@ -332,7 +411,9 @@ export const useInvoice = (id?: string) => {
   
   // Save invoice
   const saveInvoice = async (navigate: (path: string) => void) => {
+    console.log("saveInvoice called");
     if (!user) {
+      console.log("No user found, cannot save invoice");
       toast({
         title: "Error",
         description: "You must be logged in to save an invoice.",
@@ -342,6 +423,7 @@ export const useInvoice = (id?: string) => {
     }
     
     if (!invoice.customerId) {
+      console.log("No customer ID provided");
       toast({
         title: "Error",
         description: "Please select a customer.",
@@ -351,6 +433,7 @@ export const useInvoice = (id?: string) => {
     }
     
     if (invoice.items.length === 0) {
+      console.log("No invoice items provided");
       toast({
         title: "Error",
         description: "Please add at least one item to the invoice.",
@@ -360,6 +443,7 @@ export const useInvoice = (id?: string) => {
     }
 
     if (!company) {
+      console.log("No company data found");
       toast({
         title: "Error",
         description: "Please set up your company profile before creating invoices.",
@@ -369,11 +453,13 @@ export const useInvoice = (id?: string) => {
     }
     
     if (!invoice.invoiceNumber) {
+      console.log("No invoice number, generating one");
       // Auto-generate invoice number if not set
       await generateInvoiceNumber();
     }
     
     if (!invoice.financialYear) {
+      console.log("No financial year provided");
       toast({
         title: "Error",
         description: "Please select a financial year.",
@@ -385,6 +471,7 @@ export const useInvoice = (id?: string) => {
     setLoading(true);
     
     try {
+      console.log("Processing invoice save...");
       // Format date for SQL
       const invoiceDateFormatted = format(invoice.invoiceDate, 'yyyy-MM-dd');
       const dueDateFormatted = invoice.dueDate ? format(invoice.dueDate, 'yyyy-MM-dd') : null;
@@ -408,9 +495,12 @@ export const useInvoice = (id?: string) => {
         financial_year: invoice.financialYear,
       };
       
+      console.log("Prepared invoice data:", invoiceData);
+      
       let invoiceId: string;
       
       if (isEditing && id) {
+        console.log("Update mode - editing existing invoice with ID:", id);
         // Update existing invoice but don't change the invoice number
         const { data: existingInvoice, error: fetchError } = await supabase
           .from('invoices')
@@ -418,7 +508,12 @@ export const useInvoice = (id?: string) => {
           .eq('id', id)
           .single();
           
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error("Error fetching existing invoice:", fetchError);
+          throw fetchError;
+        }
+        
+        console.log("Existing invoice:", existingInvoice);
         
         // Preserve the original invoice number
         const updateData = {
@@ -426,22 +521,32 @@ export const useInvoice = (id?: string) => {
           invoice_number: existingInvoice.invoice_number
         };
         
+        console.log("Update data:", updateData);
+        
         const { error: updateError } = await supabase
           .from('invoices')
           .update(updateData)
           .eq('id', id);
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error("Error updating invoice:", updateError);
+          throw updateError;
+        }
         invoiceId = id;
         
         // Delete existing invoice items
+        console.log("Deleting existing invoice items for invoice ID:", id);
         const { error: deleteError } = await supabase
           .from('invoice_items')
           .delete()
           .eq('invoice_id', id);
           
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error("Error deleting invoice items:", deleteError);
+          throw deleteError;
+        }
       } else {
+        console.log("Insert mode - creating new invoice");
         // Insert new invoice
         const { data: insertData, error: insertError } = await supabase
           .from('invoices')
@@ -449,9 +554,17 @@ export const useInvoice = (id?: string) => {
           .select('id')
           .single();
           
-        if (insertError) throw insertError;
-        if (!insertData) throw new Error("Failed to create invoice");
+        if (insertError) {
+          console.error("Error inserting invoice:", insertError);
+          throw insertError;
+        }
+        if (!insertData) {
+          const error = new Error("Failed to create invoice - no data returned");
+          console.error(error);
+          throw error;
+        }
         
+        console.log("New invoice created with ID:", insertData.id);
         invoiceId = insertData.id;
       }
       
@@ -460,14 +573,19 @@ export const useInvoice = (id?: string) => {
         mapFrontendToInvoiceItem(item, invoiceId)
       );
       
+      console.log("Inserting invoice items:", invoiceItemsData);
       const { error: itemsError } = await supabase
         .from('invoice_items')
         .insert(invoiceItemsData);
         
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error("Error inserting invoice items:", itemsError);
+        throw itemsError;
+      }
       
       // Update company settings with the current financial year
       if (companySettings) {
+        console.log("Updating company settings with financial year:", invoice.financialYear);
         const { error: settingsError } = await supabase
           .from('company_settings')
           .update({
@@ -476,8 +594,12 @@ export const useInvoice = (id?: string) => {
           })
           .eq('id', companySettings.id);
           
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error("Error updating company settings:", settingsError);
+          throw settingsError;
+        }
       } else if (company) {
+        console.log("Creating new company settings with financial year:", invoice.financialYear);
         // Create company settings if they don't exist
         const { error: createSettingsError } = await supabase
           .from('company_settings')
@@ -488,9 +610,13 @@ export const useInvoice = (id?: string) => {
             invoice_counter: 1
           });
           
-        if (createSettingsError) throw createSettingsError;
+        if (createSettingsError) {
+          console.error("Error creating company settings:", createSettingsError);
+          throw createSettingsError;
+        }
       }
       
+      console.log("Invoice save completed successfully");
       toast({
         title: "Invoice Saved",
         description: "Your invoice has been saved successfully!",
@@ -498,7 +624,7 @@ export const useInvoice = (id?: string) => {
       
       navigate("/app/invoices");
     } catch (error: any) {
-      console.error("Error saving invoice:", error);
+      console.error("Error in saveInvoice:", error);
       toast({
         title: "Error",
         description: `Failed to save invoice: ${error.message}`,
@@ -508,6 +634,13 @@ export const useInvoice = (id?: string) => {
       setLoading(false);
     }
   };
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log("STATE CHANGE - customers:", customers);
+    console.log("STATE CHANGE - products:", products);
+    console.log("STATE CHANGE - financialYears:", financialYears);
+  }, [customers, products, financialYears]);
 
   return {
     invoice,

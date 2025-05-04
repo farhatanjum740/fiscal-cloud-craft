@@ -49,6 +49,18 @@ const InvoiceDetails = ({
   generateInvoiceNumber,
   handleFinancialYearChange,
 }: InvoiceDetailsProps) => {
+  // Add debug logging when component mounts and when props change
+  React.useEffect(() => {
+    console.log("InvoiceDetails - Debug info:");
+    console.log("financialYears:", financialYears);
+    console.log("financialYears type:", typeof financialYears);
+    console.log("financialYears isArray:", Array.isArray(financialYears));
+    console.log("customers:", customers);
+    console.log("customers type:", typeof customers);
+    console.log("customers isArray:", Array.isArray(customers));
+    console.log("invoice:", invoice);
+  }, [financialYears, customers, invoice]);
+
   // Auto-generate invoice number when financial year changes or on first load (if not editing)
   useEffect(() => {
     if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
@@ -63,17 +75,36 @@ const InvoiceDetails = ({
   // Convert customers to the format expected by CommandSelect with defensive coding
   const customerOptions = React.useMemo(() => {
     try {
-      if (!safeCustomers || !Array.isArray(safeCustomers)) return [];
+      console.log("Processing customer options:");
+      console.log("Input safeCustomers:", safeCustomers);
       
-      return safeCustomers
-        .filter(customer => customer && typeof customer === 'object')
+      if (!safeCustomers || !Array.isArray(safeCustomers)) {
+        console.log("safeCustomers is not a valid array, returning empty array");
+        return [];
+      }
+      
+      const options = safeCustomers
+        .filter(customer => {
+          const isValid = customer && typeof customer === 'object';
+          if (!isValid) console.log("Filtered out invalid customer:", customer);
+          return isValid;
+        })
         .map(customer => {
-          return {
+          const option = {
             value: customer?.id || "",
             label: customer?.name || "Unknown Customer"
           };
+          console.log("Mapped customer to option:", option);
+          return option;
         })
-        .filter(option => option.value !== "");
+        .filter(option => {
+          const isValid = option.value !== "";
+          if (!isValid) console.log("Filtered out empty value option:", option);
+          return isValid;
+        });
+      
+      console.log("Final customer options:", options);
+      return options;
     } catch (err) {
       console.error("Error processing customer options:", err);
       return [];
@@ -99,9 +130,13 @@ const InvoiceDetails = ({
               <SelectValue placeholder="Select financial year" />
             </SelectTrigger>
             <SelectContent>
-              {safeFinancialYears.map((year) => (
-                <SelectItem key={year} value={year}>{year}</SelectItem>
-              ))}
+              {safeFinancialYears.length > 0 ? (
+                safeFinancialYears.map((year) => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-4 text-center text-sm">No financial years available</div>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -185,14 +220,20 @@ const InvoiceDetails = ({
         
         <div className="space-y-2">
           <Label htmlFor="customer">Customer</Label>
-          <CommandSelect
-            options={customerOptions || []}
-            value={invoice.customerId || ""}
-            onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
-            placeholder="Select a customer"
-            searchPlaceholder="Search customers..."
-            emptyMessage="No customers found."
-          />
+          {customerOptions && Array.isArray(customerOptions) ? (
+            <CommandSelect
+              options={customerOptions}
+              value={invoice.customerId || ""}
+              onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
+              placeholder="Select a customer"
+              searchPlaceholder="Search customers..."
+              emptyMessage="No customers found."
+            />
+          ) : (
+            <div className="p-2 border border-gray-300 rounded text-sm text-gray-500">
+              No customers available
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
