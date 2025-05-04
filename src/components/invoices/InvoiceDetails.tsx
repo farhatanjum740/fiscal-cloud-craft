@@ -60,13 +60,25 @@ const InvoiceDetails = ({
   const safeCustomers = Array.isArray(customers) ? customers : [];
   const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
   
-  // Convert customers to the format expected by CommandSelect
-  const customerOptions = safeCustomers.map(customer => {
-    return {
-      value: customer?.id || "",
-      label: customer?.name || "Unknown Customer"
-    };
-  }).filter(option => option.value !== "");
+  // Convert customers to the format expected by CommandSelect with defensive coding
+  const customerOptions = React.useMemo(() => {
+    try {
+      if (!safeCustomers || !Array.isArray(safeCustomers)) return [];
+      
+      return safeCustomers
+        .filter(customer => customer && typeof customer === 'object')
+        .map(customer => {
+          return {
+            value: customer?.id || "",
+            label: customer?.name || "Unknown Customer"
+          };
+        })
+        .filter(option => option.value !== "");
+    } catch (err) {
+      console.error("Error processing customer options:", err);
+      return [];
+    }
+  }, [safeCustomers]);
 
   return (
     <Card>
@@ -174,7 +186,7 @@ const InvoiceDetails = ({
         <div className="space-y-2">
           <Label htmlFor="customer">Customer</Label>
           <CommandSelect
-            options={customerOptions}
+            options={customerOptions || []}
             value={invoice.customerId || ""}
             onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
             placeholder="Select a customer"

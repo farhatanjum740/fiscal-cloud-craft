@@ -1,5 +1,6 @@
 
 import { Plus, Trash2 } from "lucide-react";
+import * as React from "react";
 import { 
   Card, 
   CardContent, 
@@ -47,13 +48,25 @@ const InvoiceItems = ({
   const safeItems = Array.isArray(items) ? items : [];
   const safeProducts = Array.isArray(products) ? products : [];
   
-  // Convert products to the format expected by CommandSelect
-  const productOptions = safeProducts.map(product => {
-    return {
-      value: product?.id || "",
-      label: product?.name || "Unknown Product"
-    };
-  }).filter(option => option.value !== "");
+  // Convert products to the format expected by CommandSelect with defensive coding
+  const productOptions = React.useMemo(() => {
+    try {
+      if (!safeProducts || !Array.isArray(safeProducts)) return [];
+      
+      return safeProducts
+        .filter(product => product && typeof product === 'object')
+        .map(product => {
+          return {
+            value: product?.id || "",
+            label: product?.name || "Unknown Product"
+          };
+        })
+        .filter(option => option.value !== "");
+    } catch (err) {
+      console.error("Error processing product options:", err);
+      return [];
+    }
+  }, [safeProducts]);
   
   return (
     <Card>
@@ -93,10 +106,10 @@ const InvoiceItems = ({
                 </TableRow>
               ) : (
                 safeItems.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id || `item-${Math.random()}`}>
                     <TableCell>
                       <CommandSelect
-                        options={productOptions}
+                        options={productOptions || []}
                         value={item.productId || ""}
                         onValueChange={(value) => handleProductSelect(item.id, value)}
                         placeholder="Select product"

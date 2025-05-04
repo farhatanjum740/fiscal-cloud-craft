@@ -115,7 +115,7 @@ const SelectItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & { value: string }
 >(({ className, children, value, ...props }, ref) => {
   // Make absolutely sure value is a string and not empty or undefined
-  const safeValue = value || " ";
+  const safeValue = (value != null && value !== undefined && value !== "") ? String(value) : " ";
   
   return (
     <SelectPrimitive.Item

@@ -22,7 +22,7 @@ export type CommandSelectItem = {
 };
 
 interface CommandSelectProps {
-  options: CommandSelectItem[];
+  options: CommandSelectItem[] | undefined;
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
@@ -47,13 +47,18 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
-  // Always ensure options is a valid array with valid items
+  // Ensure options is always a valid array
   const safeOptions = React.useMemo(() => {
-    if (!Array.isArray(options)) return [];
+    // First check if options is defined and is an array
+    if (!options || !Array.isArray(options)) return [];
+    
+    // Then filter out invalid items
     return options.filter((option): option is CommandSelectItem => 
       option !== null && 
       option !== undefined && 
       typeof option === 'object' && 
+      'value' in option &&
+      'label' in option &&
       typeof option.value === 'string' && 
       typeof option.label === 'string'
     );
@@ -61,6 +66,7 @@ export function CommandSelect({
   
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
+    if (!value || typeof value !== 'string') return undefined;
     return safeOptions.find((option) => option.value === value);
   }, [safeOptions, value]);
 
@@ -68,10 +74,17 @@ export function CommandSelect({
   const filteredOptions = React.useMemo(() => {
     if (!searchQuery) return safeOptions;
     
-    const normalizedQuery = (searchQuery || "").toLowerCase();
-    return safeOptions.filter((option) => 
-      option.label.toLowerCase().includes(normalizedQuery)
-    );
+    const normalizedQuery = (searchQuery || "").toLowerCase().trim();
+    if (!normalizedQuery) return safeOptions;
+    
+    try {
+      return safeOptions.filter((option) => 
+        option.label?.toLowerCase().includes(normalizedQuery)
+      );
+    } catch (err) {
+      console.error("Error filtering options:", err);
+      return safeOptions;
+    }
   }, [safeOptions, searchQuery]);
 
   return (
@@ -101,25 +114,29 @@ export function CommandSelect({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-            {filteredOptions.map((option) => (
-              <CommandItem
-                key={option.value}
-                value={option.value}
-                onSelect={() => {
-                  onValueChange(option.value === value ? "" : option.value);
-                  setOpen(false);
-                  setSearchQuery("");
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === option.value ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {option.label}
-              </CommandItem>
-            ))}
+            {Array.isArray(filteredOptions) && filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <CommandItem
+                  key={option.value || `option-${Math.random()}`}
+                  value={option.value || ""}
+                  onSelect={() => {
+                    onValueChange(option.value === value ? "" : option.value);
+                    setOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))
+            ) : (
+              <div className="py-6 text-center text-sm">No options available</div>
+            )}
           </CommandGroup>
         </Command>
       </PopoverContent>

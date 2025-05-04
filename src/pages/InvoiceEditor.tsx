@@ -37,6 +37,7 @@ const InvoiceEditor = () => {
   // Ensure customers and products are always arrays
   const safeCustomers = Array.isArray(customers) ? customers : [];
   const safeProducts = Array.isArray(products) ? products : [];
+  const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
   
   return (
     <div className="space-y-6">
@@ -64,7 +65,7 @@ const InvoiceEditor = () => {
             <InvoiceDetails
               invoice={invoice}
               setInvoice={setInvoice}
-              financialYears={financialYears || []}
+              financialYears={safeFinancialYears}
               customers={safeCustomers}
               isEditing={isEditing}
               isGeneratingInvoiceNumber={isGeneratingInvoiceNumber}
@@ -75,7 +76,7 @@ const InvoiceEditor = () => {
           </div>
           
           <InvoiceItems
-            items={invoice.items || []}
+            items={Array.isArray(invoice.items) ? invoice.items : []}
             products={safeProducts}
             subtotal={subtotal}
             gstDetails={gstDetails}
