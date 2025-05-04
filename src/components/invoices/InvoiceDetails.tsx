@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { format } from "date-fns";
-import { RefreshCw } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { 
   Card, 
   CardContent, 
@@ -9,7 +9,6 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
@@ -27,7 +26,6 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { CommandSelect } from "@/components/ui/command-select";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
 
 interface InvoiceDetailsProps {
   invoice: any;
@@ -50,6 +48,13 @@ const InvoiceDetails = ({
   generateInvoiceNumber,
   handleFinancialYearChange,
 }: InvoiceDetailsProps) => {
+  // Auto-generate invoice number when financial year changes or on first load (if not editing)
+  useEffect(() => {
+    if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
+      generateInvoiceNumber();
+    }
+  }, [invoice.financialYear, isEditing, generateInvoiceNumber]);
+
   return (
     <Card>
       <CardHeader>
@@ -85,22 +90,8 @@ const InvoiceDetails = ({
               readOnly={true}
               className="flex-1 bg-gray-50"
             />
-            {!isEditing && (
-              <Button 
-                variant="outline" 
-                onClick={generateInvoiceNumber}
-                disabled={isGeneratingInvoiceNumber || !invoice.financialYear}
-                className="whitespace-nowrap"
-              >
-                {isGeneratingInvoiceNumber ? "Generating..." : (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Generate
-                  </>
-                )}
-              </Button>
-            )}
           </div>
+          {isGeneratingInvoiceNumber && <p className="text-xs text-muted-foreground">Generating invoice number...</p>}
         </div>
         
         <div className="grid grid-cols-2 gap-4">

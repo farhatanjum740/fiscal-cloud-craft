@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -183,7 +183,7 @@ export const useInvoice = (id?: string) => {
   }, [user, id, isEditing]);
   
   // Generate invoice number
-  const generateInvoiceNumber = async () => {
+  const generateInvoiceNumber = useCallback(async () => {
     if (!company) {
       toast({
         title: "Error",
@@ -210,11 +210,6 @@ export const useInvoice = (id?: string) => {
         ...prev,
         invoiceNumber: data
       }));
-      
-      toast({
-        title: "Success",
-        description: "Invoice number generated successfully",
-      });
     } catch (error: any) {
       console.error("Error generating invoice number:", error);
       toast({
@@ -225,7 +220,7 @@ export const useInvoice = (id?: string) => {
     } finally {
       setIsGeneratingInvoiceNumber(false);
     }
-  };
+  }, [company, invoice.financialYear]);
   
   // Get customer by ID
   const getCustomerById = (id: string) => {
@@ -374,12 +369,8 @@ export const useInvoice = (id?: string) => {
     }
     
     if (!invoice.invoiceNumber) {
-      toast({
-        title: "Error",
-        description: "Please generate an invoice number.",
-        variant: "destructive",
-      });
-      return;
+      // Auto-generate invoice number if not set
+      await generateInvoiceNumber();
     }
     
     if (!invoice.financialYear) {
@@ -415,7 +406,6 @@ export const useInvoice = (id?: string) => {
         terms_and_conditions: invoice.termsAndConditions,
         notes: invoice.notes,
         financial_year: invoice.financialYear,
-        invoice_prefix: "" // Remove the prefix option
       };
       
       let invoiceId: string;

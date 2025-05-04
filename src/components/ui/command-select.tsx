@@ -47,16 +47,19 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
-  const selectedOption = options.find((option) => option.value === value);
+  // Handle undefined options safely
+  const safeOptions = options || [];
+  
+  const selectedOption = safeOptions.find((option) => option.value === value);
 
   // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
-    if (!searchQuery) return options;
+    if (!searchQuery) return safeOptions;
     
-    return options.filter((option) =>
+    return safeOptions.filter((option) =>
       option.label.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [options, searchQuery]);
+  }, [safeOptions, searchQuery]);
 
   return (
     <Popover open={open && !disabled} onOpenChange={setOpen}>
