@@ -77,17 +77,23 @@ const InvoiceDetails = ({
   // Convert customers to the format expected by CommandSelect
   const customerOptions = React.useMemo(() => {
     try {
-      if (!safeCustomers.length) {
+      console.log("Creating customerOptions with:", safeCustomers);
+      
+      if (!safeCustomers || !safeCustomers.length) {
+        console.log("No customers available, returning empty array");
         return [];
       }
       
-      return safeCustomers
+      const options = safeCustomers
         .filter(customer => customer && typeof customer === 'object')
         .map(customer => ({
           value: customer?.id || "",
           label: customer?.name || "Unknown Customer"
         }))
         .filter(option => option.value !== "");
+        
+      console.log("Created customerOptions:", options);
+      return options;
     } catch (err) {
       console.error("Error processing customer options:", err);
       return [];
@@ -203,20 +209,14 @@ const InvoiceDetails = ({
         
         <div className="space-y-2">
           <Label htmlFor="customer">Customer</Label>
-          {customerOptions && customerOptions.length > 0 ? (
-            <CommandSelect
-              options={customerOptions}
-              value={invoice.customerId || ""}
-              onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
-              placeholder="Select a customer"
-              searchPlaceholder="Search customers..."
-              emptyMessage="No customers found."
-            />
-          ) : (
-            <div className="p-2 border border-gray-300 rounded text-sm text-gray-500">
-              No customers available
-            </div>
-          )}
+          <CommandSelect
+            options={customerOptions}
+            value={invoice.customerId || ""}
+            onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
+            placeholder="Select a customer"
+            searchPlaceholder="Search customers..."
+            emptyMessage="No customers found."
+          />
         </div>
 
         <div className="space-y-2">

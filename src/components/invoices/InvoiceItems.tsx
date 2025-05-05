@@ -1,4 +1,3 @@
-
 import { Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { 
@@ -63,17 +62,23 @@ const InvoiceItems = ({
   // Convert products to the format expected by CommandSelect
   const productOptions = React.useMemo(() => {
     try {
-      if (!safeProducts.length) {
+      console.log("Creating productOptions with:", safeProducts);
+      
+      if (!safeProducts || !safeProducts.length) {
+        console.log("No products available, returning empty array");
         return [];
       }
       
-      return safeProducts
+      const options = safeProducts
         .filter(product => product && typeof product === 'object')
         .map(product => ({
           value: product?.id || "",
           label: product?.name || "Unknown Product"
         }))
         .filter(option => option.value !== "");
+        
+      console.log("Created productOptions:", options);
+      return options;
     } catch (err) {
       console.error("Error processing product options:", err);
       return [];
@@ -120,21 +125,15 @@ const InvoiceItems = ({
                 safeItems.map((item) => (
                   <TableRow key={item.id || `item-${Math.random()}`}>
                     <TableCell>
-                      {productOptions && productOptions.length > 0 ? (
-                        <CommandSelect
-                          options={productOptions}
-                          value={item.productId || ""}
-                          onValueChange={(value) => handleProductSelect(item.id, value)}
-                          placeholder="Select product"
-                          searchPlaceholder="Search products..."
-                          emptyMessage="No products found."
-                          className="w-[180px]"
-                        />
-                      ) : (
-                        <div className="p-2 border border-gray-300 rounded text-sm text-gray-500 w-[180px]">
-                          No products available
-                        </div>
-                      )}
+                      <CommandSelect
+                        options={productOptions}
+                        value={item.productId || ""}
+                        onValueChange={(value) => handleProductSelect(item.id, value)}
+                        placeholder="Select product"
+                        searchPlaceholder="Search products..."
+                        emptyMessage="No products found."
+                        className="w-[180px]"
+                      />
                     </TableCell>
                     <TableCell>
                       <Input 

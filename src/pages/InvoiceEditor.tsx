@@ -95,11 +95,6 @@ const InvoiceEditor = () => {
     console.log("products:", products);
     console.log("financialYears:", financialYears);
     
-    // Additional validation logging
-    console.log("customers valid array:", Array.isArray(customers));
-    console.log("products valid array:", Array.isArray(products));
-    console.log("financialYears valid array:", Array.isArray(financialYears));
-    
     // Defensive check for undefined data
     if (!customers) console.warn("Warning: customers is undefined");
     if (!products) console.warn("Warning: products is undefined");

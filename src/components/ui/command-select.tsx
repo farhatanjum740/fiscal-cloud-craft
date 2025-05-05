@@ -47,62 +47,29 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
-  // Ensure options is always a valid array to prevent "undefined is not iterable" errors
+  // Ensure options is a valid array to prevent the "undefined is not iterable" error
   const safeOptions = React.useMemo(() => {
-    try {
-      // First check if options is defined and is an array
-      if (!options) {
-        console.log("CommandSelect - options is undefined, returning empty array");
-        return [];
-      }
-      
-      if (!Array.isArray(options)) {
-        console.log("CommandSelect - options is not an array, returning empty array");
-        return [];
-      }
-      
-      // Then filter out invalid items
-      const validOptions = options.filter((option) => {
-        if (!option) return false;
-        if (typeof option !== 'object') return false;
-        if (!('value' in option) || !('label' in option)) return false;
-        if (typeof option.value !== 'string' || typeof option.label !== 'string') return false;
-        return true;
-      });
-      
-      return validOptions;
-    } catch (err) {
-      console.error("CommandSelect - Error in safeOptions memo:", err);
-      return [];
-    }
+    if (!options) return [];
+    if (!Array.isArray(options)) return [];
+    return options;
   }, [options]);
   
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
-    try {
-      if (!value || value === "") return undefined;
-      return safeOptions.find((option) => option.value === value);
-    } catch (err) {
-      console.error("CommandSelect - Error in selectedOption memo:", err);
-      return undefined;
-    }
+    if (!value || value === "") return undefined;
+    return safeOptions.find((option) => option?.value === value);
   }, [safeOptions, value]);
 
   // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
-    try {
-      if (!searchQuery) return safeOptions;
-      
-      const normalizedQuery = searchQuery.toLowerCase().trim();
-      if (!normalizedQuery) return safeOptions;
-      
-      return safeOptions.filter((option) => 
-        option.label.toLowerCase().includes(normalizedQuery)
-      );
-    } catch (err) {
-      console.error("CommandSelect - Error filtering options:", err);
-      return safeOptions;
-    }
+    if (!searchQuery) return safeOptions;
+    
+    const normalizedQuery = searchQuery.toLowerCase().trim();
+    if (!normalizedQuery) return safeOptions;
+    
+    return safeOptions.filter((option) => 
+      option?.label?.toLowerCase().includes(normalizedQuery)
+    );
   }, [safeOptions, searchQuery]);
 
   return (
@@ -132,7 +99,7 @@ export function CommandSelect({
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-            {filteredOptions.length > 0 ? (
+            {filteredOptions && filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <CommandItem
                   key={option.value || `option-${Math.random()}`}
