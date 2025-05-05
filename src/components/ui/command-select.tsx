@@ -49,15 +49,15 @@ export function CommandSelect({
   
   // Ensure options is a valid array to prevent the "undefined is not iterable" error
   const safeOptions = React.useMemo(() => {
+    // If options is falsy, return empty array
     if (!options) return [];
-    if (!Array.isArray(options)) return [];
-    return options;
+    return Array.isArray(options) ? options : [];
   }, [options]);
   
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
     if (!value || value === "") return undefined;
-    return safeOptions.find((option) => option?.value === value);
+    return safeOptions.find(option => option?.value === value);
   }, [safeOptions, value]);
 
   // Filter options based on search query
@@ -97,10 +97,11 @@ export function CommandSelect({
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
-          <CommandEmpty>{emptyMessage}</CommandEmpty>
-          <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-            {filteredOptions && filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
+          {filteredOptions.length === 0 ? (
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+          ) : (
+            <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
+              {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.value || `option-${Math.random()}`}
                   value={option.value}
@@ -118,11 +119,9 @@ export function CommandSelect({
                   />
                   {option.label}
                 </CommandItem>
-              ))
-            ) : (
-              <div className="py-6 text-center text-sm">No options available</div>
-            )}
-          </CommandGroup>
+              ))}
+            </CommandGroup>
+          )}
         </Command>
       </PopoverContent>
     </Popover>

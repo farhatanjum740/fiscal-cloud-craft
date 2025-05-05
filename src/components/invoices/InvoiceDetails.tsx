@@ -27,6 +27,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { CommandSelect } from "@/components/ui/command-select";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/use-toast";
 
 interface InvoiceDetailsProps {
   invoice: any;
@@ -71,8 +72,15 @@ const InvoiceDetails = ({
   }, [invoice.financialYear, isEditing, generateInvoiceNumber]);
 
   // Ensure customers and financialYears are always arrays
-  const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
-  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const safeFinancialYears = React.useMemo(() => {
+    if (!financialYears) return [];
+    return Array.isArray(financialYears) ? financialYears : [];
+  }, [financialYears]);
+  
+  const safeCustomers = React.useMemo(() => {
+    if (!customers) return [];
+    return Array.isArray(customers) ? customers : [];
+  }, [customers]);
   
   // Convert customers to the format expected by CommandSelect
   const customerOptions = React.useMemo(() => {
@@ -84,16 +92,13 @@ const InvoiceDetails = ({
         return [];
       }
       
-      const options = safeCustomers
+      return safeCustomers
         .filter(customer => customer && typeof customer === 'object')
         .map(customer => ({
           value: customer?.id || "",
           label: customer?.name || "Unknown Customer"
         }))
         .filter(option => option.value !== "");
-        
-      console.log("Created customerOptions:", options);
-      return options;
     } catch (err) {
       console.error("Error processing customer options:", err);
       return [];

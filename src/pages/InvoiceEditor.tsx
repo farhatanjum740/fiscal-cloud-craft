@@ -96,9 +96,18 @@ const InvoiceEditor = () => {
     console.log("financialYears:", financialYears);
     
     // Defensive check for undefined data
-    if (!customers) console.warn("Warning: customers is undefined");
-    if (!products) console.warn("Warning: products is undefined");
-    if (!financialYears) console.warn("Warning: financialYears is undefined");
+    if (!customers || !Array.isArray(customers)) console.warn("Warning: customers is undefined or not an array");
+    if (!products || !Array.isArray(products)) console.warn("Warning: products is undefined or not an array");
+    if (!financialYears || !Array.isArray(financialYears)) console.warn("Warning: financialYears is undefined or not an array");
+    
+    // Create safe versions of arrays
+    const safeCustomers = Array.isArray(customers) ? customers : [];
+    const safeProducts = Array.isArray(products) ? products : [];
+    const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
+    
+    console.log("Safe customers:", safeCustomers);
+    console.log("Safe products:", safeProducts);
+    console.log("Safe financialYears:", safeFinancialYears);
   }, [customers, products, financialYears]);
   
   return (
