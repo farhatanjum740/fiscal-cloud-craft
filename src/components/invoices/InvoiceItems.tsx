@@ -1,3 +1,4 @@
+
 import { Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { 
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { CommandSelect } from "@/components/ui/command-select";
 import type { InvoiceItem } from "@/types";
+import { toast } from "@/components/ui/use-toast";
 
 interface InvoiceItemsProps {
   items: InvoiceItem[];
@@ -45,15 +47,15 @@ const InvoiceItems = ({
 }: InvoiceItemsProps) => {
   // Enhanced debug logging
   React.useEffect(() => {
-    console.log("InvoiceItems - Received props:");
-    console.log("products:", products);
-    console.log("products type:", typeof products);
-    console.log("products isArray:", Array.isArray(products));
-    
-    console.log("items:", items);
-    console.log("items type:", typeof items);
-    console.log("items isArray:", Array.isArray(items));
-  }, [products, items]);
+    console.log("InvoiceItems - Products Debug:");
+    console.log("- products:", products);
+    console.log("- products type:", typeof products);
+    console.log("- products isArray:", Array.isArray(products));
+    console.log("- products length:", Array.isArray(products) ? products.length : 'N/A');
+    if (Array.isArray(products) && products.length > 0) {
+      console.log("- Sample product:", products[0]);
+    }
+  }, [products]);
 
   // Ensure items and products are always arrays
   const safeItems = Array.isArray(items) ? items : [];
@@ -71,16 +73,28 @@ const InvoiceItems = ({
       
       const options = safeProducts
         .filter(product => product && typeof product === 'object')
-        .map(product => ({
-          value: product?.id || "",
-          label: product?.name || "Unknown Product"
-        }))
-        .filter(option => option.value !== "");
+        .map(product => {
+          if (!product) {
+            console.log("Found null/undefined product in safeProducts");
+            return null;
+          }
+          console.log("Processing product:", product);
+          return {
+            value: product.id || "",
+            label: product.name || "Unknown Product"
+          };
+        })
+        .filter(option => option && option.value !== "");
         
       console.log("Created productOptions:", options);
       return options;
     } catch (err) {
       console.error("Error processing product options:", err);
+      toast({
+        title: "Error creating product options",
+        description: `${err}`,
+        variant: "destructive",
+      });
       return [];
     }
   }, [safeProducts]);
@@ -128,7 +142,10 @@ const InvoiceItems = ({
                       <CommandSelect
                         options={productOptions}
                         value={item.productId || ""}
-                        onValueChange={(value) => handleProductSelect(item.id, value)}
+                        onValueChange={(value) => {
+                          console.log("Product selected:", value);
+                          handleProductSelect(item.id, value);
+                        }}
                         placeholder="Select product"
                         searchPlaceholder="Search products..."
                         emptyMessage="No products found."

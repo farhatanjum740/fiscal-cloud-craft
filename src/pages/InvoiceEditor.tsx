@@ -1,5 +1,5 @@
 
-import React, { ErrorInfo } from "react";
+import React, { ErrorInfo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useInvoice } from "@/hooks/useInvoice";
@@ -8,8 +8,9 @@ import CompanyInfo from "@/components/invoices/CompanyInfo";
 import InvoiceItems from "@/components/invoices/InvoiceItems";
 import InvoiceNotes from "@/components/invoices/InvoiceNotes";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// Error boundary component to catch and display errors
+// Enhanced Error boundary component
 class InvoiceEditorErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
@@ -26,7 +27,9 @@ class InvoiceEditorErrorBoundary extends React.Component<{ children: React.React
     
     // Log specific error details to help with debugging
     if (error.message.includes("undefined is not iterable")) {
-      console.error("This is an iteration error. Check if arrays are properly initialized.");
+      console.error("Iteration Error Details:");
+      console.error("This is likely caused by trying to iterate over undefined data");
+      console.error("Check if data arrays are properly initialized and loaded before rendering");
     }
   }
 
@@ -39,13 +42,22 @@ class InvoiceEditorErrorBoundary extends React.Component<{ children: React.React
           <pre className="bg-gray-800 text-white p-4 rounded text-sm overflow-auto max-h-60">
             {this.state.error?.stack}
           </pre>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Try reloading the page
-          </Button>
+          <div className="mt-4 space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => window.location.reload()}
+            >
+              Reload the page
+            </Button>
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={() => this.setState({ hasError: false, error: null })}
+            >
+              Try to recover
+            </Button>
+          </div>
         </div>
       );
     }
@@ -54,12 +66,84 @@ class InvoiceEditorErrorBoundary extends React.Component<{ children: React.React
   }
 }
 
+// Custom loading state component
+const LoadingState = () => (
+  <div className="flex flex-col space-y-4 items-center justify-center h-64">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+    <p className="text-muted-foreground">Loading invoice data...</p>
+  </div>
+);
+
+// Custom data verification component 
+const DataVerificationComponent = ({ userId }: { userId: string | undefined }) => {
+  const [loading, setLoading] = useState(true);
+  const [customersCount, setCustomersCount] = useState(0);
+  const [productsCount, setProductsCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const verifyData = async () => {
+      if (!userId) {
+        setError("User ID not available. Please sign in.");
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        // Check customers
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('user_id', userId);
+          
+        if (customerError) throw customerError;
+        
+        // Check products
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('id')
+          .eq('user_id', userId);
+          
+        if (productError) throw productError;
+        
+        setCustomersCount(customerData?.length || 0);
+        setProductsCount(productData?.length || 0);
+      } catch (err: any) {
+        setError(`Error verifying data: ${err.message}`);
+        console.error("Data verification error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    verifyData();
+  }, [userId]);
+
+  if (loading) {
+    return <p>Verifying database records...</p>;
+  }
+  
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
+  }
+  
+  return (
+    <div className="text-sm text-muted-foreground">
+      <p>Data verification complete:</p>
+      <ul className="list-disc list-inside ml-2">
+        <li>Found {customersCount} customer records</li>
+        <li>Found {productsCount} product records</li>
+      </ul>
+    </div>
+  );
+};
+
 const InvoiceEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditing = !!id;
   
-  // Console log to verify params
+  // Enhanced debug logging
   React.useEffect(() => {
     console.log("InvoiceEditor mounted");
     console.log("id param:", id);
@@ -88,26 +172,27 @@ const InvoiceEditor = () => {
     saveInvoice
   } = useInvoice(id);
   
-  // Enhanced debug logging
+  // Enhanced debug logging for data verification
   React.useEffect(() => {
-    console.log("InvoiceEditor - Available data:");
-    console.log("customers:", customers);
-    console.log("products:", products);
-    console.log("financialYears:", financialYears);
+    console.log("InvoiceEditor - Data Verification:");
+    console.log("- customers:", customers);
+    console.log("- products:", products);
+    console.log("- financialYears:", financialYears);
     
-    // Defensive check for undefined data
-    if (!customers || !Array.isArray(customers)) console.warn("Warning: customers is undefined or not an array");
-    if (!products || !Array.isArray(products)) console.warn("Warning: products is undefined or not an array");
-    if (!financialYears || !Array.isArray(financialYears)) console.warn("Warning: financialYears is undefined or not an array");
+    // Log each customer and product for verification
+    if (Array.isArray(customers)) {
+      console.log(`Customers (${customers.length}):`);
+      customers.forEach((customer, i) => {
+        console.log(`Customer ${i + 1}:`, customer);
+      });
+    }
     
-    // Create safe versions of arrays
-    const safeCustomers = Array.isArray(customers) ? customers : [];
-    const safeProducts = Array.isArray(products) ? products : [];
-    const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
-    
-    console.log("Safe customers:", safeCustomers);
-    console.log("Safe products:", safeProducts);
-    console.log("Safe financialYears:", safeFinancialYears);
+    if (Array.isArray(products)) {
+      console.log(`Products (${products.length}):`);
+      products.forEach((product, i) => {
+        console.log(`Product ${i + 1}:`, product);
+      });
+    }
   }, [customers, products, financialYears]);
   
   return (
@@ -128,11 +213,11 @@ const InvoiceEditor = () => {
         </div>
         
         {loadingData ? (
-          <div className="flex justify-center items-center h-32">
-            Loading...
-          </div>
+          <LoadingState />
         ) : (
           <>
+            <DataVerificationComponent userId={company?.user_id} />
+            
             <div className="grid md:grid-cols-2 gap-6">
               <InvoiceDetails
                 invoice={invoice}

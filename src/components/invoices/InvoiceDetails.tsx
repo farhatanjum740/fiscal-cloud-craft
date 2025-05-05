@@ -52,16 +52,23 @@ const InvoiceDetails = ({
 }: InvoiceDetailsProps) => {
   // Enhanced debug logging
   useEffect(() => {
-    console.log("InvoiceDetails - Received props:");
-    console.log("financialYears:", financialYears);
-    console.log("financialYears type:", typeof financialYears);
-    console.log("financialYears isArray:", Array.isArray(financialYears));
+    console.log("InvoiceDetails - Customer Debug:");
+    console.log("- customers:", customers);
+    console.log("- customers type:", typeof customers);
+    console.log("- customers isArray:", Array.isArray(customers));
+    console.log("- customers length:", Array.isArray(customers) ? customers.length : 'N/A');
+    if (Array.isArray(customers) && customers.length > 0) {
+      console.log("- Sample customer:", customers[0]);
+    }
     
-    console.log("customers:", customers);
-    console.log("customers type:", typeof customers);
-    console.log("customers isArray:", Array.isArray(customers));
+    console.log("InvoiceDetails - Financial Years Debug:");
+    console.log("- financialYears:", financialYears);
+    console.log("- financialYears type:", typeof financialYears);
+    console.log("- financialYears isArray:", Array.isArray(financialYears));
     
-    console.log("invoice:", invoice);
+    console.log("InvoiceDetails - Invoice Debug:");
+    console.log("- invoice:", invoice);
+    console.log("- customerId:", invoice.customerId);
   }, [financialYears, customers, invoice]);
 
   // Auto-generate invoice number when financial year changes or on first load (if not editing)
@@ -92,15 +99,30 @@ const InvoiceDetails = ({
         return [];
       }
       
-      return safeCustomers
+      const options = safeCustomers
         .filter(customer => customer && typeof customer === 'object')
-        .map(customer => ({
-          value: customer?.id || "",
-          label: customer?.name || "Unknown Customer"
-        }))
-        .filter(option => option.value !== "");
+        .map(customer => {
+          if (!customer) {
+            console.log("Found null/undefined customer in safeCustomers");
+            return null;
+          }
+          console.log("Processing customer:", customer);
+          return {
+            value: customer.id || "",
+            label: customer.name || "Unknown Customer"
+          };
+        })
+        .filter(option => option && option.value !== "");
+      
+      console.log("Created customerOptions:", options);
+      return options;
     } catch (err) {
       console.error("Error processing customer options:", err);
+      toast({
+        title: "Error creating customer options",
+        description: `${err}`,
+        variant: "destructive",
+      });
       return [];
     }
   }, [safeCustomers]);
@@ -217,7 +239,10 @@ const InvoiceDetails = ({
           <CommandSelect
             options={customerOptions}
             value={invoice.customerId || ""}
-            onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
+            onValueChange={(value) => {
+              console.log("Customer selected:", value);
+              setInvoice(prev => ({ ...prev, customerId: value }));
+            }}
             placeholder="Select a customer"
             searchPlaceholder="Search customers..."
             emptyMessage="No customers found."

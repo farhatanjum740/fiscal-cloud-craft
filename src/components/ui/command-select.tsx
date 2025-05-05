@@ -47,17 +47,37 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
+  // Add additional console logging to debug the options
+  React.useEffect(() => {
+    console.log("CommandSelect options:", options);
+    console.log("CommandSelect value:", value);
+  }, [options, value]);
+  
   // Ensure options is a valid array to prevent the "undefined is not iterable" error
   const safeOptions = React.useMemo(() => {
     // If options is falsy, return empty array
-    if (!options) return [];
-    return Array.isArray(options) ? options : [];
+    if (!options) {
+      console.log("Options is undefined or null, returning empty array");
+      return [];
+    }
+    
+    // Check if options is an array
+    if (!Array.isArray(options)) {
+      console.log("Options is not an array, returning empty array");
+      return [];
+    }
+    
+    // Filter out any invalid options
+    return options.filter(option => 
+      option && typeof option === "object" && 
+      'value' in option && 'label' in option
+    );
   }, [options]);
   
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
     if (!value || value === "") return undefined;
-    return safeOptions.find(option => option?.value === value);
+    return safeOptions.find(option => option.value === value);
   }, [safeOptions, value]);
 
   // Filter options based on search query
@@ -68,7 +88,7 @@ export function CommandSelect({
     if (!normalizedQuery) return safeOptions;
     
     return safeOptions.filter((option) => 
-      option?.label?.toLowerCase().includes(normalizedQuery)
+      option.label.toLowerCase().includes(normalizedQuery)
     );
   }, [safeOptions, searchQuery]);
 
