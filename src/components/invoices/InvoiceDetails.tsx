@@ -49,15 +49,17 @@ const InvoiceDetails = ({
   generateInvoiceNumber,
   handleFinancialYearChange,
 }: InvoiceDetailsProps) => {
-  // Add debug logging when component mounts and when props change
-  React.useEffect(() => {
-    console.log("InvoiceDetails - Debug info:");
+  // Enhanced debug logging
+  useEffect(() => {
+    console.log("InvoiceDetails - Received props:");
     console.log("financialYears:", financialYears);
     console.log("financialYears type:", typeof financialYears);
     console.log("financialYears isArray:", Array.isArray(financialYears));
+    
     console.log("customers:", customers);
     console.log("customers type:", typeof customers);
     console.log("customers isArray:", Array.isArray(customers));
+    
     console.log("invoice:", invoice);
   }, [financialYears, customers, invoice]);
 
@@ -69,42 +71,23 @@ const InvoiceDetails = ({
   }, [invoice.financialYear, isEditing, generateInvoiceNumber]);
 
   // Ensure customers and financialYears are always arrays
-  const safeCustomers = Array.isArray(customers) ? customers : [];
   const safeFinancialYears = Array.isArray(financialYears) ? financialYears : [];
+  const safeCustomers = Array.isArray(customers) ? customers : [];
   
-  // Convert customers to the format expected by CommandSelect with defensive coding
+  // Convert customers to the format expected by CommandSelect
   const customerOptions = React.useMemo(() => {
     try {
-      console.log("Processing customer options:");
-      console.log("Input safeCustomers:", safeCustomers);
-      
-      if (!safeCustomers || !Array.isArray(safeCustomers)) {
-        console.log("safeCustomers is not a valid array, returning empty array");
+      if (!safeCustomers.length) {
         return [];
       }
       
-      const options = safeCustomers
-        .filter(customer => {
-          const isValid = customer && typeof customer === 'object';
-          if (!isValid) console.log("Filtered out invalid customer:", customer);
-          return isValid;
-        })
-        .map(customer => {
-          const option = {
-            value: customer?.id || "",
-            label: customer?.name || "Unknown Customer"
-          };
-          console.log("Mapped customer to option:", option);
-          return option;
-        })
-        .filter(option => {
-          const isValid = option.value !== "";
-          if (!isValid) console.log("Filtered out empty value option:", option);
-          return isValid;
-        });
-      
-      console.log("Final customer options:", options);
-      return options;
+      return safeCustomers
+        .filter(customer => customer && typeof customer === 'object')
+        .map(customer => ({
+          value: customer?.id || "",
+          label: customer?.name || "Unknown Customer"
+        }))
+        .filter(option => option.value !== "");
     } catch (err) {
       console.error("Error processing customer options:", err);
       return [];
@@ -220,7 +203,7 @@ const InvoiceDetails = ({
         
         <div className="space-y-2">
           <Label htmlFor="customer">Customer</Label>
-          {customerOptions && Array.isArray(customerOptions) ? (
+          {customerOptions && customerOptions.length > 0 ? (
             <CommandSelect
               options={customerOptions}
               value={invoice.customerId || ""}

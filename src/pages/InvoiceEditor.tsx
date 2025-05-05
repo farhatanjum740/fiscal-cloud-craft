@@ -88,12 +88,22 @@ const InvoiceEditor = () => {
     saveInvoice
   } = useInvoice(id);
   
-  // Debug logging
+  // Enhanced debug logging
   React.useEffect(() => {
     console.log("InvoiceEditor - Available data:");
     console.log("customers:", customers);
     console.log("products:", products);
     console.log("financialYears:", financialYears);
+    
+    // Additional validation logging
+    console.log("customers valid array:", Array.isArray(customers));
+    console.log("products valid array:", Array.isArray(products));
+    console.log("financialYears valid array:", Array.isArray(financialYears));
+    
+    // Defensive check for undefined data
+    if (!customers) console.warn("Warning: customers is undefined");
+    if (!products) console.warn("Warning: products is undefined");
+    if (!financialYears) console.warn("Warning: financialYears is undefined");
   }, [customers, products, financialYears]);
   
   return (
@@ -123,8 +133,8 @@ const InvoiceEditor = () => {
               <InvoiceDetails
                 invoice={invoice}
                 setInvoice={setInvoice}
-                financialYears={financialYears}
-                customers={customers}
+                financialYears={Array.isArray(financialYears) ? financialYears : []}
+                customers={Array.isArray(customers) ? customers : []}
                 isEditing={isEditing}
                 isGeneratingInvoiceNumber={isGeneratingInvoiceNumber}
                 generateInvoiceNumber={generateInvoiceNumber}
@@ -135,7 +145,7 @@ const InvoiceEditor = () => {
             
             <InvoiceItems
               items={Array.isArray(invoice.items) ? invoice.items : []}
-              products={products}
+              products={Array.isArray(products) ? products : []}
               subtotal={subtotal}
               gstDetails={gstDetails}
               total={total}

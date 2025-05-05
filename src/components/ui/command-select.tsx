@@ -47,52 +47,32 @@ export function CommandSelect({
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   
-  // Debug logging for props
-  React.useEffect(() => {
-    console.log("CommandSelect - Debug info:");
-    console.log("options:", options);
-    console.log("options type:", typeof options);
-    console.log("options isArray:", Array.isArray(options));
-    console.log("value:", value);
-  }, [options, value]);
-  
-  // Ensure options is always a valid array
+  // Ensure options is always a valid array to prevent "undefined is not iterable" errors
   const safeOptions = React.useMemo(() => {
-    console.log("CommandSelect - Processing safeOptions");
     try {
       // First check if options is defined and is an array
       if (!options) {
-        console.log("options is undefined, returning empty array");
+        console.log("CommandSelect - options is undefined, returning empty array");
         return [];
       }
       
       if (!Array.isArray(options)) {
-        console.log("options is not an array, returning empty array");
+        console.log("CommandSelect - options is not an array, returning empty array");
         return [];
       }
       
       // Then filter out invalid items
-      const validOptions = options.filter((option): option is CommandSelectItem => {
-        const isValid = 
-          option !== null && 
-          option !== undefined && 
-          typeof option === 'object' && 
-          'value' in option &&
-          'label' in option &&
-          typeof option.value === 'string' && 
-          typeof option.label === 'string';
-          
-        if (!isValid) {
-          console.log("Filtered out invalid option:", option);
-        }
-        
-        return isValid;
+      const validOptions = options.filter((option) => {
+        if (!option) return false;
+        if (typeof option !== 'object') return false;
+        if (!('value' in option) || !('label' in option)) return false;
+        if (typeof option.value !== 'string' || typeof option.label !== 'string') return false;
+        return true;
       });
       
-      console.log("Returning valid options:", validOptions);
       return validOptions;
     } catch (err) {
-      console.error("Error in safeOptions memo:", err);
+      console.error("CommandSelect - Error in safeOptions memo:", err);
       return [];
     }
   }, [options]);
@@ -100,40 +80,27 @@ export function CommandSelect({
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
     try {
-      if (!value || typeof value !== 'string') return undefined;
-      
-      const found = safeOptions.find((option) => option.value === value);
-      console.log("Selected option:", found);
-      return found;
+      if (!value || value === "") return undefined;
+      return safeOptions.find((option) => option.value === value);
     } catch (err) {
-      console.error("Error in selectedOption memo:", err);
+      console.error("CommandSelect - Error in selectedOption memo:", err);
       return undefined;
     }
   }, [safeOptions, value]);
 
   // Filter options based on search query
   const filteredOptions = React.useMemo(() => {
-    console.log("CommandSelect - Computing filteredOptions");
     try {
-      if (!searchQuery) {
-        console.log("No search query, returning all safeOptions");
-        return safeOptions;
-      }
+      if (!searchQuery) return safeOptions;
       
-      const normalizedQuery = (searchQuery || "").toLowerCase().trim();
-      if (!normalizedQuery) {
-        console.log("Normalized query is empty, returning all safeOptions");
-        return safeOptions;
-      }
+      const normalizedQuery = searchQuery.toLowerCase().trim();
+      if (!normalizedQuery) return safeOptions;
       
-      const filtered = safeOptions.filter((option) => 
-        option.label?.toLowerCase().includes(normalizedQuery)
+      return safeOptions.filter((option) => 
+        option.label.toLowerCase().includes(normalizedQuery)
       );
-      
-      console.log("Filtered options result:", filtered);
-      return filtered;
     } catch (err) {
-      console.error("Error filtering options:", err);
+      console.error("CommandSelect - Error filtering options:", err);
       return safeOptions;
     }
   }, [safeOptions, searchQuery]);
@@ -151,7 +118,6 @@ export function CommandSelect({
             !value && "text-muted-foreground",
             className
           )}
-          onClick={() => console.log("CommandSelect - Trigger clicked")}
         >
           {selectedOption ? selectedOption.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -162,20 +128,16 @@ export function CommandSelect({
           <CommandInput 
             placeholder={searchPlaceholder} 
             value={searchQuery}
-            onValueChange={(value) => {
-              console.log("Search query changed:", value);
-              setSearchQuery(value || "");
-            }}
+            onValueChange={setSearchQuery}
           />
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-            {Array.isArray(filteredOptions) && filteredOptions.length > 0 ? (
+            {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <CommandItem
                   key={option.value || `option-${Math.random()}`}
-                  value={option.value || ""}
+                  value={option.value}
                   onSelect={() => {
-                    console.log("Option selected:", option);
                     onValueChange(option.value === value ? "" : option.value);
                     setOpen(false);
                     setSearchQuery("");

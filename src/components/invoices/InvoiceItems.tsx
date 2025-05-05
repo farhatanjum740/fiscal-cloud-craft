@@ -44,12 +44,13 @@ const InvoiceItems = ({
   updateItem,
   handleProductSelect,
 }: InvoiceItemsProps) => {
-  // Add debug logging
+  // Enhanced debug logging
   React.useEffect(() => {
-    console.log("InvoiceItems - Debug info:");
+    console.log("InvoiceItems - Received props:");
     console.log("products:", products);
     console.log("products type:", typeof products);
     console.log("products isArray:", Array.isArray(products));
+    
     console.log("items:", items);
     console.log("items type:", typeof items);
     console.log("items isArray:", Array.isArray(items));
@@ -59,39 +60,20 @@ const InvoiceItems = ({
   const safeItems = Array.isArray(items) ? items : [];
   const safeProducts = Array.isArray(products) ? products : [];
   
-  // Convert products to the format expected by CommandSelect with defensive coding
+  // Convert products to the format expected by CommandSelect
   const productOptions = React.useMemo(() => {
     try {
-      console.log("Processing product options:");
-      console.log("Input safeProducts:", safeProducts);
-      
-      if (!safeProducts || !Array.isArray(safeProducts)) {
-        console.log("safeProducts is not a valid array, returning empty array");
+      if (!safeProducts.length) {
         return [];
       }
       
-      const options = safeProducts
-        .filter(product => {
-          const isValid = product && typeof product === 'object';
-          if (!isValid) console.log("Filtered out invalid product:", product);
-          return isValid;
-        })
-        .map(product => {
-          const option = {
-            value: product?.id || "",
-            label: product?.name || "Unknown Product"
-          };
-          console.log("Mapped product to option:", option);
-          return option;
-        })
-        .filter(option => {
-          const isValid = option.value !== "";
-          if (!isValid) console.log("Filtered out empty value option:", option);
-          return isValid;
-        });
-      
-      console.log("Final product options:", options);
-      return options;
+      return safeProducts
+        .filter(product => product && typeof product === 'object')
+        .map(product => ({
+          value: product?.id || "",
+          label: product?.name || "Unknown Product"
+        }))
+        .filter(option => option.value !== "");
     } catch (err) {
       console.error("Error processing product options:", err);
       return [];
@@ -138,7 +120,7 @@ const InvoiceItems = ({
                 safeItems.map((item) => (
                   <TableRow key={item.id || `item-${Math.random()}`}>
                     <TableCell>
-                      {productOptions && Array.isArray(productOptions) ? (
+                      {productOptions && productOptions.length > 0 ? (
                         <CommandSelect
                           options={productOptions}
                           value={item.productId || ""}
