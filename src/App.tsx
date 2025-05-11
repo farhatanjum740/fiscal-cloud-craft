@@ -22,15 +22,18 @@ import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import React from "react";
 
-// Create a query client with enhanced error handling
+// Create a query client with enhanced error handling - updated for React Query v5
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 30000,
-      onError: (error) => {
-        console.error("Query error:", error);
+      // Updated error handling for React Query v5
+      meta: {
+        errorHandler: (error: Error) => {
+          console.error("Query error:", error);
+        }
       }
     }
   }
