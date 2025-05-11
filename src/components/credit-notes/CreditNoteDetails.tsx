@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CommandSelect } from "@/components/ui/command-select";
 import type { CreditNoteItem } from "@/types";
+import { toast } from "@/components/ui/use-toast";
 
 interface CreditNoteDetailsProps {
   creditNote: {
@@ -48,19 +48,40 @@ const CreditNoteDetails = ({
   handleInvoiceChange,
   generateCreditNoteNumber
 }: CreditNoteDetailsProps) => {
+  // Ensure invoiceOptions is always an array
+  const safeInvoiceOptions = Array.isArray(invoiceOptions) ? invoiceOptions : [];
+
+  const handleInvoiceSelect = async (value: string) => {
+    try {
+      await handleInvoiceChange(value);
+    } catch (error) {
+      console.error("Error changing invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to change invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="invoice">Invoice Reference</Label>
         <CommandSelect
-          options={invoiceOptions}
+          options={safeInvoiceOptions}
           value={creditNote.invoiceId}
-          onValueChange={handleInvoiceChange}
+          onValueChange={handleInvoiceSelect}
           placeholder="Select an invoice"
           searchPlaceholder="Search invoices..."
-          emptyMessage="No invoices found."
+          emptyMessage={safeInvoiceOptions.length === 0 ? "No invoices available" : "No matching invoices found"}
           disabled={isEditing} // Can't change invoice in edit mode
         />
+        {safeInvoiceOptions.length === 0 && !isEditing && (
+          <p className="text-xs text-amber-500 mt-1">
+            No invoices available. Please create an invoice first.
+          </p>
+        )}
       </div>
       
       <div className="space-y-2">

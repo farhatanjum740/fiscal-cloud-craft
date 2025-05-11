@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +41,8 @@ export const useCreditNote = (id?: string) => {
       
       setLoadingData(true);
       try {
+        console.log("Fetching data for useCreditNote, user:", user.id);
+        
         // Fetch company info
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
@@ -55,6 +56,7 @@ export const useCreditNote = (id?: string) => {
         }
         
         if (companyData) {
+          console.log("Company data fetched:", companyData);
           setCompany(companyData);
           
           // Fetch available invoices for credit note
@@ -62,74 +64,103 @@ export const useCreditNote = (id?: string) => {
             .from('invoices')
             .select('id, invoice_number, financial_year, status')
             .eq('user_id', user.id)
-            .in('status', ['pending', 'paid'])
-            .order('invoice_date', { ascending: false });
+            .in('status', ['pending', 'paid']);
             
           if (invoicesError) throw invoicesError;
           
-          const options = (invoicesData || []).map(inv => ({
-            value: inv.id,
-            label: `${inv.invoice_number} (${inv.financial_year})`
-          }));
+          console.log("Invoices data fetched:", invoicesData);
           
+          // Convert to options format and ensure we have valid data
+          const options = Array.isArray(invoicesData) 
+            ? invoicesData.map(inv => ({
+                value: inv.id || "",
+                label: `${inv.invoice_number || "Unknown"} (${inv.financial_year || "Unknown"})`
+              }))
+            : [];
+            
+          console.log("Invoice options created:", options);
           setInvoiceOptions(options);
         }
         
         // If editing existing credit note
         if (isEditing && id) {
-          const { data: creditNoteData, error: creditNoteError } = await supabase
-            .from('credit_notes')
-            .select('*, invoices(*)')
-            .eq('id', id)
-            .eq('user_id', user.id)
-            .single();
-            
-          if (creditNoteError) throw creditNoteError;
-          
-          if (creditNoteData) {
-            // Fetch credit note items
-            const { data: creditNoteItemsData, error: itemsError } = await supabase
-              .from('credit_note_items')
-              .select('*, invoice_items(*)')
-              .eq('credit_note_id', id);
+          console.log("Editing existing credit note, id:", id);
+          try {
+            const { data: creditNoteData, error: creditNoteError } = await supabase
+              .from('credit_notes')
+              .select('*, invoices(*)')
+              .eq('id', id)
+              .eq('user_id', user.id)
+              .maybeSingle(); // Use maybeSingle instead of single to handle not found
               
-            if (itemsError) throw itemsError;
+            if (creditNoteError) throw creditNoteError;
             
-            // Transform credit note items to match our type
-            const transformedItems: CreditNoteItem[] = (creditNoteItemsData || []).map((item: any) => ({
-              id: item.id,
-              invoiceItemId: item.invoice_item_id,
-              productId: item.product_id || "",
-              productName: item.product_name,
-              hsnCode: item.hsn_code || "",
-              quantity: item.quantity,
-              price: item.price,
-              unit: item.unit,
-              gstRate: item.gst_rate,
-            }));
+            console.log("Credit note data fetched:", creditNoteData);
             
-            // Set invoice information
-            setInvoice(creditNoteData.invoices);
-            
-            // Set credit note state
-            setCreditNote({
-              invoiceId: creditNoteData.invoice_id,
-              creditNoteNumber: creditNoteData.credit_note_number,
-              creditNoteDate: new Date(creditNoteData.credit_note_date),
-              financialYear: creditNoteData.financial_year,
-              reason: creditNoteData.reason || "",
-              items: transformedItems,
-              status: creditNoteData.status,
-            });
-            
-            // Load invoice items if we have an invoice ID
-            if (creditNoteData.invoice_id) {
-              await fetchInvoiceItems(creditNoteData.invoice_id);
+            if (creditNoteData) {
+              // Fetch credit note items
+              const { data: creditNoteItemsData, error: itemsError } = await supabase
+                .from('credit_note_items')
+                .select('*, invoice_items(*)')
+                .eq('credit_note_id', id);
+                
+              if (itemsError) throw itemsError;
+              
+              console.log("Credit note items fetched:", creditNoteItemsData);
+              
+              // Transform credit note items to match our type
+              const transformedItems: CreditNoteItem[] = Array.isArray(creditNoteItemsData) 
+                ? creditNoteItemsData.map((item: any) => ({
+                    id: item.id || `temp-${Date.now()}-${Math.random()}`,
+                    invoiceItemId: item.invoice_item_id || "",
+                    productId: item.product_id || "",
+                    productName: item.product_name || "",
+                    hsnCode: item.hsn_code || "",
+                    quantity: item.quantity || 0,
+                    price: item.price || 0,
+                    unit: item.unit || "",
+                    gstRate: item.gst_rate || 0,
+                  }))
+                : [];
+              
+              // Set invoice information
+              setInvoice(creditNoteData.invoices);
+              
+              // Set credit note state
+              setCreditNote({
+                invoiceId: creditNoteData.invoice_id || "",
+                creditNoteNumber: creditNoteData.credit_note_number || "",
+                creditNoteDate: new Date(creditNoteData.credit_note_date),
+                financialYear: creditNoteData.financial_year || "",
+                reason: creditNoteData.reason || "",
+                items: transformedItems,
+                status: creditNoteData.status || "draft",
+              });
+              
+              // Load invoice items if we have an invoice ID
+              if (creditNoteData.invoice_id) {
+                await fetchInvoiceItems(creditNoteData.invoice_id);
+              }
+            } else {
+              console.log("Credit note not found");
+              toast({
+                title: "Credit Note Not Found",
+                description: "The requested credit note could not be found.",
+                variant: "destructive",
+              });
             }
+          } catch (error: any) {
+            console.error("Error fetching credit note:", error);
+            toast({
+              title: "Error",
+              description: `Failed to load credit note: ${error.message}`,
+              variant: "destructive",
+            });
           }
         } 
         // If creating a new credit note based on an invoice
         else if (id) {
+          console.log("Creating new credit note based on invoice ID:", id);
           // Update creditNote state with the invoiceId
           setCreditNote(prev => ({ ...prev, invoiceId: id }));
           
@@ -143,14 +174,16 @@ export const useCreditNote = (id?: string) => {
             
           if (invoiceError) throw invoiceError;
           
+          console.log("Invoice data fetched:", invoiceData);
+          
           if (invoiceData) {
             setInvoice(invoiceData);
             
             // Set financial year from invoice
             setCreditNote(prev => ({ 
               ...prev, 
-              invoiceId: invoiceData.id,
-              financialYear: invoiceData.financial_year
+              invoiceId: invoiceData.id || "",
+              financialYear: invoiceData.financial_year || ""
             }));
             
             // Load invoice items
@@ -264,6 +297,7 @@ export const useCreditNote = (id?: string) => {
   
   // Handle invoice selection
   const handleInvoiceChange = async (value: string) => {
+    console.log("Invoice changed to:", value);
     setCreditNote(prev => ({ ...prev, invoiceId: value }));
     
     if (value) {
@@ -277,11 +311,13 @@ export const useCreditNote = (id?: string) => {
           
         if (error) throw error;
         
+        console.log("Selected invoice data:", data);
+        
         if (data) {
           setInvoice(data);
           
           // Update financial year to match invoice
-          setCreditNote(prev => ({ ...prev, financialYear: data.financial_year }));
+          setCreditNote(prev => ({ ...prev, financialYear: data.financial_year || "" }));
           
           // Load invoice items
           await fetchInvoiceItems(data.id);
@@ -321,7 +357,7 @@ export const useCreditNote = (id?: string) => {
         quantity: item.availableQuantity, // Default to max available
         price: item.price,
         unit: item.unit,
-        gstRate: item.gst_rate,
+        gstRate: item.gstRate,
         maxQuantity: item.availableQuantity
       }));
       
