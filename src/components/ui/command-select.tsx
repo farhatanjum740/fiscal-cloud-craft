@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,25 +46,35 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Defensive handling of options to prevent "undefined is not iterable" error
+  // Super defensive handling of options to prevent "undefined is not iterable" error
   const safeOptions = React.useMemo(() => {
-    if (!options) return [];
-    if (!Array.isArray(options)) return [];
-    
-    return options.filter(option => 
-      option && 
-      typeof option === "object" && 
-      'value' in option && 
-      'label' in option &&
-      typeof option.value === 'string' &&
-      typeof option.label === 'string'
-    );
+    try {
+      if (!options) return [];
+      if (!Array.isArray(options)) return [];
+      
+      return options.filter(option => 
+        option && 
+        typeof option === "object" && 
+        'value' in option && 
+        'label' in option &&
+        typeof option.value === 'string' &&
+        typeof option.label === 'string'
+      );
+    } catch (error) {
+      console.error("Error processing command select options:", error);
+      return [];
+    }
   }, [options]);
   
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
-    if (!value || safeOptions.length === 0) return null;
-    return safeOptions.find(option => option.value === value) || null;
+    try {
+      if (!value || !safeOptions || safeOptions.length === 0) return null;
+      return safeOptions.find(option => option.value === value) || null;
+    } catch (error) {
+      console.error("Error finding selected option:", error);
+      return null;
+    }
   }, [safeOptions, value]);
 
   return (

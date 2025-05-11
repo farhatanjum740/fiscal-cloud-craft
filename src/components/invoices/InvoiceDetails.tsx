@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
@@ -98,6 +97,7 @@ const InvoiceDetails = ({
           Basic information about the invoice
         </CardDescription>
       </CardHeader>
+      
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="financialYear">Financial Year</Label>

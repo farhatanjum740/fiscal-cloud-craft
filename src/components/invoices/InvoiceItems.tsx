@@ -1,4 +1,3 @@
-
 import { Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { 
@@ -131,9 +130,9 @@ const InvoiceItems = ({
                           handleProductSelect(item.id, value);
                         }}
                         placeholder="Select product"
+                        searchInputPlaceholder="Search products..."
                         emptyMessage="No products found."
                         className="w-[180px]"
-                        searchInputPlaceholder="Search products..."
                       />
                     </TableCell>
                     <TableCell>
