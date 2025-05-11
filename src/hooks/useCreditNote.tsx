@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,12 +72,16 @@ export const useCreditNote = (id?: string) => {
           console.log("Invoices data fetched:", invoicesData);
           
           // Convert to options format and ensure we have valid data
-          const options = Array.isArray(invoicesData) 
-            ? invoicesData.map(inv => ({
+          let options: { value: string, label: string }[] = [];
+          
+          if (Array.isArray(invoicesData) && invoicesData.length > 0) {
+            options = invoicesData
+              .filter(inv => inv && inv.id && inv.invoice_number)
+              .map(inv => ({
                 value: inv.id || "",
                 label: `${inv.invoice_number || "Unknown"} (${inv.financial_year || "Unknown"})`
-              }))
-            : [];
+              }));
+          }
             
           console.log("Invoice options created:", options);
           setInvoiceOptions(options);
@@ -170,7 +175,7 @@ export const useCreditNote = (id?: string) => {
             .select('*')
             .eq('id', id)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle(); // Use maybeSingle to avoid errors if not found
             
           if (invoiceError) throw invoiceError;
           
@@ -188,6 +193,13 @@ export const useCreditNote = (id?: string) => {
             
             // Load invoice items
             await fetchInvoiceItems(invoiceData.id);
+          } else {
+            console.log("Invoice not found");
+            toast({
+              title: "Invoice Not Found",
+              description: "The requested invoice could not be found.",
+              variant: "destructive",
+            });
           }
         }
       } catch (error: any) {
@@ -208,6 +220,8 @@ export const useCreditNote = (id?: string) => {
   // Fetch invoice items
   const fetchInvoiceItems = async (invoiceId: string) => {
     try {
+      console.log("Fetching invoice items for invoice ID:", invoiceId);
+      
       // Fetch invoice items
       const { data: itemsData, error: itemsError } = await supabase
         .from('invoice_items')
@@ -215,6 +229,8 @@ export const useCreditNote = (id?: string) => {
         .eq('invoice_id', invoiceId);
         
       if (itemsError) throw itemsError;
+      
+      console.log("Invoice items data:", itemsData);
       
       // Get credited quantities for each item
       const itemIds = (itemsData || []).map(item => item.id);
@@ -228,6 +244,8 @@ export const useCreditNote = (id?: string) => {
           .in('invoice_item_id', itemIds);
           
         if (creditedError) throw creditedError;
+        
+        console.log("Credited quantities data:", creditedData);
         
         // Sum up quantities by invoice item id
         (creditedData || []).forEach((item: any) => {
@@ -245,6 +263,7 @@ export const useCreditNote = (id?: string) => {
         return { ...item, availableQuantity: availableQty };
       });
       
+      console.log("Items with available quantities:", itemsWithAvailable);
       setInvoiceItems(itemsWithAvailable);
     } catch (error: any) {
       console.error("Error fetching invoice items:", error);
@@ -307,7 +326,7 @@ export const useCreditNote = (id?: string) => {
           .from('invoices')
           .select('*')
           .eq('id', value)
-          .single();
+          .maybeSingle(); // Use maybeSingle to avoid errors if not found
           
         if (error) throw error;
         
@@ -321,6 +340,13 @@ export const useCreditNote = (id?: string) => {
           
           // Load invoice items
           await fetchInvoiceItems(data.id);
+        } else {
+          console.log("Invoice not found");
+          toast({
+            title: "Invoice Not Found",
+            description: "The selected invoice could not be found.",
+            variant: "destructive",
+          });
         }
       } catch (error: any) {
         console.error("Error fetching invoice:", error);
@@ -357,7 +383,7 @@ export const useCreditNote = (id?: string) => {
         quantity: item.availableQuantity, // Default to max available
         price: item.price,
         unit: item.unit,
-        gstRate: item.gstRate,
+        gstRate: item.gst_rate,
         maxQuantity: item.availableQuantity
       }));
       

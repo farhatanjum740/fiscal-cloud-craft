@@ -43,22 +43,34 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
+  // Debug logging
+  React.useEffect(() => {
+    console.log("CommandSelect options:", options);
+    console.log("CommandSelect value:", value);
+  }, [options, value]);
+  
   // Ensure options is always a valid array
   const safeOptions = React.useMemo(() => {
+    // If options is undefined or null, return an empty array
     if (!options) return [];
+    
+    // If options is not an array, return an empty array
     if (!Array.isArray(options)) return [];
     
     // Filter out any invalid options
     return options.filter(option => 
-      option && typeof option === "object" && 
-      'value' in option && 'label' in option &&
-      option.value !== undefined && option.label !== undefined
+      option && 
+      typeof option === "object" && 
+      'value' in option && 
+      'label' in option &&
+      option.value !== undefined && 
+      option.label !== undefined
     );
   }, [options]);
   
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
-    if (!value) return undefined;
+    if (!value || !safeOptions || safeOptions.length === 0) return undefined;
     return safeOptions.find(option => option.value === value);
   }, [safeOptions, value]);
 
@@ -75,14 +87,20 @@ export function CommandSelect({
             !value && "text-muted-foreground",
             className
           )}
+          onClick={() => !open && setOpen(true)}
         >
           {selectedOption ? selectedOption.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" style={{ minWidth: "var(--radix-popover-trigger-width)" }}>
+      <PopoverContent 
+        className="w-full p-0" 
+        style={{ minWidth: "var(--radix-popover-trigger-width)" }}
+        align="start"
+        sideOffset={4}
+      >
         <Command>
-          {safeOptions.length === 0 ? (
+          {(!safeOptions || safeOptions.length === 0) ? (
             <CommandEmpty>{emptyMessage}</CommandEmpty>
           ) : (
             <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>

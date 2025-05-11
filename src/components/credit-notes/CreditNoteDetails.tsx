@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,6 @@ const CreditNoteDetails = ({
           value={creditNote.invoiceId}
           onValueChange={handleInvoiceSelect}
           placeholder="Select an invoice"
-          searchPlaceholder="Search invoices..."
           emptyMessage={safeInvoiceOptions.length === 0 ? "No invoices available" : "No matching invoices found"}
           disabled={isEditing} // Can't change invoice in edit mode
         />

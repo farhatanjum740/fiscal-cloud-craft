@@ -244,7 +244,6 @@ const InvoiceDetails = ({
               setInvoice(prev => ({ ...prev, customerId: value }));
             }}
             placeholder="Select a customer"
-            searchPlaceholder="Search customers..."
             emptyMessage="No customers found."
           />
         </div>
