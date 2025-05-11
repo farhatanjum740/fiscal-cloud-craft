@@ -1,12 +1,13 @@
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
 } from "@/components/ui/command";
 import {
@@ -14,7 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { toast } from "@/components/ui/use-toast";
 
 export type CommandSelectItem = {
   value: string;
@@ -26,6 +26,7 @@ interface CommandSelectProps {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
+  searchInputPlaceholder?: string;
   emptyMessage?: string;
   className?: string;
   disabled?: boolean;
@@ -37,6 +38,7 @@ export function CommandSelect({
   value,
   onValueChange,
   placeholder = "Select an option",
+  searchInputPlaceholder = "Search...",
   emptyMessage = "No results found.",
   className,
   disabled = false,
@@ -46,27 +48,17 @@ export function CommandSelect({
   
   // Defensive handling of options to prevent "undefined is not iterable" error
   const safeOptions = React.useMemo(() => {
-    try {
-      // If options is undefined/null, return empty array
-      if (!options) return [];
-      
-      // If options is not an array, return empty array
-      if (!Array.isArray(options)) return [];
-      
-      // Filter out invalid options
-      return options.filter(option => 
-        option && 
-        typeof option === "object" && 
-        'value' in option && 
-        'label' in option &&
-        typeof option.value === 'string' &&
-        typeof option.label === 'string'
-      );
-    } catch (err) {
-      // If any error occurs during processing, log and return empty array
-      console.error("Error processing dropdown options:", err);
-      return [];
-    }
+    if (!options) return [];
+    if (!Array.isArray(options)) return [];
+    
+    return options.filter(option => 
+      option && 
+      typeof option === "object" && 
+      'value' in option && 
+      'label' in option &&
+      typeof option.value === 'string' &&
+      typeof option.label === 'string'
+    );
   }, [options]);
   
   // Find selected option safely
@@ -101,6 +93,7 @@ export function CommandSelect({
         sideOffset={4}
       >
         <Command>
+          <CommandInput placeholder={searchInputPlaceholder} />
           {safeOptions.length === 0 ? (
             <CommandEmpty>{emptyMessage}</CommandEmpty>
           ) : (

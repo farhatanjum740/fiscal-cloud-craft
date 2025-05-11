@@ -88,6 +88,8 @@ const InvoiceDetails = ({
     }
   }, [safeCustomers]);
 
+  console.log("Customer options for dropdown:", customerOptions);
+
   return (
     <Card>
       <CardHeader>
@@ -204,8 +206,14 @@ const InvoiceDetails = ({
               setInvoice(prev => ({ ...prev, customerId: value }));
             }}
             placeholder="Select a customer"
+            searchInputPlaceholder="Search customers..."
             emptyMessage="No customers found."
           />
+          {customerOptions.length === 0 && (
+            <p className="text-xs text-amber-500">
+              No customers available. Please add customers first.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">

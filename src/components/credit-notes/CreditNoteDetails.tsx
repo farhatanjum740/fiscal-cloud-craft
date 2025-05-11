@@ -50,7 +50,12 @@ const CreditNoteDetails = ({
   generateCreditNoteNumber
 }: CreditNoteDetailsProps) => {
   // Ensure invoiceOptions is always an array
-  const safeInvoiceOptions = Array.isArray(invoiceOptions) ? invoiceOptions : [];
+  const safeInvoiceOptions = React.useMemo(() => {
+    if (!invoiceOptions) return [];
+    return Array.isArray(invoiceOptions) ? invoiceOptions : [];
+  }, [invoiceOptions]);
+
+  console.log("Invoice options for dropdown:", safeInvoiceOptions);
 
   const handleInvoiceSelect = async (value: string) => {
     try {
@@ -74,6 +79,7 @@ const CreditNoteDetails = ({
           value={creditNote.invoiceId}
           onValueChange={handleInvoiceSelect}
           placeholder="Select an invoice"
+          searchInputPlaceholder="Search invoices..."
           emptyMessage={safeInvoiceOptions.length === 0 ? "No invoices available" : "No matching invoices found"}
           disabled={isEditing} // Can't change invoice in edit mode
         />

@@ -133,6 +133,7 @@ const InvoiceItems = ({
                         placeholder="Select product"
                         emptyMessage="No products found."
                         className="w-[180px]"
+                        searchInputPlaceholder="Search products..."
                       />
                     </TableCell>
                     <TableCell>
