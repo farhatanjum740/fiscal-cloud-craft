@@ -50,27 +50,6 @@ const InvoiceDetails = ({
   generateInvoiceNumber,
   handleFinancialYearChange,
 }: InvoiceDetailsProps) => {
-  // Enhanced debug logging
-  useEffect(() => {
-    console.log("InvoiceDetails - Customer Debug:");
-    console.log("- customers:", customers);
-    console.log("- customers type:", typeof customers);
-    console.log("- customers isArray:", Array.isArray(customers));
-    console.log("- customers length:", Array.isArray(customers) ? customers.length : 'N/A');
-    if (Array.isArray(customers) && customers.length > 0) {
-      console.log("- Sample customer:", customers[0]);
-    }
-    
-    console.log("InvoiceDetails - Financial Years Debug:");
-    console.log("- financialYears:", financialYears);
-    console.log("- financialYears type:", typeof financialYears);
-    console.log("- financialYears isArray:", Array.isArray(financialYears));
-    
-    console.log("InvoiceDetails - Invoice Debug:");
-    console.log("- invoice:", invoice);
-    console.log("- customerId:", invoice.customerId);
-  }, [financialYears, customers, invoice]);
-
   // Auto-generate invoice number when financial year changes or on first load (if not editing)
   useEffect(() => {
     if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
@@ -89,40 +68,22 @@ const InvoiceDetails = ({
     return Array.isArray(customers) ? customers : [];
   }, [customers]);
   
-  // Convert customers to the format expected by CommandSelect
+  // Convert customers to the format expected by CommandSelect with robust error handling
   const customerOptions = React.useMemo(() => {
     try {
-      console.log("Creating customerOptions with:", safeCustomers);
-      
-      if (!safeCustomers || !safeCustomers.length) {
-        console.log("No customers available, returning empty array");
+      if (!safeCustomers.length) {
         return [];
       }
       
-      const options = safeCustomers
+      return safeCustomers
         .filter(customer => customer && typeof customer === 'object')
-        .map(customer => {
-          if (!customer) {
-            console.log("Found null/undefined customer in safeCustomers");
-            return null;
-          }
-          console.log("Processing customer:", customer);
-          return {
-            value: customer.id || "",
-            label: customer.name || "Unknown Customer"
-          };
-        })
-        .filter(option => option && option.value !== "");
-      
-      console.log("Created customerOptions:", options);
-      return options;
-    } catch (err) {
-      console.error("Error processing customer options:", err);
-      toast({
-        title: "Error creating customer options",
-        description: `${err}`,
-        variant: "destructive",
-      });
+        .map(customer => ({
+          value: customer.id?.toString() || "",
+          label: customer.name || "Unknown"
+        }))
+        .filter(option => option.value !== "");
+    } catch (error) {
+      console.error("Error processing customer options:", error);
       return [];
     }
   }, [safeCustomers]);
@@ -240,7 +201,6 @@ const InvoiceDetails = ({
             options={customerOptions}
             value={invoice.customerId || ""}
             onValueChange={(value) => {
-              console.log("Customer selected:", value);
               setInvoice(prev => ({ ...prev, customerId: value }));
             }}
             placeholder="Select a customer"

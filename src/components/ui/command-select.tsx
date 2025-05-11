@@ -14,6 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { toast } from "@/components/ui/use-toast";
 
 export type CommandSelectItem = {
   value: string;
@@ -43,35 +44,35 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Debug logging
-  React.useEffect(() => {
-    console.log("CommandSelect options:", options);
-    console.log("CommandSelect value:", value);
-  }, [options, value]);
-  
-  // Ensure options is always a valid array
+  // Defensive handling of options to prevent "undefined is not iterable" error
   const safeOptions = React.useMemo(() => {
-    // If options is undefined or null, return an empty array
-    if (!options) return [];
-    
-    // If options is not an array, return an empty array
-    if (!Array.isArray(options)) return [];
-    
-    // Filter out any invalid options
-    return options.filter(option => 
-      option && 
-      typeof option === "object" && 
-      'value' in option && 
-      'label' in option &&
-      option.value !== undefined && 
-      option.label !== undefined
-    );
+    try {
+      // If options is undefined/null, return empty array
+      if (!options) return [];
+      
+      // If options is not an array, return empty array
+      if (!Array.isArray(options)) return [];
+      
+      // Filter out invalid options
+      return options.filter(option => 
+        option && 
+        typeof option === "object" && 
+        'value' in option && 
+        'label' in option &&
+        typeof option.value === 'string' &&
+        typeof option.label === 'string'
+      );
+    } catch (err) {
+      // If any error occurs during processing, log and return empty array
+      console.error("Error processing dropdown options:", err);
+      return [];
+    }
   }, [options]);
   
   // Find selected option safely
   const selectedOption = React.useMemo(() => {
-    if (!value || !safeOptions || safeOptions.length === 0) return undefined;
-    return safeOptions.find(option => option.value === value);
+    if (!value || safeOptions.length === 0) return null;
+    return safeOptions.find(option => option.value === value) || null;
   }, [safeOptions, value]);
 
   return (
@@ -100,10 +101,10 @@ export function CommandSelect({
         sideOffset={4}
       >
         <Command>
-          {(!safeOptions || safeOptions.length === 0) ? (
+          {safeOptions.length === 0 ? (
             <CommandEmpty>{emptyMessage}</CommandEmpty>
           ) : (
-            <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
+            <CommandGroup style={{ maxHeight, overflowY: 'auto' }}>
               {safeOptions.map((option) => (
                 <CommandItem
                   key={option.value || `option-${Math.random()}`}

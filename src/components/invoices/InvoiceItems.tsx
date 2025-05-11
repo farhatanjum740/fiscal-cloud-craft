@@ -45,56 +45,41 @@ const InvoiceItems = ({
   updateItem,
   handleProductSelect,
 }: InvoiceItemsProps) => {
-  // Enhanced debug logging
-  React.useEffect(() => {
-    console.log("InvoiceItems - Products Debug:");
-    console.log("- products:", products);
-    console.log("- products type:", typeof products);
-    console.log("- products isArray:", Array.isArray(products));
-    console.log("- products length:", Array.isArray(products) ? products.length : 'N/A');
-    if (Array.isArray(products) && products.length > 0) {
-      console.log("- Sample product:", products[0]);
+  // Enhanced error handling
+  const safeItems = React.useMemo(() => {
+    if (!items) return [];
+    if (!Array.isArray(items)) {
+      console.error("InvoiceItems: items is not an array", items);
+      return [];
     }
-  }, [products]);
-
-  // Ensure items and products are always arrays
-  const safeItems = Array.isArray(items) ? items : [];
-  const safeProducts = Array.isArray(products) ? products : [];
+    return items;
+  }, [items]);
   
-  // Convert products to the format expected by CommandSelect
+  const safeProducts = React.useMemo(() => {
+    if (!products) return [];
+    if (!Array.isArray(products)) {
+      console.error("InvoiceItems: products is not an array", products);
+      return [];
+    }
+    return products;
+  }, [products]);
+  
+  // Convert products to options safely with error handling
   const productOptions = React.useMemo(() => {
     try {
-      console.log("Creating productOptions with:", safeProducts);
-      
-      if (!safeProducts || !safeProducts.length) {
-        console.log("No products available, returning empty array");
+      if (!safeProducts.length) {
         return [];
       }
       
-      const options = safeProducts
+      return safeProducts
         .filter(product => product && typeof product === 'object')
-        .map(product => {
-          if (!product) {
-            console.log("Found null/undefined product in safeProducts");
-            return null;
-          }
-          console.log("Processing product:", product);
-          return {
-            value: product.id || "",
-            label: product.name || "Unknown Product"
-          };
-        })
-        .filter(option => option && option.value !== "");
-        
-      console.log("Created productOptions:", options);
-      return options;
-    } catch (err) {
-      console.error("Error processing product options:", err);
-      toast({
-        title: "Error creating product options",
-        description: `${err}`,
-        variant: "destructive",
-      });
+        .map(product => ({
+          value: product.id?.toString() || "",
+          label: product.name || "Unknown"
+        }))
+        .filter(option => option.value !== "");
+    } catch (error) {
+      console.error("Error processing product options:", error);
       return [];
     }
   }, [safeProducts]);
@@ -143,7 +128,6 @@ const InvoiceItems = ({
                         options={productOptions}
                         value={item.productId || ""}
                         onValueChange={(value) => {
-                          console.log("Product selected:", value);
                           handleProductSelect(item.id, value);
                         }}
                         placeholder="Select product"
