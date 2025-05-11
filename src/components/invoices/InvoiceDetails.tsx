@@ -27,7 +27,6 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { CommandSelect } from "@/components/ui/command-select";
 import { cn } from "@/lib/utils";
-import { toast } from "@/components/ui/use-toast";
 
 interface InvoiceDetailsProps {
   invoice: any;
@@ -52,79 +51,27 @@ const InvoiceDetails = ({
 }: InvoiceDetailsProps) => {
   // Auto-generate invoice number when financial year changes or on first load (if not editing)
   useEffect(() => {
-    try {
-      if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
-        generateInvoiceNumber();
-      }
-    } catch (error) {
-      console.error("Error in invoice number generation effect:", error);
+    if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
+      generateInvoiceNumber();
     }
   }, [invoice.financialYear, isEditing, generateInvoiceNumber]);
 
-  // Ensure customers and financialYears are always arrays with additional error handling
+  // Ensure arrays are valid
   const safeFinancialYears = React.useMemo(() => {
-    try {
-      if (!financialYears) return [];
-      return Array.isArray(financialYears) ? financialYears : [];
-    } catch (error) {
-      console.error("Error processing financial years:", error);
-      return [];
-    }
+    return Array.isArray(financialYears) ? financialYears : [];
   }, [financialYears]);
   
   const safeCustomers = React.useMemo(() => {
-    try {
-      if (!customers) return [];
-      return Array.isArray(customers) ? customers : [];
-    } catch (error) {
-      console.error("Error processing customers:", error);
-      return [];
-    }
+    return Array.isArray(customers) ? customers : [];
   }, [customers]);
   
-  // Convert customers to the format expected by CommandSelect with enhanced error handling
+  // Convert customers to options
   const customerOptions = React.useMemo(() => {
-    try {
-      if (!safeCustomers || safeCustomers.length === 0) {
-        console.log("No customers available for dropdown");
-        return [];
-      }
-      
-      return safeCustomers
-        .filter(customer => {
-          try {
-            return customer && typeof customer === 'object';
-          } catch (err) {
-            console.error("Error filtering customer:", err);
-            return false;
-          }
-        })
-        .map(customer => {
-          try {
-            return {
-              value: customer.id?.toString() || "",
-              label: customer.name || "Unknown"
-            };
-          } catch (err) {
-            console.error("Error mapping customer to option:", err);
-            return { value: "", label: "Error" };
-          }
-        })
-        .filter(option => {
-          try {
-            return option.value !== "";
-          } catch (err) {
-            console.error("Error filtering option:", err);
-            return false;
-          }
-        });
-    } catch (error) {
-      console.error("Error processing customer options:", error);
-      return [];
-    }
+    return safeCustomers.map(customer => ({
+      value: customer?.id?.toString() || "",
+      label: customer?.name || "Unknown"
+    })).filter(option => option.value !== "");
   }, [safeCustomers]);
-
-  console.log("Customer options for dropdown:", customerOptions);
 
   return (
     <Card>
@@ -146,13 +93,9 @@ const InvoiceDetails = ({
               <SelectValue placeholder="Select financial year" />
             </SelectTrigger>
             <SelectContent>
-              {safeFinancialYears.length > 0 ? (
-                safeFinancialYears.map((year) => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm">No financial years available</div>
-              )}
+              {safeFinancialYears.map((year) => (
+                <SelectItem key={year} value={year}>{year}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

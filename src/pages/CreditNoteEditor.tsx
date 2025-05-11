@@ -114,6 +114,13 @@ const CreditNoteEditor = () => {
     saveCreditNote(navigate);
   };
   
+  // Log the state of key data to help track down issues
+  React.useEffect(() => {
+    console.log("CreditNoteEditor - Credit Note:", creditNote);
+    console.log("CreditNoteEditor - Invoice Options:", invoiceOptions);
+    console.log("CreditNoteEditor - Selected Items:", selectedItems);
+  }, [creditNote, invoiceOptions, selectedItems]);
+  
   return (
     <ErrorBoundary>
       <div className="space-y-6">

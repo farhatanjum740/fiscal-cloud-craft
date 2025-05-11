@@ -46,52 +46,40 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Extra defensive handling of options - with multiple layers of safety checks
+  // Core issue fix: Always ensure options is an array before any operations
   const safeOptions = React.useMemo(() => {
-    try {
-      // First check if options exists and is an array
-      if (!options) return [];
-      if (!Array.isArray(options)) return [];
-      
-      // Filter out invalid options
-      return options.filter(option => {
-        try {
-          return option && 
-            typeof option === "object" && 
-            'value' in option && 
-            'label' in option &&
-            typeof option.value === 'string' &&
-            typeof option.label === 'string';
-        } catch (err) {
-          console.error("Error processing individual option:", err);
-          return false;
-        }
-      });
-    } catch (error) {
-      console.error("Error processing command select options:", error);
+    // First, handle null/undefined case
+    if (!options) {
+      console.log("CommandSelect: options is null or undefined");
       return [];
     }
+    
+    // Then handle non-array case
+    if (!Array.isArray(options)) {
+      console.log("CommandSelect: options is not an array", options);
+      return [];
+    }
+    
+    // Filter out invalid items
+    return options.filter(item => {
+      if (!item || typeof item !== 'object') {
+        console.log("CommandSelect: Invalid option item", item);
+        return false;
+      }
+      
+      if (!('value' in item) || !('label' in item)) {
+        console.log("CommandSelect: Option missing required properties", item);
+        return false;
+      }
+      
+      return true;
+    });
   }, [options]);
   
-  // Find selected option with comprehensive error handling
+  // Find selected option
   const selectedOption = React.useMemo(() => {
-    try {
-      if (!value) return null;
-      if (!safeOptions) return null;
-      if (safeOptions.length === 0) return null;
-      
-      return safeOptions.find(option => {
-        try {
-          return option.value === value;
-        } catch (err) {
-          console.error("Error comparing option value:", err);
-          return false;
-        }
-      }) || null;
-    } catch (error) {
-      console.error("Error finding selected option:", error);
-      return null;
-    }
+    if (!value) return null;
+    return safeOptions.find(option => option.value === value) || null;
   }, [safeOptions, value]);
 
   return (
@@ -121,11 +109,11 @@ export function CommandSelect({
       >
         <Command>
           <CommandInput placeholder={searchInputPlaceholder} />
-          {!safeOptions || safeOptions.length === 0 ? (
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
-          ) : (
-            <CommandGroup style={{ maxHeight, overflowY: 'auto' }}>
-              {safeOptions.map((option) => (
+          <CommandGroup style={{ maxHeight, overflowY: 'auto' }}>
+            {safeOptions.length === 0 ? (
+              <CommandEmpty>{emptyMessage}</CommandEmpty>
+            ) : (
+              safeOptions.map((option) => (
                 <CommandItem
                   key={option.value || `option-${Math.random()}`}
                   value={option.value}
@@ -142,9 +130,9 @@ export function CommandSelect({
                   />
                   {option.label}
                 </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
+              ))
+            )}
+          </CommandGroup>
         </Command>
       </PopoverContent>
     </Popover>
