@@ -147,7 +147,6 @@ const InvoiceItems = ({
                           handleProductSelect(item.id, value);
                         }}
                         placeholder="Select product"
-                        searchPlaceholder="Search products..."
                         emptyMessage="No products found."
                         className="w-[180px]"
                       />
