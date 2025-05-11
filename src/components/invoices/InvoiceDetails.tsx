@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
@@ -51,36 +52,72 @@ const InvoiceDetails = ({
 }: InvoiceDetailsProps) => {
   // Auto-generate invoice number when financial year changes or on first load (if not editing)
   useEffect(() => {
-    if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
-      generateInvoiceNumber();
+    try {
+      if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
+        generateInvoiceNumber();
+      }
+    } catch (error) {
+      console.error("Error in invoice number generation effect:", error);
     }
   }, [invoice.financialYear, isEditing, generateInvoiceNumber]);
 
-  // Ensure customers and financialYears are always arrays
+  // Ensure customers and financialYears are always arrays with additional error handling
   const safeFinancialYears = React.useMemo(() => {
-    if (!financialYears) return [];
-    return Array.isArray(financialYears) ? financialYears : [];
+    try {
+      if (!financialYears) return [];
+      return Array.isArray(financialYears) ? financialYears : [];
+    } catch (error) {
+      console.error("Error processing financial years:", error);
+      return [];
+    }
   }, [financialYears]);
   
   const safeCustomers = React.useMemo(() => {
-    if (!customers) return [];
-    return Array.isArray(customers) ? customers : [];
+    try {
+      if (!customers) return [];
+      return Array.isArray(customers) ? customers : [];
+    } catch (error) {
+      console.error("Error processing customers:", error);
+      return [];
+    }
   }, [customers]);
   
-  // Convert customers to the format expected by CommandSelect with robust error handling
+  // Convert customers to the format expected by CommandSelect with enhanced error handling
   const customerOptions = React.useMemo(() => {
     try {
-      if (!safeCustomers.length) {
+      if (!safeCustomers || safeCustomers.length === 0) {
+        console.log("No customers available for dropdown");
         return [];
       }
       
       return safeCustomers
-        .filter(customer => customer && typeof customer === 'object')
-        .map(customer => ({
-          value: customer.id?.toString() || "",
-          label: customer.name || "Unknown"
-        }))
-        .filter(option => option.value !== "");
+        .filter(customer => {
+          try {
+            return customer && typeof customer === 'object';
+          } catch (err) {
+            console.error("Error filtering customer:", err);
+            return false;
+          }
+        })
+        .map(customer => {
+          try {
+            return {
+              value: customer.id?.toString() || "",
+              label: customer.name || "Unknown"
+            };
+          } catch (err) {
+            console.error("Error mapping customer to option:", err);
+            return { value: "", label: "Error" };
+          }
+        })
+        .filter(option => {
+          try {
+            return option.value !== "";
+          } catch (err) {
+            console.error("Error filtering option:", err);
+            return false;
+          }
+        });
     } catch (error) {
       console.error("Error processing customer options:", error);
       return [];

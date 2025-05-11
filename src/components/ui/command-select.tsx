@@ -46,31 +46,48 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Super defensive handling of options to prevent "undefined is not iterable" error
+  // Extra defensive handling of options - with multiple layers of safety checks
   const safeOptions = React.useMemo(() => {
     try {
+      // First check if options exists and is an array
       if (!options) return [];
       if (!Array.isArray(options)) return [];
       
-      return options.filter(option => 
-        option && 
-        typeof option === "object" && 
-        'value' in option && 
-        'label' in option &&
-        typeof option.value === 'string' &&
-        typeof option.label === 'string'
-      );
+      // Filter out invalid options
+      return options.filter(option => {
+        try {
+          return option && 
+            typeof option === "object" && 
+            'value' in option && 
+            'label' in option &&
+            typeof option.value === 'string' &&
+            typeof option.label === 'string';
+        } catch (err) {
+          console.error("Error processing individual option:", err);
+          return false;
+        }
+      });
     } catch (error) {
       console.error("Error processing command select options:", error);
       return [];
     }
   }, [options]);
   
-  // Find selected option safely
+  // Find selected option with comprehensive error handling
   const selectedOption = React.useMemo(() => {
     try {
-      if (!value || !safeOptions || safeOptions.length === 0) return null;
-      return safeOptions.find(option => option.value === value) || null;
+      if (!value) return null;
+      if (!safeOptions) return null;
+      if (safeOptions.length === 0) return null;
+      
+      return safeOptions.find(option => {
+        try {
+          return option.value === value;
+        } catch (err) {
+          console.error("Error comparing option value:", err);
+          return false;
+        }
+      }) || null;
     } catch (error) {
       console.error("Error finding selected option:", error);
       return null;
@@ -104,7 +121,7 @@ export function CommandSelect({
       >
         <Command>
           <CommandInput placeholder={searchInputPlaceholder} />
-          {safeOptions.length === 0 ? (
+          {!safeOptions || safeOptions.length === 0 ? (
             <CommandEmpty>{emptyMessage}</CommandEmpty>
           ) : (
             <CommandGroup style={{ maxHeight, overflowY: 'auto' }}>

@@ -52,8 +52,13 @@ const CreditNoteDetails = ({
 }: CreditNoteDetailsProps) => {
   // Ensure invoiceOptions is always an array
   const safeInvoiceOptions = React.useMemo(() => {
-    if (!invoiceOptions) return [];
-    return Array.isArray(invoiceOptions) ? invoiceOptions : [];
+    try {
+      if (!invoiceOptions) return [];
+      return Array.isArray(invoiceOptions) ? invoiceOptions : [];
+    } catch (error) {
+      console.error("Error processing invoice options:", error);
+      return [];
+    }
   }, [invoiceOptions]);
 
   console.log("Invoice options for dropdown:", safeInvoiceOptions);

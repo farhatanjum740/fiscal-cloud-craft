@@ -1,3 +1,4 @@
+
 import { Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { 
@@ -46,42 +47,75 @@ const InvoiceItems = ({
 }: InvoiceItemsProps) => {
   // Enhanced error handling
   const safeItems = React.useMemo(() => {
-    if (!items) return [];
-    if (!Array.isArray(items)) {
-      console.error("InvoiceItems: items is not an array", items);
+    try {
+      if (!items) return [];
+      if (!Array.isArray(items)) {
+        console.error("InvoiceItems: items is not an array", items);
+        return [];
+      }
+      return items;
+    } catch (error) {
+      console.error("Error processing invoice items:", error);
       return [];
     }
-    return items;
   }, [items]);
   
   const safeProducts = React.useMemo(() => {
-    if (!products) return [];
-    if (!Array.isArray(products)) {
-      console.error("InvoiceItems: products is not an array", products);
+    try {
+      if (!products) return [];
+      if (!Array.isArray(products)) {
+        console.error("InvoiceItems: products is not an array", products);
+        return [];
+      }
+      return products;
+    } catch (error) {
+      console.error("Error processing products:", error);
       return [];
     }
-    return products;
   }, [products]);
   
-  // Convert products to options safely with error handling
+  // Convert products to options safely with comprehensive error handling
   const productOptions = React.useMemo(() => {
     try {
-      if (!safeProducts.length) {
+      if (!safeProducts || safeProducts.length === 0) {
         return [];
       }
       
       return safeProducts
-        .filter(product => product && typeof product === 'object')
-        .map(product => ({
-          value: product.id?.toString() || "",
-          label: product.name || "Unknown"
-        }))
-        .filter(option => option.value !== "");
+        .filter(product => {
+          try {
+            return product && typeof product === 'object';
+          } catch (err) {
+            console.error("Error filtering product:", err);
+            return false;
+          }
+        })
+        .map(product => {
+          try {
+            return {
+              value: product.id?.toString() || "",
+              label: product.name || "Unknown"
+            };
+          } catch (err) {
+            console.error("Error mapping product to option:", err);
+            return { value: "", label: "Error" };
+          }
+        })
+        .filter(option => {
+          try {
+            return option.value !== "";
+          } catch (err) {
+            console.error("Error filtering option:", err);
+            return false;
+          }
+        });
     } catch (error) {
       console.error("Error processing product options:", error);
       return [];
     }
   }, [safeProducts]);
+  
+  console.log("ProductOptions for dropdown:", productOptions);
   
   return (
     <Card>
