@@ -7,7 +7,6 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
 } from "@/components/ui/command";
 import {
@@ -26,7 +25,6 @@ interface CommandSelectProps {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
-  searchPlaceholder?: string;
   emptyMessage?: string;
   className?: string;
   disabled?: boolean;
@@ -38,14 +36,12 @@ export function CommandSelect({
   value,
   onValueChange,
   placeholder = "Select an option",
-  searchPlaceholder = "Search...",
   emptyMessage = "No results found.",
   className,
   disabled = false,
   maxHeight = 300,
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
   
   // Ensure options is always a valid array
   const safeOptions = React.useMemo(() => {
@@ -65,18 +61,6 @@ export function CommandSelect({
     if (!value) return undefined;
     return safeOptions.find(option => option.value === value);
   }, [safeOptions, value]);
-
-  // Filter options based on search query
-  const filteredOptions = React.useMemo(() => {
-    if (!searchQuery) return safeOptions;
-    
-    const normalizedQuery = searchQuery.toLowerCase().trim();
-    if (!normalizedQuery) return safeOptions;
-    
-    return safeOptions.filter((option) => 
-      option.label.toLowerCase().includes(normalizedQuery)
-    );
-  }, [safeOptions, searchQuery]);
 
   return (
     <Popover open={open && !disabled} onOpenChange={setOpen}>
@@ -98,23 +82,17 @@ export function CommandSelect({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" style={{ minWidth: "var(--radix-popover-trigger-width)" }}>
         <Command>
-          <CommandInput 
-            placeholder={searchPlaceholder} 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
-          {filteredOptions.length === 0 ? (
+          {safeOptions.length === 0 ? (
             <CommandEmpty>{emptyMessage}</CommandEmpty>
           ) : (
             <CommandGroup style={{ maxHeight: maxHeight, overflowY: 'auto' }}>
-              {filteredOptions.map((option) => (
+              {safeOptions.map((option) => (
                 <CommandItem
                   key={option.value || `option-${Math.random()}`}
                   value={option.value}
                   onSelect={() => {
                     onValueChange(option.value === value ? "" : option.value);
                     setOpen(false);
-                    setSearchQuery("");
                   }}
                 >
                   <Check
