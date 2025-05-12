@@ -5,149 +5,138 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
+    --card-foreground: 222.2 84% 4.9%;
+ 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 215 79% 23%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 187 92% 31%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 29 85% 57%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 84% 60%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 215 79% 23%;
-
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+ 
     --radius: 0.5rem;
-
-    --sidebar-background: 215 79% 16%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 187 92% 31%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 215 79% 20%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 79% 23%;
-    --sidebar-ring: 187 92% 31%;
   }
-
+ 
   .dark {
-    --background: 222 47% 11%;
+    --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
-    --card: 222 47% 11%;
+ 
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 11%;
+ 
+    --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 215 79% 60%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 187 92% 31%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 29 85% 57%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 63% 31%;
+ 
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 215 79% 60%;
-
-    --sidebar-background: 215 79% 12%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 187 92% 31%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 79% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 79% 20%;
-    --sidebar-ring: 187 92% 31%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
   }
 }
 
-@layer components {
-  .invoice-container {
-    @apply overflow-auto p-6 bg-white rounded-lg shadow-sm;
-    min-height: 29.7cm;
-    width: 21cm;
-    padding: 1.5cm;
+/* Print styles for PDF generation */
+@media print {
+  /* Hide UI elements that shouldn't appear in print */
+  .print-hidden,
+  .print\:hidden {
+    display: none !important;
   }
   
-  .invoice-header {
-    @apply flex justify-between mb-8;
+  /* Paper settings */
+  @page {
+    size: A4;
+    margin: 10mm;
   }
   
-  .invoice-logo {
-    @apply h-16 w-auto object-contain;
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    background: white;
   }
   
-  .invoice-title {
-    @apply text-2xl font-bold text-invoice-primary;
+  /* Typography and spacing */
+  .invoice-print-container, 
+  .credit-note-print-container {
+    background-color: white !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 12pt;
   }
   
-  .invoice-meta {
-    @apply flex justify-between mb-6;
+  /* Improved table rendering */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
   }
   
-  .invoice-table {
-    @apply w-full border-collapse mb-6;
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
   }
   
-  .invoice-table th {
-    @apply text-left bg-invoice-background p-2 border-b border-invoice-muted;
+  td, th {
+    page-break-inside: avoid !important;
+    border: 1px solid #ddd !important;
   }
   
-  .invoice-table td {
-    @apply p-2 border-b border-invoice-muted;
+  /* Ensure page breaks happen at appropriate places */
+  h1, h2, h3, thead, .page-break {
+    page-break-after: avoid !important;
   }
   
-  .invoice-total {
-    @apply flex justify-end mt-6;
-  }
-  
-  .invoice-total-table {
-    @apply w-1/2 border-collapse;
-  }
-  
-  .invoice-total-table th {
-    @apply text-left p-2;
-  }
-  
-  .invoice-total-table td {
-    @apply text-right p-2;
-  }
-  
-  .invoice-footer {
-    @apply mt-12 text-center text-invoice-muted text-sm;
+  /* Force colored backgrounds to appear in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
