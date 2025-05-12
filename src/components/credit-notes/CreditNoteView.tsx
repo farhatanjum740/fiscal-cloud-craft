@@ -75,12 +75,22 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     }
   };
   
-  // Calculate GST amounts
-  const hasIGST = (creditNote.igst || 0) > 0;
-  const hasCGSTSGST = (creditNote.cgst || 0) > 0 || (creditNote.sgst || 0) > 0;
+  // Determine if we should show IGST or CGST/SGST based on states
+  const companyState = company.state;
+  const customerState = customer?.billing_state || '';
+  const useIGST = companyState !== customerState;
+  
+  // Calculate GST amounts - ensure we're working with numbers
+  const subtotal = typeof creditNote.subtotal === 'number' ? creditNote.subtotal : 0;
+  const cgst = !useIGST && typeof creditNote.cgst === 'number' ? creditNote.cgst : 0;
+  const sgst = !useIGST && typeof creditNote.sgst === 'number' ? creditNote.sgst : 0;
+  const igst = useIGST && typeof creditNote.igst === 'number' ? creditNote.igst : 0;
+  
+  // Calculate total
+  const calculatedTotal = subtotal + cgst + sgst + igst;
   
   // Round to nearest rupee - ensure we're working with numbers
-  const totalAmount = typeof creditNote.totalAmount === 'number' ? creditNote.totalAmount : 0;
+  const totalAmount = calculatedTotal || 0;
   const roundedTotal = Math.round(totalAmount);
   const roundOffAmount = roundedTotal - totalAmount;
 
@@ -110,25 +120,27 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
             <h1 className="text-2xl font-bold text-gray-800">CREDIT NOTE</h1>
             <p className="text-gray-500"># {creditNote.creditNoteNumber}</p>
             <p className="text-gray-500 mt-2">Date: {creditNote.creditNoteDate ? format(new Date(creditNote.creditNoteDate), 'dd/MM/yyyy') : ''}</p>
-            <p className="text-gray-500">Reference Invoice: {invoice.invoiceNumber}</p>
+            <p className="text-gray-500">Reference Invoice: {invoice?.invoiceNumber || 'N/A'}</p>
           </div>
           
-          <div className="text-right flex items-center gap-3">
-            {company.logo && (
-              <img 
-                src={company.logo} 
-                alt={`${company.name} logo`} 
-                className="h-12 w-auto object-contain" 
-              />
-            )}
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">{company.name}</h2>
-              <p className="text-sm text-gray-600">{company.address_line1}</p>
-              {company.address_line2 && <p className="text-sm text-gray-600">{company.address_line2}</p>}
-              <p className="text-sm text-gray-600">{company.city}, {company.state} - {company.pincode}</p>
-              <p className="text-sm text-gray-600">GSTIN: {company.gstin}</p>
-              {company.email && <p className="text-sm text-gray-600">Email: {company.email}</p>}
-              {company.phone && <p className="text-sm text-gray-600">Phone: {company.phone}</p>}
+          <div className="text-right">
+            <div className="flex items-start gap-3 justify-end">
+              {company.logo && (
+                <img 
+                  src={company.logo} 
+                  alt={`${company.name} logo`} 
+                  className="h-12 w-auto object-contain" 
+                />
+              )}
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">{company.name}</h2>
+                <p className="text-sm text-gray-600">{company.address_line1}</p>
+                {company.address_line2 && <p className="text-sm text-gray-600">{company.address_line2}</p>}
+                <p className="text-sm text-gray-600">{company.city}, {company.state} - {company.pincode}</p>
+                <p className="text-sm text-gray-600">GSTIN: {company.gstin}</p>
+                {company.email && <p className="text-sm text-gray-600">Email: {company.email}</p>}
+                {company.phone && <p className="text-sm text-gray-600">Phone: {company.phone}</p>}
+              </div>
             </div>
           </div>
         </div>
@@ -138,11 +150,19 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         {/* Customer Information */}
         <div className="mb-6">
           <h3 className="font-semibold text-gray-800 mb-2">Customer:</h3>
-          <p className="font-medium">{customer?.name}</p>
-          <p>{customer?.billing_address_line1}</p>
-          {customer?.billing_address_line2 && <p>{customer.billing_address_line2}</p>}
-          <p>{customer?.billing_city}, {customer?.billing_state} {customer?.billing_pincode}</p>
-          {customer?.gstin && <p>GSTIN: {customer.gstin}</p>}
+          {customer ? (
+            <>
+              <p className="font-medium">{customer.name}</p>
+              <p>{customer.billing_address_line1}</p>
+              {customer.billing_address_line2 && <p>{customer.billing_address_line2}</p>}
+              <p>{customer.billing_city}, {customer.billing_state} {customer.billing_pincode}</p>
+              {customer.gstin && <p>GSTIN: {customer.gstin}</p>}
+              {customer.email && <p>Email: {customer.email}</p>}
+              {customer.phone && <p>Phone: {customer.phone}</p>}
+            </>
+          ) : (
+            <p className="text-gray-500">Customer information not available</p>
+          )}
         </div>
         
         {/* Reason */}
@@ -158,12 +178,21 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           <table className="w-full text-left border-collapse mb-6">
             <thead>
               <tr className="bg-gray-100">
+                <th className="py-3 px-4 border font-semibold">S.No</th>
                 <th className="py-3 px-4 border font-semibold">Item</th>
                 <th className="py-3 px-4 border font-semibold">HSN/SAC</th>
                 <th className="py-3 px-4 border font-semibold">Qty</th>
                 <th className="py-3 px-4 border font-semibold">Unit</th>
                 <th className="py-3 px-4 border font-semibold">Rate</th>
                 <th className="py-3 px-4 border font-semibold">GST %</th>
+                {useIGST ? (
+                  <th className="py-3 px-4 border font-semibold">IGST</th>
+                ) : (
+                  <>
+                    <th className="py-3 px-4 border font-semibold">CGST</th>
+                    <th className="py-3 px-4 border font-semibold">SGST</th>
+                  </>
+                )}
                 <th className="py-3 px-4 border font-semibold text-right">Amount</th>
               </tr>
             </thead>
@@ -172,16 +201,29 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                 // Ensure we're working with numbers
                 const price = typeof item.price === 'number' ? item.price : 0;
                 const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+                const gstRate = typeof item.gstRate === 'number' ? item.gstRate : 0;
+                
+                const itemTotal = price * quantity;
+                const gstAmount = (itemTotal * gstRate) / 100;
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="py-3 px-4 border">{index + 1}</td>
                     <td className="py-3 px-4 border">{item.productName}</td>
                     <td className="py-3 px-4 border">{item.hsnCode}</td>
                     <td className="py-3 px-4 border">{item.quantity}</td>
                     <td className="py-3 px-4 border">{item.unit}</td>
                     <td className="py-3 px-4 border">₹{formatAmount(price)}</td>
                     <td className="py-3 px-4 border">{item.gstRate}%</td>
-                    <td className="py-3 px-4 border text-right">₹{formatAmount(price * quantity)}</td>
+                    {useIGST ? (
+                      <td className="py-3 px-4 border">₹{formatAmount(gstAmount)}</td>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4 border">₹{formatAmount(gstAmount / 2)}</td>
+                        <td className="py-3 px-4 border">₹{formatAmount(gstAmount / 2)}</td>
+                      </>
+                    )}
+                    <td className="py-3 px-4 border text-right">₹{formatAmount(itemTotal)}</td>
                   </tr>
                 )
               })}
@@ -194,26 +236,26 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           <div className="w-64">
             <div className="flex justify-between py-2">
               <span>Subtotal:</span>
-              <span>₹{formatAmount(creditNote.subtotal || 0)}</span>
+              <span>₹{formatAmount(subtotal)}</span>
             </div>
             
-            {hasCGSTSGST && (
+            {!useIGST && (cgst > 0 || sgst > 0) && (
               <>
                 <div className="flex justify-between py-2">
                   <span>CGST:</span>
-                  <span>₹{formatAmount(creditNote.cgst || 0)}</span>
+                  <span>₹{formatAmount(cgst)}</span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span>SGST:</span>
-                  <span>₹{formatAmount(creditNote.sgst || 0)}</span>
+                  <span>₹{formatAmount(sgst)}</span>
                 </div>
               </>
             )}
             
-            {hasIGST && (
+            {useIGST && igst > 0 && (
               <div className="flex justify-between py-2">
                 <span>IGST:</span>
-                <span>₹{formatAmount(creditNote.igst || 0)}</span>
+                <span>₹{formatAmount(igst)}</span>
               </div>
             )}
             
@@ -239,13 +281,11 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         {/* Bank Details */}
         <div className="border-t pt-4 mt-4">
           <h4 className="font-semibold mb-2">Bank Details:</h4>
-          <div className="flex flex-wrap gap-2 text-sm">
-            <p><span className="font-medium">Account:</span> {company.bank_account_name} ({company.bank_account_number})</p>
-            <p className="mx-2">|</p>
-            <p><span className="font-medium">Bank:</span> {company.bank_name}, {company.bank_branch}</p>
-            <p className="mx-2">|</p>
-            <p><span className="font-medium">IFSC:</span> {company.bank_ifsc_code}</p>
-          </div>
+          <p className="text-sm">
+            <span className="font-medium">Account:</span> {company.bank_account_name} ({company.bank_account_number}) |  
+            <span className="font-medium"> Bank:</span> {company.bank_name}, {company.bank_branch} | 
+            <span className="font-medium"> IFSC:</span> {company.bank_ifsc_code}
+          </p>
         </div>
         
         {/* Footer */}

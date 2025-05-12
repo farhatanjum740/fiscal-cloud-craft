@@ -121,11 +121,12 @@
   }
   
   body {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-    background: white;
+    background: white !important;
+    width: 210mm !important;
   }
   
   /* Force all content into A4 size */
@@ -137,6 +138,8 @@
     box-sizing: border-box !important;
     page-break-after: always !important;
     background-color: white !important;
+    overflow: visible !important;
+    float: none !important;
   }
   
   /* Improved table rendering */
@@ -148,6 +151,7 @@
   
   tr {
     page-break-inside: avoid !important;
+    page-break-after: auto !important;
   }
   
   td, th {
@@ -157,5 +161,15 @@
   /* Ensure page breaks happen at appropriate places */
   h1, h2, h3, thead {
     page-break-after: avoid !important;
+  }
+  
+  /* Force a page break after the main content if needed */
+  .page-break-after {
+    page-break-after: always !important;
+  }
+  
+  /* Adjust table to fit on A4 */
+  .overflow-x-auto {
+    overflow-x: visible !important;
   }
 }

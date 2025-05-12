@@ -1,9 +1,12 @@
 
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
 import { useCreditNote } from "@/hooks/useCreditNote";
 import CreditNoteViewComponent from "@/components/credit-notes/CreditNoteView";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreditNoteView = () => {
   const { id } = useParams();
@@ -29,6 +32,41 @@ const CreditNoteView = () => {
     gstin: invoice.customer_gstin
   } : null;
   
+  const handleDeleteCreditNote = async () => {
+    if (!id) return;
+    
+    try {
+      // First delete the credit note items
+      const { error: itemsError } = await supabase
+        .from('credit_note_items')
+        .delete()
+        .eq('credit_note_id', id);
+        
+      if (itemsError) throw itemsError;
+      
+      // Then delete the credit note
+      const { error } = await supabase
+        .from('credit_notes')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Credit note deleted",
+        description: "The credit note has been successfully deleted."
+      });
+      
+      navigate("/app/invoices");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to delete credit note: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -39,9 +77,36 @@ const CreditNoteView = () => {
           <h1 className="text-3xl font-bold">Credit Note Details</h1>
         </div>
         
-        <Button variant="outline" onClick={() => navigate(`/app/credit-notes/edit/${id}`)}>
-          Edit Credit Note
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(`/app/credit-notes/edit/${id}`)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the credit note
+                  and all related data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteCreditNote}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {loadingData ? (

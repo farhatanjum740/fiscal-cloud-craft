@@ -1,9 +1,12 @@
 
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
 import { useInvoice } from "@/hooks/useInvoice";
 import InvoiceViewComponent from "@/components/invoices/InvoiceView";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const InvoiceView = () => {
   const { id } = useParams();
@@ -20,6 +23,41 @@ const InvoiceView = () => {
   // Find the customer for this invoice
   const customer = customers.find(cust => cust.id === invoice.customerId);
   
+  const handleDeleteInvoice = async () => {
+    if (!id) return;
+    
+    try {
+      // First delete related invoice items
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', id);
+        
+      if (itemsError) throw itemsError;
+      
+      // Then delete the invoice
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Invoice deleted",
+        description: "The invoice has been successfully deleted."
+      });
+      
+      navigate("/app/invoices");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to delete invoice: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -30,9 +68,36 @@ const InvoiceView = () => {
           <h1 className="text-3xl font-bold">Invoice Details</h1>
         </div>
         
-        <Button variant="outline" onClick={() => navigate(`/app/invoices/edit/${id}`)}>
-          Edit Invoice
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(`/app/invoices/edit/${id}`)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the invoice
+                  and all related data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteInvoice}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {loadingData ? (
