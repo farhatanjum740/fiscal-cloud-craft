@@ -1,7 +1,7 @@
 
 import React, { useRef } from 'react';
 import { format } from 'date-fns';
-import { toPng } from 'html-to-image';
+import html2pdf from 'html2pdf.js';
 import { Printer, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,7 +25,7 @@ const amountInWords = (amount: number): string => {
     minimumFractionDigits: 2,
   });
   
-  return `${formatter.format(amount)} only`;
+  return `${formatter.format(amount || 0)} only`;
 };
 
 export const CreditNoteView: React.FC<CreditNoteViewProps> = ({ 
@@ -55,15 +55,16 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
-      const dataUrl = await toPng(printRef.current, { quality: 1.0, backgroundColor: 'white' });
+      const options = {
+        filename: `CreditNote-${creditNote.creditNoteNumber}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
       
-      // Create a link and trigger download
-      const link = document.createElement('a');
-      link.download = `CreditNote-${creditNote.creditNoteNumber}.png`;
-      link.href = dataUrl;
-      link.click();
+      await html2pdf().set(options).from(printRef.current).save();
       
-      toast({ title: "Download complete", description: "Credit note has been downloaded successfully." });
+      toast({ title: "Download complete", description: "Credit note has been downloaded as PDF." });
     } catch (error) {
       console.error('Error generating credit note PDF:', error);
       toast({ 
@@ -93,12 +94,16 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           </Button>
           <Button variant="default" size="sm" onClick={handleDownload}>
             <Download className="h-4 w-4 mr-2" />
-            Download
+            Download PDF
           </Button>
         </div>
       )}
       
-      <div ref={printRef} className="bg-white p-8 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none">
+      <div 
+        ref={printRef} 
+        className="bg-white p-8 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none"
+        style={{ width: '210mm', minHeight: '297mm' }}
+      >
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
@@ -118,10 +123,12 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
             )}
             <div>
               <h2 className="text-xl font-bold text-gray-800">{company.name}</h2>
-              <p className="text-sm text-gray-600">{company.address?.line1}</p>
-              {company.address?.line2 && <p className="text-sm text-gray-600">{company.address.line2}</p>}
-              <p className="text-sm text-gray-600">{company.address?.city}, {company.address?.state} {company.address?.pincode}</p>
+              <p className="text-sm text-gray-600">{company.address_line1}</p>
+              {company.address_line2 && <p className="text-sm text-gray-600">{company.address_line2}</p>}
+              <p className="text-sm text-gray-600">{company.city}, {company.state} - {company.pincode}</p>
               <p className="text-sm text-gray-600">GSTIN: {company.gstin}</p>
+              {company.email && <p className="text-sm text-gray-600">Email: {company.email}</p>}
+              {company.phone && <p className="text-sm text-gray-600">Phone: {company.phone}</p>}
             </div>
           </div>
         </div>
@@ -232,16 +239,12 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         {/* Bank Details */}
         <div className="border-t pt-4 mt-4">
           <h4 className="font-semibold mb-2">Bank Details:</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p><span className="font-medium">Account Name:</span> {company.bankDetails?.accountName}</p>
-              <p><span className="font-medium">Account Number:</span> {company.bankDetails?.accountNumber}</p>
-            </div>
-            <div>
-              <p><span className="font-medium">Bank Name:</span> {company.bankDetails?.bankName}</p>
-              <p><span className="font-medium">IFSC Code:</span> {company.bankDetails?.ifscCode}</p>
-              <p><span className="font-medium">Branch:</span> {company.bankDetails?.branch}</p>
-            </div>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <p><span className="font-medium">Account:</span> {company.bank_account_name} ({company.bank_account_number})</p>
+            <p className="mx-2">|</p>
+            <p><span className="font-medium">Bank:</span> {company.bank_name}, {company.bank_branch}</p>
+            <p className="mx-2">|</p>
+            <p><span className="font-medium">IFSC:</span> {company.bank_ifsc_code}</p>
           </div>
         </div>
         

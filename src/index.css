@@ -105,3 +105,57 @@
 [data-scope="sidebar"] [data-part="footer"] {
   @apply border-t border-[#1a3b7a];
 }
+
+/* Print styles for A4 page */
+@media print {
+  /* Hide UI elements that shouldn't appear in print */
+  .print-hidden,
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Paper settings */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    background: white;
+  }
+  
+  /* Force all content into A4 size */
+  div[ref="printRef"] {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    page-break-after: always !important;
+    background-color: white !important;
+  }
+  
+  /* Improved table rendering */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+  
+  tr {
+    page-break-inside: avoid !important;
+  }
+  
+  td, th {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Ensure page breaks happen at appropriate places */
+  h1, h2, h3, thead {
+    page-break-after: avoid !important;
+  }
+}
