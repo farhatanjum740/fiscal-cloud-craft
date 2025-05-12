@@ -51,18 +51,21 @@ export function AppHeader() {
     <header className="border-b flex items-center h-14 px-4 gap-4 bg-background">
       <SidebarTrigger />
       
-      {company && company.logo && (
+      <div className="flex-1" />
+      
+      {company && (
         <div className="flex items-center gap-2">
-          <img 
-            src={company.logo}
-            alt={company.name}
-            className="h-8 w-auto object-contain"
-          />
+          {company.logo && (
+            <img 
+              src={company.logo}
+              alt={company.name}
+              className="h-8 w-auto object-contain"
+            />
+          )}
           <span className="font-medium hidden lg:inline-block">{company.name}</span>
         </div>
       )}
       
-      <div className="flex-1" />
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
           <Avatar className="h-8 w-8">
