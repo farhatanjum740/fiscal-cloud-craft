@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
-import { Printer, Download, Eye } from 'lucide-react';
+import { Printer, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -73,17 +73,42 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
   const customerState = customer?.shipping_state || customer?.billing_state || '';
   const useIGST = companyState !== customerState;
   
-  // Calculate GST amounts - ensure we're working with numbers
-  const subtotal = typeof invoice.subtotal === 'number' ? invoice.subtotal : 0;
-  const cgst = !useIGST && ((invoice.taxAmount?.cgst || invoice.cgst) || 0);
-  const sgst = !useIGST && ((invoice.taxAmount?.sgst || invoice.sgst) || 0);
-  const igst = useIGST && ((invoice.taxAmount?.igst || invoice.igst) || 0);
+  // Calculate subtotal correctly - sum of all item amounts
+  const subtotal = Array.isArray(invoice.items) 
+    ? invoice.items.reduce((sum: number, item: any) => {
+        const price = typeof item.price === 'number' ? item.price : 0;
+        const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+        return sum + (price * quantity);
+      }, 0)
+    : 0;
+  
+  // Calculate GST amounts based on each item's GST rate and the determined tax type
+  let cgst = 0;
+  let sgst = 0;
+  let igst = 0;
+  
+  if (Array.isArray(invoice.items)) {
+    invoice.items.forEach((item: any) => {
+      const price = typeof item.price === 'number' ? item.price : 0;
+      const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+      const gstRate = typeof item.gstRate === 'number' ? item.gstRate : 0;
+      
+      const itemTotal = price * quantity;
+      const gstAmount = (itemTotal * gstRate) / 100;
+      
+      if (useIGST) {
+        igst += gstAmount;
+      } else {
+        cgst += gstAmount / 2;
+        sgst += gstAmount / 2;
+      }
+    });
+  }
   
   // Calculate total
-  const calculatedTotal = subtotal + cgst + sgst + igst;
+  const totalAmount = subtotal + cgst + sgst + igst;
   
-  // Round to nearest rupee - ensure we're working with numbers
-  const totalAmount = calculatedTotal || 0;
+  // Round to nearest rupee
   const roundedTotal = Math.round(totalAmount);
   const roundOffAmount = roundedTotal - totalAmount;
 
@@ -171,26 +196,26 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Invoice Items */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse mb-6">
+        <div className="w-full">
+          <table className="w-full text-left border-collapse mb-6 text-sm">
             <thead>
               <tr className="bg-gray-100">
-                <th className="py-3 px-4 border font-semibold">S.No</th>
-                <th className="py-3 px-4 border font-semibold">Item</th>
-                <th className="py-3 px-4 border font-semibold">HSN/SAC</th>
-                <th className="py-3 px-4 border font-semibold">Qty</th>
-                <th className="py-3 px-4 border font-semibold">Unit</th>
-                <th className="py-3 px-4 border font-semibold">Rate</th>
-                <th className="py-3 px-4 border font-semibold">GST %</th>
+                <th className="py-3 px-2 border font-semibold">S.No</th>
+                <th className="py-3 px-2 border font-semibold">Item</th>
+                <th className="py-3 px-2 border font-semibold">HSN/SAC</th>
+                <th className="py-3 px-2 border font-semibold">Qty</th>
+                <th className="py-3 px-2 border font-semibold">Unit</th>
+                <th className="py-3 px-2 border font-semibold">Rate</th>
+                <th className="py-3 px-2 border font-semibold">GST %</th>
                 {useIGST ? (
-                  <th className="py-3 px-4 border font-semibold">IGST</th>
+                  <th className="py-3 px-2 border font-semibold">IGST</th>
                 ) : (
                   <>
-                    <th className="py-3 px-4 border font-semibold">CGST</th>
-                    <th className="py-3 px-4 border font-semibold">SGST</th>
+                    <th className="py-3 px-2 border font-semibold">CGST</th>
+                    <th className="py-3 px-2 border font-semibold">SGST</th>
                   </>
                 )}
-                <th className="py-3 px-4 border font-semibold text-right">Amount</th>
+                <th className="py-3 px-2 border font-semibold text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -205,25 +230,25 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-3 px-4 border">{index + 1}</td>
-                    <td className="py-3 px-4 border">
+                    <td className="py-2 px-2 border">{index + 1}</td>
+                    <td className="py-2 px-2 border">
                       <div className="font-medium">{item.productName}</div>
-                      {item.description && <div className="text-sm text-gray-600">{item.description}</div>}
+                      {item.description && <div className="text-xs text-gray-600">{item.description}</div>}
                     </td>
-                    <td className="py-3 px-4 border">{item.hsnCode}</td>
-                    <td className="py-3 px-4 border">{item.quantity}</td>
-                    <td className="py-3 px-4 border">{item.unit}</td>
-                    <td className="py-3 px-4 border">₹{formatAmount(price)}</td>
-                    <td className="py-3 px-4 border">{item.gstRate}%</td>
+                    <td className="py-2 px-2 border">{item.hsnCode}</td>
+                    <td className="py-2 px-2 border">{item.quantity}</td>
+                    <td className="py-2 px-2 border">{item.unit}</td>
+                    <td className="py-2 px-2 border">₹{formatAmount(price)}</td>
+                    <td className="py-2 px-2 border">{item.gstRate}%</td>
                     {useIGST ? (
-                      <td className="py-3 px-4 border">₹{formatAmount(gstAmount)}</td>
+                      <td className="py-2 px-2 border">₹{formatAmount(gstAmount)}</td>
                     ) : (
                       <>
-                        <td className="py-3 px-4 border">₹{formatAmount(gstAmount / 2)}</td>
-                        <td className="py-3 px-4 border">₹{formatAmount(gstAmount / 2)}</td>
+                        <td className="py-2 px-2 border">₹{formatAmount(gstAmount / 2)}</td>
+                        <td className="py-2 px-2 border">₹{formatAmount(gstAmount / 2)}</td>
                       </>
                     )}
-                    <td className="py-3 px-4 border text-right">₹{formatAmount(itemTotal)}</td>
+                    <td className="py-2 px-2 border text-right">₹{formatAmount(itemTotal)}</td>
                   </tr>
                 );
               })}
@@ -297,7 +322,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         
         {/* Bank Details */}
         <div className="border-t pt-4 mt-4">
-          <h4 className="font-semibold mb-2">Bank Details:</h4>
+          <h4 className="font-semibold mb-1">Bank Details:</h4>
           <p className="text-sm">
             <span className="font-medium">Account:</span> {company.bank_account_name} ({company.bank_account_number}) |  
             <span className="font-medium"> Bank:</span> {company.bank_name}, {company.bank_branch} | 

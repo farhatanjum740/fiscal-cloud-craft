@@ -106,11 +106,15 @@
   @apply border-t border-[#1a3b7a];
 }
 
-/* Print styles for A4 page */
+/* Enhanced print styles for A4 page */
 @media print {
   /* Hide UI elements that shouldn't appear in print */
   .print-hidden,
-  .print\:hidden {
+  .print\:hidden,
+  button,
+  nav,
+  header,
+  footer {
     display: none !important;
   }
   
@@ -120,19 +124,22 @@
     margin: 0;
   }
   
-  body {
+  html, body {
+    width: 210mm !important;
+    height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+    overflow: hidden !important;
     background: white !important;
-    width: 210mm !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
   
   /* Force all content into A4 size */
   div[ref="printRef"] {
     width: 210mm !important;
     min-height: 297mm !important;
+    max-height: 297mm !important;
     padding: 10mm !important;
     margin: 0 !important;
     box-sizing: border-box !important;
@@ -140,6 +147,7 @@
     background-color: white !important;
     overflow: visible !important;
     float: none !important;
+    font-size: 11pt !important;
   }
   
   /* Improved table rendering */
@@ -147,6 +155,8 @@
     width: 100% !important;
     border-collapse: collapse !important;
     page-break-inside: auto !important;
+    font-size: 10pt !important;
+    table-layout: fixed !important;
   }
   
   tr {
@@ -156,6 +166,8 @@
   
   td, th {
     page-break-inside: avoid !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
   }
   
   /* Ensure page breaks happen at appropriate places */
@@ -163,13 +175,24 @@
     page-break-after: avoid !important;
   }
   
-  /* Force a page break after the main content if needed */
+  /* Control pagination */
+  .page-break-before {
+    page-break-before: always !important;
+  }
+  
   .page-break-after {
     page-break-after: always !important;
   }
   
-  /* Adjust table to fit on A4 */
-  .overflow-x-auto {
+  /* Fix overflow issues */
+  .overflow-x-auto, .w-full {
     overflow-x: visible !important;
+    width: 100% !important;
+  }
+  
+  /* Better table cells */
+  th, td {
+    padding: 2mm !important;
+    font-size: 9pt !important;
   }
 }

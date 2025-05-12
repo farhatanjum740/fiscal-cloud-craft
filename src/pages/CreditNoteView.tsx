@@ -1,7 +1,7 @@
 
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { useCreditNote } from "@/hooks/useCreditNote";
 import CreditNoteViewComponent from "@/components/credit-notes/CreditNoteView";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -29,7 +29,9 @@ const CreditNoteView = () => {
     billing_city: invoice.customer_billing_city,
     billing_state: invoice.customer_billing_state,
     billing_pincode: invoice.customer_billing_pincode,
-    gstin: invoice.customer_gstin
+    gstin: invoice.customer_gstin,
+    email: invoice.customer_email,
+    phone: invoice.customer_phone
   } : null;
   
   const handleDeleteCreditNote = async () => {
