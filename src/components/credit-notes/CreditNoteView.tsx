@@ -78,9 +78,10 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   const hasIGST = (creditNote.igst || 0) > 0;
   const hasCGSTSGST = (creditNote.cgst || 0) > 0 || (creditNote.sgst || 0) > 0;
   
-  // Round to nearest rupee
-  const roundedTotal = Math.round(creditNote.totalAmount);
-  const roundOffAmount = roundedTotal - creditNote.totalAmount;
+  // Round to nearest rupee - ensure we're working with numbers
+  const totalAmount = typeof creditNote.totalAmount === 'number' ? creditNote.totalAmount : 0;
+  const roundedTotal = Math.round(totalAmount);
+  const roundOffAmount = roundedTotal - totalAmount;
 
   return (
     <div className="bg-white">
@@ -160,17 +161,23 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(creditNote.items) && creditNote.items.map((item: any, index: number) => (
-                <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="py-3 px-4 border">{item.productName}</td>
-                  <td className="py-3 px-4 border">{item.hsnCode}</td>
-                  <td className="py-3 px-4 border">{item.quantity}</td>
-                  <td className="py-3 px-4 border">{item.unit}</td>
-                  <td className="py-3 px-4 border">₹{formatAmount(item.price)}</td>
-                  <td className="py-3 px-4 border">{item.gstRate}%</td>
-                  <td className="py-3 px-4 border text-right">₹{formatAmount(item.price * item.quantity)}</td>
-                </tr>
-              ))}
+              {Array.isArray(creditNote.items) && creditNote.items.map((item: any, index: number) => {
+                // Ensure we're working with numbers
+                const price = typeof item.price === 'number' ? item.price : 0;
+                const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+                
+                return (
+                  <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="py-3 px-4 border">{item.productName}</td>
+                    <td className="py-3 px-4 border">{item.hsnCode}</td>
+                    <td className="py-3 px-4 border">{item.quantity}</td>
+                    <td className="py-3 px-4 border">{item.unit}</td>
+                    <td className="py-3 px-4 border">₹{formatAmount(price)}</td>
+                    <td className="py-3 px-4 border">{item.gstRate}%</td>
+                    <td className="py-3 px-4 border text-right">₹{formatAmount(price * quantity)}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -180,7 +187,7 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           <div className="w-64">
             <div className="flex justify-between py-2">
               <span>Subtotal:</span>
-              <span>₹{formatAmount(creditNote.subtotal)}</span>
+              <span>₹{formatAmount(creditNote.subtotal || 0)}</span>
             </div>
             
             {hasCGSTSGST && (

@@ -67,13 +67,14 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
     }
   };
   
-  // Calculate GST amounts
-  const hasIGST = (invoice.taxAmount?.igst || 0) > 0;
-  const hasCGSTSGST = (invoice.taxAmount?.cgst || 0) > 0 || (invoice.taxAmount?.sgst || 0) > 0;
+  // Calculate GST amounts - handle potential undefined values
+  const hasIGST = ((invoice.taxAmount?.igst || invoice.igst) || 0) > 0;
+  const hasCGSTSGST = ((invoice.taxAmount?.cgst || invoice.cgst) || 0) > 0 || ((invoice.taxAmount?.sgst || invoice.sgst) || 0) > 0;
   
-  // Round to nearest rupee
-  const roundedTotal = Math.round(invoice.totalAmount);
-  const roundOffAmount = roundedTotal - invoice.totalAmount;
+  // Round to nearest rupee - ensure we're working with numbers
+  const totalAmount = typeof invoice.totalAmount === 'number' ? invoice.totalAmount : 0;
+  const roundedTotal = Math.round(totalAmount);
+  const roundOffAmount = roundedTotal - totalAmount;
 
   return (
     <div className="bg-white">
@@ -165,20 +166,26 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(invoice.items) && invoice.items.map((item: any, index: number) => (
-                <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="py-3 px-4 border">
-                    <div className="font-medium">{item.productName}</div>
-                    {item.description && <div className="text-sm text-gray-600">{item.description}</div>}
-                  </td>
-                  <td className="py-3 px-4 border">{item.hsnCode}</td>
-                  <td className="py-3 px-4 border">{item.quantity}</td>
-                  <td className="py-3 px-4 border">{item.unit}</td>
-                  <td className="py-3 px-4 border">₹{formatAmount(item.price)}</td>
-                  <td className="py-3 px-4 border">{item.gstRate}%</td>
-                  <td className="py-3 px-4 border text-right">₹{formatAmount(item.price * item.quantity)}</td>
-                </tr>
-              ))}
+              {Array.isArray(invoice.items) && invoice.items.map((item: any, index: number) => {
+                // Ensure we're working with numbers
+                const price = typeof item.price === 'number' ? item.price : 0;
+                const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+                
+                return (
+                  <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="py-3 px-4 border">
+                      <div className="font-medium">{item.productName}</div>
+                      {item.description && <div className="text-sm text-gray-600">{item.description}</div>}
+                    </td>
+                    <td className="py-3 px-4 border">{item.hsnCode}</td>
+                    <td className="py-3 px-4 border">{item.quantity}</td>
+                    <td className="py-3 px-4 border">{item.unit}</td>
+                    <td className="py-3 px-4 border">₹{formatAmount(price)}</td>
+                    <td className="py-3 px-4 border">{item.gstRate}%</td>
+                    <td className="py-3 px-4 border text-right">₹{formatAmount(price * quantity)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -188,18 +195,18 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
           <div className="w-64">
             <div className="flex justify-between py-2">
               <span>Subtotal:</span>
-              <span>₹{formatAmount(invoice.subtotal)}</span>
+              <span>₹{formatAmount(invoice.subtotal || 0)}</span>
             </div>
             
             {hasCGSTSGST && (
               <>
                 <div className="flex justify-between py-2">
                   <span>CGST:</span>
-                  <span>₹{formatAmount(invoice.taxAmount?.cgst || 0)}</span>
+                  <span>₹{formatAmount((invoice.taxAmount?.cgst || invoice.cgst || 0))}</span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span>SGST:</span>
-                  <span>₹{formatAmount(invoice.taxAmount?.sgst || 0)}</span>
+                  <span>₹{formatAmount((invoice.taxAmount?.sgst || invoice.sgst || 0))}</span>
                 </div>
               </>
             )}
@@ -207,7 +214,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
             {hasIGST && (
               <div className="flex justify-between py-2">
                 <span>IGST:</span>
-                <span>₹{formatAmount(invoice.taxAmount?.igst || 0)}</span>
+                <span>₹{formatAmount((invoice.taxAmount?.igst || invoice.igst || 0))}</span>
               </div>
             )}
             
