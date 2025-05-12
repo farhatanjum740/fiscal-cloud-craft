@@ -16,7 +16,7 @@ const CreditNoteView = () => {
     company,
     invoice,
     invoiceItems,
-  } = useCreditNote(id, undefined);
+  } = useCreditNote(id);
 
   // Find the customer from the invoice
   const customer = invoice ? {
