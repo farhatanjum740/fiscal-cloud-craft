@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,8 +18,9 @@ import CompanyProfile from "./pages/CompanyProfile";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
-import LandingPage from "./pages/Index";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Reports from '@/pages/Reports';
 import { AuthProvider } from "./contexts/AuthContext";
 import React from "react";
 
@@ -87,43 +87,63 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AppErrorBoundary>
-        <BrowserRouter>
+function App() {
+  return (
+    <BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppErrorBoundary>
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<Index />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              
               <Route path="/app" element={<AppLayout />}>
                 <Route index element={<Dashboard />} />
-                <Route path="invoices" element={<Invoices />} />
-                <Route path="invoices/new" element={<InvoiceEditor />} />
-                <Route path="invoices/edit/:id" element={<InvoiceEditor />} />
-                <Route path="invoices/view/:id" element={<InvoiceView />} />
-                <Route path="credit-notes/new" element={<CreditNoteEditor />} />
-                <Route path="credit-notes/edit/:id" element={<CreditNoteEditor />} />
-                <Route path="credit-notes/view/:id" element={<CreditNoteView />} />
-                <Route path="customers" element={<Customers />} />
-                <Route path="customers/new" element={<CustomerEditor />} />
-                <Route path="customers/edit/:id" element={<CustomerEditor />} />
-                <Route path="products" element={<Products />} />
-                <Route path="products/new" element={<ProductEditor />} />
-                <Route path="products/edit/:id" element={<ProductEditor />} />
-                <Route path="settings/company" element={<CompanyProfile />} />
+                
+                <Route path="invoices">
+                  <Route index element={<Invoices />} />
+                  <Route path="new" element={<InvoiceEditor />} />
+                  <Route path="edit/:id" element={<InvoiceEditor />} />
+                  <Route path="view/:id" element={<InvoiceView />} />
+                </Route>
+                
+                <Route path="credit-notes">
+                  <Route path="new" element={<CreditNoteEditor />} />
+                  <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
+                  <Route path="edit/:id" element={<CreditNoteEditor />} />
+                  <Route path="view/:id" element={<CreditNoteView />} />
+                </Route>
+                
+                <Route path="customers">
+                  <Route index element={<Customers />} />
+                  <Route path="new" element={<CustomerEditor />} />
+                  <Route path="edit/:id" element={<CustomerEditor />} />
+                </Route>
+                
+                <Route path="products">
+                  <Route index element={<Products />} />
+                  <Route path="new" element={<ProductEditor />} />
+                  <Route path="edit/:id" element={<ProductEditor />} />
+                </Route>
+
+                <Route path="reports" element={<Reports />} />
+                
+                <Route path="settings">
+                  <Route path="company" element={<CompanyProfile />} />
+                </Route>
               </Route>
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
-        </BrowserRouter>
-      </AppErrorBoundary>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        </AppErrorBoundary>
+      </TooltipProvider>
+    </BrowserRouter>
+  );
+}
 
 export default App;

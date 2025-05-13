@@ -7,10 +7,12 @@ import CreditNoteViewComponent from "@/components/credit-notes/CreditNoteView";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const CreditNoteView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [customerData, setCustomerData] = useState<any>(null);
   
   const {
     creditNote,
@@ -21,8 +23,30 @@ const CreditNoteView = () => {
     invoiceItems,
   } = useCreditNote(id);
 
-  // Find the customer from the invoice
-  const customer = invoice ? {
+  // Fetch customer data when invoice changes
+  useEffect(() => {
+    const fetchCustomerData = async () => {
+      if (invoice?.customer_id) {
+        try {
+          const { data, error } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', invoice.customer_id)
+            .single();
+          
+          if (error) throw error;
+          setCustomerData(data);
+        } catch (error) {
+          console.error("Error fetching customer data:", error);
+        }
+      }
+    };
+    
+    fetchCustomerData();
+  }, [invoice]);
+  
+  // Find the customer from the invoice or from fetched data
+  const customer = customerData || (invoice ? {
     name: invoice.customer_name || "",
     billing_address_line1: invoice.customer_billing_address_line1 || "",
     billing_address_line2: invoice.customer_billing_address_line2 || "",
@@ -32,7 +56,7 @@ const CreditNoteView = () => {
     gstin: invoice.customer_gstin || "",
     email: invoice.customer_email || "",
     phone: invoice.customer_phone || ""
-  } : null;
+  } : null);
   
   const handleDeleteCreditNote = async () => {
     if (!id) return;
@@ -59,7 +83,10 @@ const CreditNoteView = () => {
         description: "The credit note has been successfully deleted."
       });
       
-      navigate("/app/invoices");
+      // Navigate immediately to ensure we leave the page after deleting
+      setTimeout(() => {
+        navigate("/app/invoices");
+      }, 500);
     } catch (error: any) {
       console.error("Error deleting credit note:", error);
       toast({

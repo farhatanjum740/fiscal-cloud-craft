@@ -24,7 +24,8 @@ import {
   Users, 
   Package, 
   Building, 
-  LogOut 
+  LogOut,
+  BarChart
 } from 'lucide-react';
 
 const AppLayout = () => {
@@ -105,6 +106,14 @@ const AppSidebar = ({ signOut }: { signOut: () => void }) => {
                   <a href="/app/products">
                     <Package className="h-5 w-5" />
                     <span>Products</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/app/reports">
+                    <BarChart className="h-5 w-5" />
+                    <span>Reports</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>

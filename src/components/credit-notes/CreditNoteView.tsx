@@ -65,9 +65,9 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
   
   // Determine if we should show IGST or CGST/SGST based on states
-  const companyState = company.state;
+  const companyState = company?.state || '';
   const customerState = customer?.billing_state || '';
-  const useIGST = companyState !== customerState;
+  const useIGST = companyState.toLowerCase() !== customerState.toLowerCase() && companyState && customerState;
   
   // Calculate subtotal correctly - sum of all item amounts
   const subtotal = Array.isArray(creditNote.items) 
@@ -134,7 +134,7 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
             <h1 className="text-2xl font-bold text-gray-800">CREDIT NOTE</h1>
             <p className="text-gray-500"># {creditNote.creditNoteNumber}</p>
             <p className="text-gray-500 mt-2">Date: {creditNote.creditNoteDate ? format(new Date(creditNote.creditNoteDate), 'dd/MM/yyyy') : ''}</p>
-            <p className="text-gray-500">Reference Invoice: {invoice?.invoiceNumber || 'N/A'}</p>
+            <p className="text-gray-500">Reference Invoice: {invoice?.invoice_number || 'N/A'}</p>
           </div>
           
           <div className="text-right">
@@ -188,8 +188,8 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         )}
         
         {/* Credit Note Items */}
-        <div className="w-full overflow-visible print:overflow-visible">
-          <table className="w-full text-left border-collapse mb-6 text-sm">
+        <div className="w-full overflow-hidden print:overflow-visible">
+          <table className="w-full text-left border-collapse mb-6 text-xs md:text-sm">
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-2 px-2 border font-semibold">S.No</th>
@@ -222,22 +222,22 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-2 px-2 border text-sm">{index + 1}</td>
-                    <td className="py-2 px-2 border text-sm">{item.productName}</td>
-                    <td className="py-2 px-2 border text-sm">{item.hsnCode}</td>
-                    <td className="py-2 px-2 border text-sm">{item.quantity}</td>
-                    <td className="py-2 px-2 border text-sm">{item.unit}</td>
-                    <td className="py-2 px-2 border text-sm">₹{formatAmount(price)}</td>
-                    <td className="py-2 px-2 border text-sm">{item.gstRate}%</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm">{index + 1}</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm">{item.productName}</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm">{item.hsnCode}</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm">{item.quantity}</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm">{item.unit}</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(price)}</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm">{item.gstRate}%</td>
                     {useIGST ? (
-                      <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount)}</td>
+                      <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(gstAmount)}</td>
                     ) : (
                       <>
-                        <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount / 2)}</td>
-                        <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount / 2)}</td>
+                        <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(gstAmount / 2)}</td>
+                        <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(gstAmount / 2)}</td>
                       </>
                     )}
-                    <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(itemTotal)}</td>
+                    <td className="py-2 px-2 border text-xs md:text-sm text-right">₹{formatAmount(itemTotal)}</td>
                   </tr>
                 )
               })}
