@@ -3,13 +3,62 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { FileText, Users, Package, TrendingUp, ChartBar } from "lucide-react";
+import { 
+  FileText, Users, Package, TrendingUp, ChartBar,
+  Calendar, CalendarIcon, Download
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  subDays,
+  subMonths,
+  subYears,
+  startOfWeek,
+  endOfWeek,
+  eachMonthOfInterval,
+  parse
+} from "date-fns";
+
+// Define financial year utility functions
+const startOfFinancialYear = (date: Date): Date => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  // Financial year starts on April 1st in India
+  return new Date(month < 3 ? year - 1 : year, 3, 1);
+};
+
+const endOfFinancialYear = (date: Date): Date => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  // Financial year ends on March 31st in India
+  return new Date(month < 3 ? year : year + 1, 2, 31, 23, 59, 59, 999);
+};
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
+  const [timeRange, setTimeRange] = useState("thisYear");
+  const [chartData, setChartData] = useState<{month: string, revenue: number}[]>([]);
+  const [dateRange, setDateRange] = useState<{
+    from: Date;
+    to: Date;
+  }>({
+    from: startOfYear(new Date()),
+    to: endOfYear(new Date()),
+  });
+  
   const [stats, setStats] = useState({
     totalInvoices: 0,
     totalCustomers: 0,
@@ -17,6 +66,57 @@ const Dashboard = () => {
     totalRevenue: 0,
     pendingInvoices: 0
   });
+
+  // Update date range based on selected time range
+  useEffect(() => {
+    const today = new Date();
+    let from, to;
+
+    switch (timeRange) {
+      case "7days":
+        from = subDays(today, 7);
+        to = today;
+        break;
+      case "30days":
+        from = subDays(today, 30);
+        to = today;
+        break;
+      case "thisWeek":
+        from = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+        to = endOfWeek(today, { weekStartsOn: 1 }); // Sunday
+        break;
+      case "thisMonth":
+        from = startOfMonth(today);
+        to = endOfMonth(today);
+        break;
+      case "lastMonth":
+        from = startOfMonth(subMonths(today, 1));
+        to = endOfMonth(subMonths(today, 1));
+        break;
+      case "thisYear":
+        from = startOfYear(today);
+        to = endOfYear(today);
+        break;
+      case "lastYear":
+        from = startOfYear(subYears(today, 1));
+        to = endOfYear(subYears(today, 1));
+        break;
+      case "thisFinancialYear":
+        from = startOfFinancialYear(today);
+        to = endOfFinancialYear(today);
+        break;
+      case "lastFinancialYear":
+        const lastYear = subYears(today, 1);
+        from = startOfFinancialYear(lastYear);
+        to = endOfFinancialYear(lastYear);
+        break;
+      default:
+        from = startOfYear(today);
+        to = endOfYear(today);
+    }
+
+    setDateRange({ from, to });
+  }, [timeRange]);
 
   // Fetch dashboard stats
   const { data: dashboardData } = useQuery({
@@ -70,6 +170,87 @@ const Dashboard = () => {
     enabled: !!user
   });
 
+  // Fetch revenue data for chart based on date range
+  const { data: revenueData, isLoading: loadingRevenueData } = useQuery({
+    queryKey: ['revenue-chart', dateRange],
+    queryFn: async () => {
+      if (!user || !dateRange.from || !dateRange.to) return [];
+      
+      const formattedFrom = format(dateRange.from, 'yyyy-MM-dd');
+      const formattedTo = format(dateRange.to, 'yyyy-MM-dd');
+      
+      // Fetch invoices
+      const { data: invoices, error: invoicesError } = await supabase
+        .from('invoices')
+        .select('invoice_date, total_amount, status')
+        .eq('user_id', user.id)
+        .gte('invoice_date', formattedFrom)
+        .lte('invoice_date', formattedTo)
+        .eq('status', 'paid');
+        
+      if (invoicesError) throw invoicesError;
+      
+      // Fetch credit notes
+      const { data: creditNotes, error: creditNotesError } = await supabase
+        .from('credit_notes')
+        .select('credit_note_date, total_amount')
+        .eq('user_id', user.id)
+        .gte('credit_note_date', formattedFrom)
+        .lte('credit_note_date', formattedTo);
+        
+      if (creditNotesError) throw creditNotesError;
+      
+      return {
+        invoices: invoices || [],
+        creditNotes: creditNotes || []
+      };
+    },
+    enabled: !!user && !!dateRange.from && !!dateRange.to
+  });
+
+  // Process revenue data to create chart data
+  useEffect(() => {
+    if (!revenueData) return;
+    
+    const { invoices, creditNotes } = revenueData;
+    
+    // Get all months in the selected range
+    const months = eachMonthOfInterval({
+      start: dateRange.from,
+      end: dateRange.to
+    });
+    
+    // Initialize monthly data
+    const monthlyData = months.map(date => ({
+      month: format(date, 'MMM yyyy'),
+      revenue: 0
+    }));
+    
+    // Add invoice amounts
+    invoices.forEach(invoice => {
+      const invoiceDate = new Date(invoice.invoice_date);
+      const monthKey = format(invoiceDate, 'MMM yyyy');
+      const existingMonth = monthlyData.find(m => m.month === monthKey);
+      
+      if (existingMonth) {
+        existingMonth.revenue += (invoice.total_amount || 0);
+      }
+    });
+    
+    // Subtract credit note amounts
+    creditNotes.forEach(creditNote => {
+      const creditNoteDate = new Date(creditNote.credit_note_date);
+      const monthKey = format(creditNoteDate, 'MMM yyyy');
+      const existingMonth = monthlyData.find(m => m.month === monthKey);
+      
+      if (existingMonth) {
+        existingMonth.revenue -= (creditNote.total_amount || 0);
+      }
+    });
+    
+    setChartData(monthlyData);
+  }, [revenueData, dateRange]);
+
   // Update stats when dashboardData changes
   useEffect(() => {
     if (dashboardData) {
@@ -79,6 +260,9 @@ const Dashboard = () => {
 
   // Get the appropriate display name for the welcome message
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'there';
+  
+  // Find the highest value in chart data to normalize chart heights
+  const maxChartValue = Math.max(...chartData.map(item => item.revenue), 1);
 
   return (
     <div className="space-y-6">
@@ -161,29 +345,72 @@ const Dashboard = () => {
         </Card>
         
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <ChartBar className="h-5 w-5 mr-2 text-primary" />
-              Revenue Overview
-            </CardTitle>
-            <CardDescription>Monthly revenue for current year</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="flex items-center">
+                <ChartBar className="h-5 w-5 mr-2 text-primary" />
+                Revenue Overview
+              </CardTitle>
+              <CardDescription>Monthly revenue</CardDescription>
+            </div>
+            
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7days">Last 7 days</SelectItem>
+                <SelectItem value="30days">Last 30 days</SelectItem>
+                <SelectItem value="thisMonth">This month</SelectItem>
+                <SelectItem value="lastMonth">Last month</SelectItem>
+                <SelectItem value="thisYear">This year</SelectItem>
+                <SelectItem value="lastYear">Last year</SelectItem>
+                <SelectItem value="thisFinancialYear">This financial year</SelectItem>
+                <SelectItem value="lastFinancialYear">Last financial year</SelectItem>
+              </SelectContent>
+            </Select>
           </CardHeader>
           <CardContent>
-            <div className="h-48 flex items-end justify-between gap-2">
-              {generateMockChartData().map((value, i) => (
-                <div key={i} className="relative h-full flex-1 flex flex-col justify-end">
-                  <div 
-                    className="bg-primary rounded-t w-full" 
-                    style={{ height: `${value}%` }}
-                  ></div>
-                  <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs">
-                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i].substring(0, 1)}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-8">
-              <Button variant="outline" className="w-full">Generate Reports</Button>
+            {loadingRevenueData ? (
+              <div className="h-48 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="h-48 flex items-center justify-center text-gray-500">
+                No revenue data available for selected period.
+              </div>
+            ) : (
+              <div className="h-48 flex items-end justify-between gap-2">
+                {chartData.map((item, i) => (
+                  <div key={i} className="relative h-full flex-1 flex flex-col justify-end group">
+                    <div 
+                      className={`${
+                        item.revenue >= 0 ? 'bg-primary' : 'bg-red-500'
+                      } rounded-t w-full`} 
+                      style={{ 
+                        height: `${Math.abs(item.revenue) / maxChartValue * 100}%`,
+                        minHeight: item.revenue !== 0 ? '4px' : '0'
+                      }}
+                    ></div>
+                    <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 text-xs">
+                      {item.month.substring(0, 3)}
+                    </div>
+                    
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black text-white text-xs rounded p-1 opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">
+                      {item.month}: ₹{item.revenue.toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-12">
+              <Link to="/app/reports">
+                <Button variant="outline" className="w-full">
+                  <ChartBar className="h-4 w-4 mr-2" />
+                  Generate Reports
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -227,13 +454,5 @@ const StatCard = ({
     </CardContent>
   </Card>
 );
-
-// Helper function to generate mock chart data
-const generateMockChartData = () => {
-  const currentMonth = new Date().getMonth();
-  return Array(12).fill(0).map((_, i) => 
-    i <= currentMonth ? Math.floor(Math.random() * 80) + 10 : 0
-  );
-};
 
 export default Dashboard;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -29,19 +30,14 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { 
-  Form, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormControl 
+  FormLabel
 } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
 import { 
   Popover, 
   PopoverContent, 
   PopoverTrigger 
 } from "@/components/ui/popover";
-import { CalendarIcon, Download, FileText } from "lucide-react";
+import { CalendarIcon, Download } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { 
   format, 
@@ -86,15 +82,6 @@ const Reports = () => {
   const [customerData, setCustomerData] = useState<any[]>([]);
   const [productData, setProductData] = useState<any[]>([]);
   const [reportType, setReportType] = useState("monthly");
-
-  const form = useForm({
-    defaultValues: {
-      dateRange: {
-        from: subMonths(new Date(), 1),
-        to: new Date(),
-      },
-    },
-  });
 
   const updateDateRange = (preset: string) => {
     const today = new Date();

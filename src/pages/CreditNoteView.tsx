@@ -53,6 +53,11 @@ const CreditNoteView = () => {
     billing_city: invoice.customer_billing_city || "",
     billing_state: invoice.customer_billing_state || "",
     billing_pincode: invoice.customer_billing_pincode || "",
+    shipping_address_line1: invoice.customer_shipping_address_line1 || "",
+    shipping_address_line2: invoice.customer_shipping_address_line2 || "",
+    shipping_city: invoice.customer_shipping_city || "",
+    shipping_state: invoice.customer_shipping_state || "",
+    shipping_pincode: invoice.customer_shipping_pincode || "",
     gstin: invoice.customer_gstin || "",
     email: invoice.customer_email || "",
     phone: invoice.customer_phone || ""
@@ -84,9 +89,7 @@ const CreditNoteView = () => {
       });
       
       // Navigate immediately to ensure we leave the page after deleting
-      setTimeout(() => {
-        navigate("/app/invoices");
-      }, 500);
+      navigate("/app/invoices");
     } catch (error: any) {
       console.error("Error deleting credit note:", error);
       toast({

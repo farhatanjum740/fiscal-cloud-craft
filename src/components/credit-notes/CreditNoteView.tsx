@@ -17,11 +17,11 @@ interface CreditNoteViewProps {
   isDownloadable?: boolean;
 }
 
-export const CreditNoteView: React.FC<CreditNoteViewProps> = ({ 
+const CreditNoteView: React.FC<CreditNoteViewProps> = ({ 
   creditNote, 
   company, 
   invoice, 
-  customer, 
+  customer,
   isDownloadable = true 
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       </div>
     );
   }
-  
+
   const handlePrint = () => {
     window.print();
   };
@@ -45,7 +45,7 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
       const options = {
-        filename: `CreditNote-${creditNote.creditNoteNumber}.pdf`,
+        filename: `Credit-Note-${creditNote.credit_note_number}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -64,49 +64,12 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     }
   };
   
-  // Determine if we should show IGST or CGST/SGST based on states
-  const companyState = company?.state || '';
-  const customerState = customer?.billing_state || '';
-  const useIGST = companyState.toLowerCase() !== customerState.toLowerCase() && companyState && customerState;
-  
-  // Calculate subtotal correctly - sum of all item amounts
-  const subtotal = Array.isArray(creditNote.items) 
-    ? creditNote.items.reduce((sum: number, item: any) => {
-        const price = typeof item.price === 'number' ? item.price : 0;
-        const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-        return sum + (price * quantity);
-      }, 0)
-    : 0;
-  
-  // Calculate GST amounts based on each item's GST rate and the determined tax type
-  let cgst = 0;
-  let sgst = 0;
-  let igst = 0;
-  
-  if (Array.isArray(creditNote.items)) {
-    creditNote.items.forEach((item: any) => {
-      const price = typeof item.price === 'number' ? item.price : 0;
-      const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-      const gstRate = typeof item.gstRate === 'number' ? item.gstRate : 0;
-      
-      const itemTotal = price * quantity;
-      const gstAmount = (itemTotal * gstRate) / 100;
-      
-      if (useIGST) {
-        igst += gstAmount;
-      } else {
-        cgst += gstAmount / 2;
-        sgst += gstAmount / 2;
-      }
-    });
-  }
-  
-  // Calculate total
-  const totalAmount = subtotal + cgst + sgst + igst;
-  
-  // Round to nearest rupee
-  const roundedTotal = Math.round(totalAmount);
-  const roundOffAmount = roundedTotal - totalAmount;
+  // Calculate totals
+  const subtotal = creditNote.subtotal || 0;
+  const cgst = creditNote.cgst || 0;
+  const sgst = creditNote.sgst || 0;
+  const igst = creditNote.igst || 0;
+  const totalAmount = creditNote.total_amount || 0;
 
   return (
     <div className="bg-white">
@@ -132,9 +95,11 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">CREDIT NOTE</h1>
-            <p className="text-gray-500"># {creditNote.creditNoteNumber}</p>
-            <p className="text-gray-500 mt-2">Date: {creditNote.creditNoteDate ? format(new Date(creditNote.creditNoteDate), 'dd/MM/yyyy') : ''}</p>
-            <p className="text-gray-500">Reference Invoice: {invoice?.invoice_number || 'N/A'}</p>
+            <p className="text-gray-500"># {creditNote.credit_note_number}</p>
+            <p className="text-gray-500 mt-2">Date: {creditNote.credit_note_date ? format(new Date(creditNote.credit_note_date), 'dd/MM/yyyy') : ''}</p>
+            {invoice && (
+              <p className="text-gray-500">Reference Invoice: {invoice.invoice_number || 'N/A'}</p>
+            )}
           </div>
           
           <div className="text-right">
@@ -162,85 +127,65 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         <Separator className="my-6" />
         
         {/* Customer Information */}
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-800 mb-2">Customer:</h3>
-          {customer ? (
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          {customer && (
             <>
-              <p className="font-medium">{customer.name}</p>
-              <p>{customer.billing_address_line1}</p>
-              {customer.billing_address_line2 && <p>{customer.billing_address_line2}</p>}
-              <p>{customer.billing_city}, {customer.billing_state} {customer.billing_pincode}</p>
-              {customer.gstin && <p>GSTIN: {customer.gstin}</p>}
-              {customer.email && <p>Email: {customer.email}</p>}
-              {customer.phone && <p>Phone: {customer.phone}</p>}
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-2">Bill To:</h3>
+                <p className="font-medium">{customer.name}</p>
+                <p>{customer.billing_address_line1}</p>
+                {customer.billing_address_line2 && <p>{customer.billing_address_line2}</p>}
+                <p>{customer.billing_city}, {customer.billing_state} {customer.billing_pincode}</p>
+                {customer.gstin && <p>GSTIN: {customer.gstin}</p>}
+                {customer.email && <p>Email: {customer.email}</p>}
+                {customer.phone && <p>Phone: {customer.phone}</p>}
+              </div>
+              
+              {(customer.shipping_address_line1 || customer.shipping_city) && (
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Ship To:</h3>
+                  <p className="font-medium">{customer.name}</p>
+                  <p>{customer.shipping_address_line1 || customer.billing_address_line1}</p>
+                  {customer.shipping_address_line2 && <p>{customer.shipping_address_line2}</p>}
+                  <p>
+                    {customer.shipping_city || customer.billing_city}, 
+                    {customer.shipping_state || customer.billing_state} 
+                    {customer.shipping_pincode || customer.billing_pincode}
+                  </p>
+                </div>
+              )}
             </>
-          ) : (
-            <p className="text-gray-500">Customer information not available</p>
           )}
         </div>
         
-        {/* Reason */}
-        {creditNote.reason && (
-          <div className="mb-6 p-3 bg-gray-50 rounded border">
-            <h3 className="font-semibold text-gray-800 mb-1">Reason for Credit Note:</h3>
-            <p>{creditNote.reason}</p>
-          </div>
-        )}
-        
         {/* Credit Note Items */}
-        <div className="w-full overflow-hidden print:overflow-visible">
-          <table className="w-full text-left border-collapse mb-6 text-xs md:text-sm">
+        <div className="w-full overflow-visible print:overflow-visible">
+          <table className="w-full text-left border-collapse mb-6 text-sm">
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-2 px-2 border font-semibold">S.No</th>
-                <th className="py-2 px-2 border font-semibold">Item</th>
+                <th className="py-2 px-2 border font-semibold">Product</th>
                 <th className="py-2 px-2 border font-semibold">HSN/SAC</th>
                 <th className="py-2 px-2 border font-semibold">Qty</th>
                 <th className="py-2 px-2 border font-semibold">Unit</th>
                 <th className="py-2 px-2 border font-semibold">Rate</th>
-                <th className="py-2 px-2 border font-semibold">GST %</th>
-                {useIGST ? (
-                  <th className="py-2 px-2 border font-semibold">IGST</th>
-                ) : (
-                  <>
-                    <th className="py-2 px-2 border font-semibold">CGST</th>
-                    <th className="py-2 px-2 border font-semibold">SGST</th>
-                  </>
-                )}
-                <th className="py-2 px-2 border font-semibold text-right">Amount</th>
+                <th className="py-2 px-2 border font-semibold">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(creditNote.items) && creditNote.items.map((item: any, index: number) => {
-                // Ensure we're working with numbers
-                const price = typeof item.price === 'number' ? item.price : 0;
-                const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-                const gstRate = typeof item.gstRate === 'number' ? item.gstRate : 0;
-                
-                const itemTotal = price * quantity;
-                const gstAmount = (itemTotal * gstRate) / 100;
-                
-                return (
-                  <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-2 px-2 border text-xs md:text-sm">{index + 1}</td>
-                    <td className="py-2 px-2 border text-xs md:text-sm">{item.productName}</td>
-                    <td className="py-2 px-2 border text-xs md:text-sm">{item.hsnCode}</td>
-                    <td className="py-2 px-2 border text-xs md:text-sm">{item.quantity}</td>
-                    <td className="py-2 px-2 border text-xs md:text-sm">{item.unit}</td>
-                    <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(price)}</td>
-                    <td className="py-2 px-2 border text-xs md:text-sm">{item.gstRate}%</td>
-                    {useIGST ? (
-                      <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(gstAmount)}</td>
-                    ) : (
-                      <>
-                        <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(gstAmount / 2)}</td>
-                        <td className="py-2 px-2 border text-xs md:text-sm">₹{formatAmount(gstAmount / 2)}</td>
-                      </>
-                    )}
-                    <td className="py-2 px-2 border text-xs md:text-sm text-right">₹{formatAmount(itemTotal)}</td>
-                  </tr>
-                )
-              })}
+              {Array.isArray(creditNote.items) && creditNote.items.map((item: any, index: number) => (
+                <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                  <td className="py-2 px-2 border text-sm">{index + 1}</td>
+                  <td className="py-2 px-2 border text-sm">
+                    <div className="font-medium">{item.product_name}</div>
+                  </td>
+                  <td className="py-2 px-2 border text-sm">{item.hsn_code}</td>
+                  <td className="py-2 px-2 border text-sm">{item.quantity}</td>
+                  <td className="py-2 px-2 border text-sm">{item.unit}</td>
+                  <td className="py-2 px-2 border text-sm">₹{formatAmount(item.price)}</td>
+                  <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(item.price * item.quantity)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -253,44 +198,46 @@ export const CreditNoteView: React.FC<CreditNoteViewProps> = ({
               <span>₹{formatAmount(subtotal)}</span>
             </div>
             
-            {!useIGST && (cgst > 0 || sgst > 0) && (
-              <>
-                <div className="flex justify-between py-2">
-                  <span>CGST:</span>
-                  <span>₹{formatAmount(cgst)}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span>SGST:</span>
-                  <span>₹{formatAmount(sgst)}</span>
-                </div>
-              </>
+            {cgst > 0 && (
+              <div className="flex justify-between py-2">
+                <span>CGST:</span>
+                <span>₹{formatAmount(cgst)}</span>
+              </div>
             )}
             
-            {useIGST && igst > 0 && (
+            {sgst > 0 && (
+              <div className="flex justify-between py-2">
+                <span>SGST:</span>
+                <span>₹{formatAmount(sgst)}</span>
+              </div>
+            )}
+            
+            {igst > 0 && (
               <div className="flex justify-between py-2">
                 <span>IGST:</span>
                 <span>₹{formatAmount(igst)}</span>
               </div>
             )}
             
-            {roundOffAmount !== 0 && (
-              <div className="flex justify-between py-2">
-                <span>Round off:</span>
-                <span>₹{formatAmount(roundOffAmount)}</span>
-              </div>
-            )}
-            
             <div className="flex justify-between py-2 font-bold border-t border-gray-300 mt-2">
-              <span>Total Credit:</span>
-              <span>₹{formatAmount(roundedTotal)}</span>
+              <span>Total:</span>
+              <span>₹{formatAmount(totalAmount)}</span>
             </div>
           </div>
         </div>
         
         {/* Amount in words */}
         <div className="mb-6 border p-3 bg-gray-50 rounded">
-          <p><span className="font-medium">Amount in words:</span> {amountToWords(roundedTotal)}</p>
+          <p><span className="font-medium">Amount in words:</span> {amountToWords(totalAmount)}</p>
         </div>
+        
+        {/* Reason for credit note */}
+        {creditNote.reason && (
+          <div className="mb-6">
+            <h4 className="font-semibold mb-1">Reason:</h4>
+            <p className="whitespace-pre-line">{creditNote.reason}</p>
+          </div>
+        )}
         
         {/* Bank Details */}
         <div className="border-t pt-4 mt-4">

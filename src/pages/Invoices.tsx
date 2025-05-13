@@ -75,10 +75,6 @@ const Invoices = () => {
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'invoice' | 'creditNote'} | null>(null);
   
   // Fetch invoices and credit notes
-  useEffect(() => {
-    fetchData();
-  }, []);
-  
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -116,6 +112,10 @@ const Invoices = () => {
       setLoading(false);
     }
   };
+  
+  useEffect(() => {
+    fetchData();
+  }, []);
   
   // Filter invoices based on search and status
   const filteredInvoices = invoices.filter((invoice) => {
@@ -422,7 +422,7 @@ const Invoices = () => {
                         <TableCell>
                           {format(new Date(creditNote.credit_note_date), "dd MMM yyyy")}
                         </TableCell>
-                        <TableCell>{creditNote.invoices?.invoice_number}</TableCell>
+                        <TableCell>{creditNote.invoices?.invoice_number || "N/A"}</TableCell>
                         <TableCell>₹{creditNote.total_amount.toFixed(2)}</TableCell>
                         <TableCell>
                           <StatusBadge status={creditNote.status} />
