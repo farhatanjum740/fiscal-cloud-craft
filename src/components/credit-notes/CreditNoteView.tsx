@@ -103,14 +103,25 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           </div>
           
           <div className="text-right">
-            <div className="flex items-start gap-3 justify-end">
-              {company.logo && (
+            {company.logo && (
+              <div className="flex items-start gap-3 justify-end">
                 <img 
                   src={company.logo} 
                   alt={`${company.name} logo`} 
                   className="h-12 w-auto object-contain" 
                 />
-              )}
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">{company.name}</h2>
+                  <p className="text-sm text-gray-600">{company.address_line1}</p>
+                  {company.address_line2 && <p className="text-sm text-gray-600">{company.address_line2}</p>}
+                  <p className="text-sm text-gray-600">{company.city}, {company.state} - {company.pincode}</p>
+                  <p className="text-sm text-gray-600">GSTIN: {company.gstin}</p>
+                  {company.email && <p className="text-sm text-gray-600">Email: {company.email}</p>}
+                  {company.phone && <p className="text-sm text-gray-600">Phone: {company.phone}</p>}
+                </div>
+              </div>
+            )}
+            {!company.logo && (
               <div>
                 <h2 className="text-xl font-bold text-gray-800">{company.name}</h2>
                 <p className="text-sm text-gray-600">{company.address_line1}</p>
@@ -120,7 +131,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                 {company.email && <p className="text-sm text-gray-600">Email: {company.email}</p>}
                 {company.phone && <p className="text-sm text-gray-600">Phone: {company.phone}</p>}
               </div>
-            </div>
+            )}
           </div>
         </div>
         
@@ -158,7 +169,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           )}
         </div>
         
-        {/* Credit Note Items - Match the layout from screenshot 2 */}
+        {/* Credit Note Items - Match the layout from screenshot */}
         <div className="w-full overflow-visible print:overflow-visible">
           <table className="w-full text-left border-collapse mb-6 text-sm">
             <thead>

@@ -24,6 +24,8 @@ const CreditNoteView = () => {
     invoice,
     invoiceItems,
   } = useCreditNote(id);
+  
+  console.log("Credit Note Data:", { creditNote, company, invoice, customerData });
 
   // Auto download if query param is present
   useEffect(() => {
