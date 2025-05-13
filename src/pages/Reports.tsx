@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -51,23 +50,21 @@ import {
   startOfYear,
   endOfYear,
   subMonths,
-  subYears,
-  startOfFinancialYear,
-  endOfFinancialYear
+  subYears
 } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 
-// Add missing function for financial year calculation
-const startOfFinancialYear = (date: Date) => {
+// Define financial year utility functions
+const startOfFinancialYear = (date: Date): Date => {
   const year = date.getFullYear();
   const month = date.getMonth();
   // Financial year starts on April 1st in India
   return new Date(month < 3 ? year - 1 : year, 3, 1);
 };
 
-const endOfFinancialYear = (date: Date) => {
+const endOfFinancialYear = (date: Date): Date => {
   const year = date.getFullYear();
   const month = date.getMonth();
   // Financial year ends on March 31st in India
