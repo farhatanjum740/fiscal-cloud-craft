@@ -23,15 +23,15 @@ const CreditNoteView = () => {
 
   // Find the customer from the invoice
   const customer = invoice ? {
-    name: invoice.customer_name,
-    billing_address_line1: invoice.customer_billing_address_line1,
-    billing_address_line2: invoice.customer_billing_address_line2,
-    billing_city: invoice.customer_billing_city,
-    billing_state: invoice.customer_billing_state,
-    billing_pincode: invoice.customer_billing_pincode,
-    gstin: invoice.customer_gstin,
-    email: invoice.customer_email,
-    phone: invoice.customer_phone
+    name: invoice.customer_name || "",
+    billing_address_line1: invoice.customer_billing_address_line1 || "",
+    billing_address_line2: invoice.customer_billing_address_line2 || "",
+    billing_city: invoice.customer_billing_city || "",
+    billing_state: invoice.customer_billing_state || "",
+    billing_pincode: invoice.customer_billing_pincode || "",
+    gstin: invoice.customer_gstin || "",
+    email: invoice.customer_email || "",
+    phone: invoice.customer_phone || ""
   } : null;
   
   const handleDeleteCreditNote = async () => {
@@ -61,6 +61,7 @@ const CreditNoteView = () => {
       
       navigate("/app/invoices");
     } catch (error: any) {
+      console.error("Error deleting credit note:", error);
       toast({
         title: "Error",
         description: `Failed to delete credit note: ${error.message}`,

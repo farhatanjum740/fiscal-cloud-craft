@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
-import { formatCurrency, formatAmount } from '@/lib/utils';
+import { formatCurrency, formatAmount, amountToWords } from '@/lib/utils';
 
 interface InvoiceViewProps {
   invoice: any;
@@ -15,17 +15,6 @@ interface InvoiceViewProps {
   customer: any;
   isDownloadable?: boolean;
 }
-
-// Helper function to convert amount to words
-const amountInWords = (amount: number): string => {
-  const formatter = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 2,
-  });
-  
-  return `${formatter.format(amount || 0)} only`;
-};
 
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, customer, isDownloadable = true }) => {
   const printRef = useRef<HTMLDivElement>(null);
@@ -196,26 +185,26 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Invoice Items */}
-        <div className="w-full">
+        <div className="w-full overflow-visible print:overflow-visible">
           <table className="w-full text-left border-collapse mb-6 text-sm">
             <thead>
               <tr className="bg-gray-100">
-                <th className="py-3 px-2 border font-semibold">S.No</th>
-                <th className="py-3 px-2 border font-semibold">Item</th>
-                <th className="py-3 px-2 border font-semibold">HSN/SAC</th>
-                <th className="py-3 px-2 border font-semibold">Qty</th>
-                <th className="py-3 px-2 border font-semibold">Unit</th>
-                <th className="py-3 px-2 border font-semibold">Rate</th>
-                <th className="py-3 px-2 border font-semibold">GST %</th>
+                <th className="py-2 px-2 border font-semibold">S.No</th>
+                <th className="py-2 px-2 border font-semibold">Item</th>
+                <th className="py-2 px-2 border font-semibold">HSN/SAC</th>
+                <th className="py-2 px-2 border font-semibold">Qty</th>
+                <th className="py-2 px-2 border font-semibold">Unit</th>
+                <th className="py-2 px-2 border font-semibold">Rate</th>
+                <th className="py-2 px-2 border font-semibold">GST %</th>
                 {useIGST ? (
-                  <th className="py-3 px-2 border font-semibold">IGST</th>
+                  <th className="py-2 px-2 border font-semibold">IGST</th>
                 ) : (
                   <>
-                    <th className="py-3 px-2 border font-semibold">CGST</th>
-                    <th className="py-3 px-2 border font-semibold">SGST</th>
+                    <th className="py-2 px-2 border font-semibold">CGST</th>
+                    <th className="py-2 px-2 border font-semibold">SGST</th>
                   </>
                 )}
-                <th className="py-3 px-2 border font-semibold text-right">Amount</th>
+                <th className="py-2 px-2 border font-semibold text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -230,25 +219,25 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-2 px-2 border">{index + 1}</td>
-                    <td className="py-2 px-2 border">
+                    <td className="py-2 px-2 border text-sm">{index + 1}</td>
+                    <td className="py-2 px-2 border text-sm">
                       <div className="font-medium">{item.productName}</div>
                       {item.description && <div className="text-xs text-gray-600">{item.description}</div>}
                     </td>
-                    <td className="py-2 px-2 border">{item.hsnCode}</td>
-                    <td className="py-2 px-2 border">{item.quantity}</td>
-                    <td className="py-2 px-2 border">{item.unit}</td>
-                    <td className="py-2 px-2 border">₹{formatAmount(price)}</td>
-                    <td className="py-2 px-2 border">{item.gstRate}%</td>
+                    <td className="py-2 px-2 border text-sm">{item.hsnCode}</td>
+                    <td className="py-2 px-2 border text-sm">{item.quantity}</td>
+                    <td className="py-2 px-2 border text-sm">{item.unit}</td>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(price)}</td>
+                    <td className="py-2 px-2 border text-sm">{item.gstRate}%</td>
                     {useIGST ? (
-                      <td className="py-2 px-2 border">₹{formatAmount(gstAmount)}</td>
+                      <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount)}</td>
                     ) : (
                       <>
-                        <td className="py-2 px-2 border">₹{formatAmount(gstAmount / 2)}</td>
-                        <td className="py-2 px-2 border">₹{formatAmount(gstAmount / 2)}</td>
+                        <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount / 2)}</td>
+                        <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount / 2)}</td>
                       </>
                     )}
-                    <td className="py-2 px-2 border text-right">₹{formatAmount(itemTotal)}</td>
+                    <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(itemTotal)}</td>
                   </tr>
                 );
               })}
@@ -300,7 +289,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         
         {/* Amount in words */}
         <div className="mb-6 border p-3 bg-gray-50 rounded">
-          <p><span className="font-medium">Amount in words:</span> {amountInWords(roundedTotal)}</p>
+          <p><span className="font-medium">Amount in words:</span> {amountToWords(roundedTotal)}</p>
         </div>
         
         {/* Notes and Terms */}
@@ -324,9 +313,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         <div className="border-t pt-4 mt-4">
           <h4 className="font-semibold mb-1">Bank Details:</h4>
           <p className="text-sm">
-            <span className="font-medium">Account:</span> {company.bank_account_name} ({company.bank_account_number}) |  
-            <span className="font-medium"> Bank:</span> {company.bank_name}, {company.bank_branch} | 
-            <span className="font-medium"> IFSC:</span> {company.bank_ifsc_code}
+            {company.bank_account_name} ({company.bank_account_number}) | {company.bank_name}, {company.bank_branch} | IFSC: {company.bank_ifsc_code}
           </p>
         </div>
         
