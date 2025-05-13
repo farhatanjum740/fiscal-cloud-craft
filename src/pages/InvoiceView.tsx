@@ -1,5 +1,5 @@
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
 import { useInvoice } from "@/hooks/useInvoice";
@@ -7,10 +7,12 @@ import InvoiceViewComponent from "@/components/invoices/InvoiceView";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 const InvoiceView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const { 
     invoice, 
@@ -20,6 +22,21 @@ const InvoiceView = () => {
     customers,
   } = useInvoice(id || '');
 
+  // Auto download if query param is present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldDownload = params.get('download') === 'true';
+    
+    if (shouldDownload && !loadingData && document.querySelector('button[title="Download Invoice"]')) {
+      // Click the download button once data is loaded
+      const downloadBtn = document.querySelector('button[title="Download Invoice"]') as HTMLButtonElement;
+      if (downloadBtn) downloadBtn.click();
+      
+      // Clean up the URL
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.search, loadingData, navigate, location.pathname]);
+
   // Find the customer for this invoice
   const customer = customers.find(cust => cust.id === invoice.customerId);
   
@@ -27,6 +44,21 @@ const InvoiceView = () => {
     if (!id) return;
     
     try {
+      // Check if there are credit notes associated with this invoice
+      const { data: relatedCreditNotes } = await supabase
+        .from('credit_notes')
+        .select('id')
+        .eq('invoice_id', id);
+        
+      if (relatedCreditNotes && relatedCreditNotes.length > 0) {
+        toast({
+          title: "Cannot Delete Invoice",
+          description: "This invoice has credit notes attached. Delete the credit notes first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // First delete related invoice items
       const { error: itemsError } = await supabase
         .from('invoice_items')

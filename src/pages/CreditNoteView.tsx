@@ -1,5 +1,5 @@
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { useCreditNote } from "@/hooks/useCreditNote";
@@ -12,7 +12,9 @@ import { useEffect, useState } from "react";
 const CreditNoteView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [customerData, setCustomerData] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const {
     creditNote,
@@ -22,6 +24,21 @@ const CreditNoteView = () => {
     invoice,
     invoiceItems,
   } = useCreditNote(id);
+
+  // Auto download if query param is present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldDownload = params.get('download') === 'true';
+    
+    if (shouldDownload && !loadingData && document.querySelector('button[title="Download Credit Note"]')) {
+      // Click the download button once data is loaded
+      const downloadBtn = document.querySelector('button[title="Download Credit Note"]') as HTMLButtonElement;
+      if (downloadBtn) downloadBtn.click();
+      
+      // Clean up the URL
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.search, loadingData, navigate, location.pathname]);
 
   // Fetch customer data when invoice changes
   useEffect(() => {
@@ -67,13 +84,21 @@ const CreditNoteView = () => {
     if (!id) return;
     
     try {
+      setIsDeleting(true);
+      console.log("Starting to delete credit note with ID:", id);
+      
       // First delete the credit note items
       const { error: itemsError } = await supabase
         .from('credit_note_items')
         .delete()
         .eq('credit_note_id', id);
         
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error("Error deleting credit note items:", itemsError);
+        throw itemsError;
+      }
+      
+      console.log("Successfully deleted credit note items, now deleting credit note");
       
       // Then delete the credit note
       const { error } = await supabase
@@ -81,7 +106,12 @@ const CreditNoteView = () => {
         .delete()
         .eq('id', id);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting credit note:", error);
+        throw error;
+      }
+      
+      console.log("Successfully deleted credit note");
       
       toast({
         title: "Credit note deleted",
@@ -97,6 +127,8 @@ const CreditNoteView = () => {
         description: `Failed to delete credit note: ${error.message}`,
         variant: "destructive"
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -133,8 +165,11 @@ const CreditNoteView = () => {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteCreditNote}>
-                  Delete
+                <AlertDialogAction 
+                  onClick={handleDeleteCreditNote}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

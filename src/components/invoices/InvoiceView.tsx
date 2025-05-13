@@ -109,7 +109,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
-          <Button variant="default" size="sm" onClick={handleDownload}>
+          <Button variant="default" size="sm" onClick={handleDownload} title="Download Invoice">
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>

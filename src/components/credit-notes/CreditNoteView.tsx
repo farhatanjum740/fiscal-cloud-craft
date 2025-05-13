@@ -158,34 +158,48 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           )}
         </div>
         
-        {/* Credit Note Items */}
+        {/* Credit Note Items - Updated to match screenshot 2 format */}
         <div className="w-full overflow-visible print:overflow-visible">
           <table className="w-full text-left border-collapse mb-6 text-sm">
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-2 px-2 border font-semibold">S.No</th>
-                <th className="py-2 px-2 border font-semibold">Product</th>
+                <th className="py-2 px-2 border font-semibold">Item</th>
                 <th className="py-2 px-2 border font-semibold">HSN/SAC</th>
                 <th className="py-2 px-2 border font-semibold">Qty</th>
                 <th className="py-2 px-2 border font-semibold">Unit</th>
                 <th className="py-2 px-2 border font-semibold">Rate</th>
-                <th className="py-2 px-2 border font-semibold">Amount</th>
+                <th className="py-2 px-2 border font-semibold">GST %</th>
+                <th className="py-2 px-2 border font-semibold">CGST</th>
+                <th className="py-2 px-2 border font-semibold">SGST</th>
+                <th className="py-2 px-2 border font-semibold text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(creditNote.items) && creditNote.items.map((item: any, index: number) => (
-                <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="py-2 px-2 border text-sm">{index + 1}</td>
-                  <td className="py-2 px-2 border text-sm">
-                    <div className="font-medium">{item.product_name}</div>
-                  </td>
-                  <td className="py-2 px-2 border text-sm">{item.hsn_code}</td>
-                  <td className="py-2 px-2 border text-sm">{item.quantity}</td>
-                  <td className="py-2 px-2 border text-sm">{item.unit}</td>
-                  <td className="py-2 px-2 border text-sm">₹{formatAmount(item.price)}</td>
-                  <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(item.price * item.quantity)}</td>
-                </tr>
-              ))}
+              {Array.isArray(creditNote.items) && creditNote.items.map((item: any, index: number) => {
+                const itemAmount = item.price * item.quantity;
+                const gstRate = item.gst_rate || 0;
+                const gstAmount = (itemAmount * gstRate) / 100;
+                const cgstAmount = gstAmount / 2;
+                const sgstAmount = gstAmount / 2;
+                
+                return (
+                  <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="py-2 px-2 border text-sm">{index + 1}</td>
+                    <td className="py-2 px-2 border text-sm">
+                      <div className="font-medium">{item.product_name}</div>
+                    </td>
+                    <td className="py-2 px-2 border text-sm">{item.hsn_code}</td>
+                    <td className="py-2 px-2 border text-sm">{item.quantity}</td>
+                    <td className="py-2 px-2 border text-sm">{item.unit}</td>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(item.price)}</td>
+                    <td className="py-2 px-2 border text-sm">{gstRate}%</td>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(cgstAmount)}</td>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(sgstAmount)}</td>
+                    <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(itemAmount)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
