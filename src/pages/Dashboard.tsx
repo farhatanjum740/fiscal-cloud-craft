@@ -47,6 +47,12 @@ const endOfFinancialYear = (date: Date): Date => {
   return new Date(month < 3 ? year : year + 1, 2, 31, 23, 59, 59, 999);
 };
 
+// Define the type for revenue data
+interface RevenueDataType {
+  invoices: { invoice_date: string; total_amount: number; status: string }[];
+  creditNotes: { credit_note_date: string; total_amount: number }[];
+}
+
 const Dashboard = () => {
   const { user, profile } = useAuth();
   const [timeRange, setTimeRange] = useState("thisYear");
@@ -171,10 +177,10 @@ const Dashboard = () => {
   });
 
   // Fetch revenue data for chart based on date range
-  const { data: revenueData, isLoading: loadingRevenueData } = useQuery({
+  const { data: revenueData, isLoading: loadingRevenueData } = useQuery<RevenueDataType>({
     queryKey: ['revenue-chart', dateRange],
     queryFn: async () => {
-      if (!user || !dateRange.from || !dateRange.to) return [];
+      if (!user || !dateRange.from || !dateRange.to) return { invoices: [], creditNotes: [] };
       
       const formattedFrom = format(dateRange.from, 'yyyy-MM-dd');
       const formattedTo = format(dateRange.to, 'yyyy-MM-dd');
@@ -211,6 +217,9 @@ const Dashboard = () => {
   // Process revenue data to create chart data
   useEffect(() => {
     if (!revenueData) return;
+    
+    // Ensure we're working with the object structure, not an array
+    if (!('invoices' in revenueData) || !('creditNotes' in revenueData)) return;
     
     const { invoices, creditNotes } = revenueData;
     
