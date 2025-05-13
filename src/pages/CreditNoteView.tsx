@@ -118,8 +118,10 @@ const CreditNoteView = () => {
         description: "The credit note has been successfully deleted."
       });
       
-      // Navigate immediately to ensure we leave the page after deleting
-      navigate("/app/invoices");
+      // Navigate away after a short delay to ensure the toast is seen
+      setTimeout(() => {
+        navigate("/app/invoices");
+      }, 500);
     } catch (error: any) {
       console.error("Error deleting credit note:", error);
       toast({
@@ -164,7 +166,7 @@ const CreditNoteView = () => {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
                 <AlertDialogAction 
                   onClick={handleDeleteCreditNote}
                   disabled={isDeleting}

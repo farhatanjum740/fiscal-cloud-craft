@@ -79,7 +79,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
-          <Button variant="default" size="sm" onClick={handleDownload}>
+          <Button variant="default" size="sm" onClick={handleDownload} title="Download Credit Note">
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
@@ -95,8 +95,8 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">CREDIT NOTE</h1>
-            <p className="text-gray-500"># {creditNote.credit_note_number}</p>
-            <p className="text-gray-500 mt-2">Date: {creditNote.credit_note_date ? format(new Date(creditNote.credit_note_date), 'dd/MM/yyyy') : ''}</p>
+            <p className="text-gray-500"># {creditNote.credit_note_number || 'N/A'}</p>
+            <p className="text-gray-500 mt-2">Date: {creditNote.credit_note_date ? format(new Date(creditNote.credit_note_date), 'dd/MM/yyyy') : 'N/A'}</p>
             {invoice && (
               <p className="text-gray-500">Reference Invoice: {invoice.invoice_number || 'N/A'}</p>
             )}
@@ -158,7 +158,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           )}
         </div>
         
-        {/* Credit Note Items - Updated to match screenshot 2 format */}
+        {/* Credit Note Items - Match the layout from screenshot 2 */}
         <div className="w-full overflow-visible print:overflow-visible">
           <table className="w-full text-left border-collapse mb-6 text-sm">
             <thead>
@@ -169,10 +169,10 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                 <th className="py-2 px-2 border font-semibold">Qty</th>
                 <th className="py-2 px-2 border font-semibold">Unit</th>
                 <th className="py-2 px-2 border font-semibold">Rate</th>
+                <th className="py-2 px-2 border font-semibold">Amount</th>
                 <th className="py-2 px-2 border font-semibold">GST %</th>
-                <th className="py-2 px-2 border font-semibold">CGST</th>
-                <th className="py-2 px-2 border font-semibold">SGST</th>
-                <th className="py-2 px-2 border font-semibold text-right">Amount</th>
+                <th className="py-2 px-2 border font-semibold">GST Amt</th>
+                <th className="py-2 px-2 border font-semibold text-right">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -180,8 +180,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                 const itemAmount = item.price * item.quantity;
                 const gstRate = item.gst_rate || 0;
                 const gstAmount = (itemAmount * gstRate) / 100;
-                const cgstAmount = gstAmount / 2;
-                const sgstAmount = gstAmount / 2;
+                const totalWithGst = itemAmount + gstAmount;
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
@@ -189,14 +188,14 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                     <td className="py-2 px-2 border text-sm">
                       <div className="font-medium">{item.product_name}</div>
                     </td>
-                    <td className="py-2 px-2 border text-sm">{item.hsn_code}</td>
+                    <td className="py-2 px-2 border text-sm">{item.hsn_code || 'N/A'}</td>
                     <td className="py-2 px-2 border text-sm">{item.quantity}</td>
-                    <td className="py-2 px-2 border text-sm">{item.unit}</td>
+                    <td className="py-2 px-2 border text-sm">{item.unit || 'Unit'}</td>
                     <td className="py-2 px-2 border text-sm">₹{formatAmount(item.price)}</td>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(itemAmount)}</td>
                     <td className="py-2 px-2 border text-sm">{gstRate}%</td>
-                    <td className="py-2 px-2 border text-sm">₹{formatAmount(cgstAmount)}</td>
-                    <td className="py-2 px-2 border text-sm">₹{formatAmount(sgstAmount)}</td>
-                    <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(itemAmount)}</td>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount)}</td>
+                    <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(totalWithGst)}</td>
                   </tr>
                 );
               })}
