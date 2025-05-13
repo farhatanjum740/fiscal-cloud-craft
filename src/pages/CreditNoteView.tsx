@@ -49,7 +49,7 @@ const CreditNoteView = () => {
             .from('customers')
             .select('*')
             .eq('id', invoice.customer_id)
-            .single();
+            .maybeSingle();
           
           if (error) throw error;
           setCustomerData(data);
