@@ -2,7 +2,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
-import { useCreditNote } from "@/hooks/useCreditNote";
+import { useCreditNote } from "@/hooks/credit-notes";
 import CreditNoteViewComponent from "@/components/credit-notes/CreditNoteView";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";

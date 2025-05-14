@@ -9,9 +9,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useCreditNote } from "@/hooks/useCreditNote";
+import { useCreditNote } from "@/hooks/credit-notes";
 import { AlertCircle } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import CreditNoteDetails from "@/components/credit-notes/CreditNoteDetails";
 import InvoiceInfo from "@/components/credit-notes/InvoiceInfo";
 import CreditNoteItems from "@/components/credit-notes/CreditNoteItems";
