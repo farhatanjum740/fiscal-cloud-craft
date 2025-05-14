@@ -64,7 +64,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     }
   };
   
-  // Calculate totals
+  // Calculate totals from the actual credit note data
   const subtotal = creditNote.subtotal || 0;
   const cgst = creditNote.cgst || 0;
   const sgst = creditNote.sgst || 0;
@@ -95,10 +95,10 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">CREDIT NOTE</h1>
-            <p className="text-gray-500"># {creditNote.credit_note_number || 'N/A'}</p>
+            <p className="text-gray-500"># {creditNote.credit_note_number}</p>
             <p className="text-gray-500 mt-2">Date: {creditNote.credit_note_date ? format(new Date(creditNote.credit_note_date), 'dd/MM/yyyy') : 'N/A'}</p>
             {invoice && (
-              <p className="text-gray-500">Reference Invoice: {invoice.invoice_number || 'N/A'}</p>
+              <p className="text-gray-500">Reference Invoice: {invoice.invoice_number}</p>
             )}
           </div>
           
@@ -174,7 +174,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           <h3 className="font-semibold text-gray-800 mb-2">Credit Note Details:</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p><span className="font-medium">Credit Note Number:</span> {creditNote.credit_note_number || 'N/A'}</p>
+              <p><span className="font-medium">Credit Note Number:</span> {creditNote.credit_note_number}</p>
               <p><span className="font-medium">Credit Note Date:</span> {creditNote.credit_note_date ? format(new Date(creditNote.credit_note_date), 'dd/MM/yyyy') : 'N/A'}</p>
               <p><span className="font-medium">Status:</span> {creditNote.status ? creditNote.status.charAt(0).toUpperCase() + creditNote.status.slice(1) : 'N/A'}</p>
             </div>
@@ -214,9 +214,9 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
                     <td className="py-2 px-2 border text-sm">{index + 1}</td>
                     <td className="py-2 px-2 border text-sm">
-                      <div className="font-medium">{item.product_name || 'N/A'}</div>
+                      <div className="font-medium">{item.product_name}</div>
                     </td>
-                    <td className="py-2 px-2 border text-sm">{item.hsn_code || 'N/A'}</td>
+                    <td className="py-2 px-2 border text-sm">{item.hsn_code}</td>
                     <td className="py-2 px-2 border text-sm">{item.quantity}</td>
                     <td className="py-2 px-2 border text-sm">{item.unit || 'Unit'}</td>
                     <td className="py-2 px-2 border text-sm">₹{formatAmount(item.price)}</td>

@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import type { CreditNoteItem } from "@/types";
 
@@ -376,12 +377,12 @@ export const useCreditNote = (id?: string) => {
         id: `temp-${Date.now()}-${item.id}`,
         invoiceItemId: item.id,
         productId: item.product_id || "",
-        productName: item.productName,
-        hsnCode: item.hsnCode || "",
+        productName: item.product_name || item.productName, // Use the correct field based on what's available
+        hsnCode: item.hsn_code || item.hsnCode || "", // Use the correct field based on what's available
         quantity: item.availableQuantity, // Default to max available
         price: item.price,
         unit: item.unit,
-        gstRate: item.gstRate,
+        gstRate: item.gst_rate || item.gstRate, // Use the correct field based on what's available
         maxQuantity: item.availableQuantity
       }));
       
