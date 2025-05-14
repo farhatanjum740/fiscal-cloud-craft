@@ -6,7 +6,7 @@ import { Printer, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { formatCurrency, formatAmount, amountToWords } from '@/lib/utils';
 
 interface CreditNoteViewProps {
@@ -169,7 +169,24 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           )}
         </div>
         
-        {/* Credit Note Items - Match the layout from screenshot */}
+        {/* Credit Note Details - Added for clarification */}
+        <div className="mb-6 bg-gray-50 p-4 border border-gray-200 rounded">
+          <h3 className="font-semibold text-gray-800 mb-2">Credit Note Details:</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p><span className="font-medium">Credit Note Number:</span> {creditNote.credit_note_number || 'N/A'}</p>
+              <p><span className="font-medium">Credit Note Date:</span> {creditNote.credit_note_date ? format(new Date(creditNote.credit_note_date), 'dd/MM/yyyy') : 'N/A'}</p>
+              <p><span className="font-medium">Status:</span> {creditNote.status ? creditNote.status.charAt(0).toUpperCase() + creditNote.status.slice(1) : 'N/A'}</p>
+            </div>
+            <div>
+              <p><span className="font-medium">Reference Invoice:</span> {invoice ? invoice.invoice_number : 'N/A'}</p>
+              <p><span className="font-medium">Invoice Date:</span> {invoice && invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : 'N/A'}</p>
+              <p><span className="font-medium">Customer:</span> {customer ? customer.name : 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Credit Note Items */}
         <div className="w-full overflow-visible print:overflow-visible">
           <table className="w-full text-left border-collapse mb-6 text-sm">
             <thead>
@@ -197,7 +214,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
                     <td className="py-2 px-2 border text-sm">{index + 1}</td>
                     <td className="py-2 px-2 border text-sm">
-                      <div className="font-medium">{item.product_name}</div>
+                      <div className="font-medium">{item.product_name || 'N/A'}</div>
                     </td>
                     <td className="py-2 px-2 border text-sm">{item.hsn_code || 'N/A'}</td>
                     <td className="py-2 px-2 border text-sm">{item.quantity}</td>

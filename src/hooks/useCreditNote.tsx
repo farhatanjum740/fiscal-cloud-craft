@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -289,9 +288,8 @@ export const useCreditNote = (id?: string) => {
     try {
       setIsGeneratingNumber(true);
       
-      // Format: CN/INV-NUMBER/001
-      const baseInvoiceNumber = invoice.invoice_number.split('/').pop() || invoice.invoice_number;
-      const creditNoteNumber = `CN/${invoice.invoice_number}/001`;
+      // Format: CN/INV-NUMBER (without the redundant 001 suffix)
+      const creditNoteNumber = `CN/${invoice.invoice_number}`;
       
       setCreditNote(prev => ({
         ...prev,
@@ -378,12 +376,12 @@ export const useCreditNote = (id?: string) => {
         id: `temp-${Date.now()}-${item.id}`,
         invoiceItemId: item.id,
         productId: item.product_id || "",
-        productName: item.product_name,
-        hsnCode: item.hsn_code || "",
+        productName: item.productName,
+        hsnCode: item.hsnCode || "",
         quantity: item.availableQuantity, // Default to max available
         price: item.price,
         unit: item.unit,
-        gstRate: item.gst_rate,
+        gstRate: item.gstRate,
         maxQuantity: item.availableQuantity
       }));
       
