@@ -8,6 +8,7 @@ interface CreditNoteSummaryProps {
   sgst: number | null;
   igst: number | null;
   totalAmount: number | null;
+  useIGST?: boolean;
 }
 
 const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({ 
@@ -15,7 +16,8 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
   cgst = 0,
   sgst = 0,
   igst = 0,
-  totalAmount = 0
+  totalAmount = 0,
+  useIGST = false
 }) => {
   // Ensure we have numbers, not null values
   const safeSubtotal = Number(subtotal) || 0;
@@ -33,21 +35,18 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
             <span>₹{formatAmount(safeSubtotal)}</span>
           </div>
           
-          {safeCgst > 0 && (
-            <div className="flex justify-between py-2">
-              <span>CGST:</span>
-              <span>₹{formatAmount(safeCgst)}</span>
-            </div>
-          )}
-          
-          {safeSgst > 0 && (
-            <div className="flex justify-between py-2">
-              <span>SGST:</span>
-              <span>₹{formatAmount(safeSgst)}</span>
-            </div>
-          )}
-          
-          {safeIgst > 0 && (
+          {!useIGST ? (
+            <>
+              <div className="flex justify-between py-2">
+                <span>CGST:</span>
+                <span>₹{formatAmount(safeCgst)}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span>SGST:</span>
+                <span>₹{formatAmount(safeSgst)}</span>
+              </div>
+            </>
+          ) : (
             <div className="flex justify-between py-2">
               <span>IGST:</span>
               <span>₹{formatAmount(safeIgst)}</span>

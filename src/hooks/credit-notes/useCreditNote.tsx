@@ -22,6 +22,11 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     fetchInvoiceItems
   } = useFetchCreditNoteData(user?.id, id, isEditing);
 
+  // Log fetched data for debugging
+  console.log("useCreditNote - Credit Note Data:", creditNote);
+  console.log("useCreditNote - Invoice Data:", invoice);
+  console.log("useCreditNote - Company Data:", company);
+
   const {
     loading,
     selectedItems,
@@ -46,6 +51,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
 
   // Get customer data
   const customer = useCreditNoteCustomer(invoice);
+  console.log("useCreditNote - Customer Data:", customer);
 
   // Create a wrapper for handleInvoiceChange to update the invoice state
   const handleInvoiceChange = async (value: string) => {

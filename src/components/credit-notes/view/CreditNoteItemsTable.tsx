@@ -4,9 +4,10 @@ import { formatAmount } from '@/lib/utils';
 
 interface CreditNoteItemsTableProps {
   items: any[];
+  useIGST?: boolean;
 }
 
-const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items }) => {
+const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useIGST = false }) => {
   return (
     <div className="w-full overflow-visible print:overflow-visible">
       <table className="w-full text-left border-collapse mb-6 text-sm">
@@ -20,7 +21,14 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items }) =>
             <th className="py-2 px-2 border font-semibold">Rate</th>
             <th className="py-2 px-2 border font-semibold">Amount</th>
             <th className="py-2 px-2 border font-semibold">GST %</th>
-            <th className="py-2 px-2 border font-semibold">GST Amt</th>
+            {useIGST ? (
+              <th className="py-2 px-2 border font-semibold">IGST</th>
+            ) : (
+              <>
+                <th className="py-2 px-2 border font-semibold">CGST</th>
+                <th className="py-2 px-2 border font-semibold">SGST</th>
+              </>
+            )}
             <th className="py-2 px-2 border font-semibold text-right">Total</th>
           </tr>
         </thead>
@@ -45,7 +53,14 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items }) =>
                 <td className="py-2 px-2 border text-sm">₹{formatAmount(itemPrice)}</td>
                 <td className="py-2 px-2 border text-sm">₹{formatAmount(itemAmount)}</td>
                 <td className="py-2 px-2 border text-sm">{gstRate}%</td>
-                <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount)}</td>
+                {useIGST ? (
+                  <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount)}</td>
+                ) : (
+                  <>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount / 2)}</td>
+                    <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount / 2)}</td>
+                  </>
+                )}
                 <td className="py-2 px-2 border text-sm text-right">₹{formatAmount(totalWithGst)}</td>
               </tr>
             );

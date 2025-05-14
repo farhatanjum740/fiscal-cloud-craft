@@ -7,6 +7,7 @@ import { useCreditNote } from "@/hooks/credit-notes";
 import CreditNoteViewComponent from "@/components/credit-notes/view";
 import CreditNoteDeleteDialog from "./CreditNoteDeleteDialog";
 import CreditNoteLoading from "./CreditNoteLoading";
+import { toast } from "@/hooks/use-toast";
 
 const CreditNoteViewPage = () => {
   const { id } = useParams();
@@ -21,6 +22,18 @@ const CreditNoteViewPage = () => {
     invoice,
     customer
   } = useCreditNote(id);
+  
+  // Error handling
+  useEffect(() => {
+    if (!loadingData && !creditNote && id) {
+      toast({
+        title: "Error",
+        description: "Credit note not found or couldn't be loaded",
+        variant: "destructive"
+      });
+      navigate("/app/invoices", { replace: true });
+    }
+  }, [creditNote, loadingData, id, navigate]);
   
   // Auto download if query param is present
   useEffect(() => {

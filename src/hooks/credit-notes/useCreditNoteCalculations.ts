@@ -18,7 +18,8 @@ export const useCreditNoteCalculations = (
   // Calculate totals whenever credit note items change
   useEffect(() => {
     // Ensure creditNote and items exist
-    if (!creditNote || !Array.isArray(creditNote.items)) {
+    if (!creditNote || !Array.isArray(creditNote.items) || creditNote.items.length === 0) {
+      console.log("No items found in credit note for calculations");
       return;
     }
     
@@ -28,6 +29,7 @@ export const useCreditNoteCalculations = (
       return acc + (itemPrice * itemQuantity);
     }, 0);
     
+    console.log("Calculated subtotal:", calcSubtotal);
     setSubtotal(calcSubtotal);
     
     let cgst = 0;
@@ -35,14 +37,30 @@ export const useCreditNoteCalculations = (
     let igst = 0;
     
     if (invoice && company) {
-      // Determine whether to use CGST+SGST or IGST based on invoice
-      const useIgst = invoice.igst > 0;
+      // Customer and company state comparison
+      const companyState = company.state;
+      const customerState = invoice.customer_id ? 
+        (invoice.customer_shipping_state || invoice.customer_billing_state) : null;
+      
+      // Determine whether to use IGST or CGST+SGST based on states
+      const useIgst = companyState && customerState && companyState !== customerState;
+      
+      console.log("Tax calculation - Company state:", companyState);
+      console.log("Tax calculation - Customer state:", customerState);
+      console.log("Using IGST:", useIgst);
       
       creditNote.items.forEach(item => {
         const itemPrice = Number(item.price) || 0;
         const itemQuantity = Number(item.quantity) || 0;
         const gstRate = Number(item.gstRate) || 0;
         const gstAmount = (itemPrice * itemQuantity * gstRate) / 100;
+        
+        console.log(`Item ${item.productName} GST calculation:`, { 
+          price: itemPrice, 
+          quantity: itemQuantity, 
+          rate: gstRate, 
+          amount: gstAmount 
+        });
         
         if (useIgst) {
           igst += gstAmount;
@@ -53,8 +71,12 @@ export const useCreditNoteCalculations = (
       });
     }
     
+    console.log("Calculated GST:", { cgst, sgst, igst });
     setGstDetails({ cgst, sgst, igst });
-    setTotal(calcSubtotal + cgst + sgst + igst);
+    
+    const calculatedTotal = calcSubtotal + cgst + sgst + igst;
+    console.log("Calculated total:", calculatedTotal);
+    setTotal(calculatedTotal);
     
   }, [creditNote?.items, invoice, company]);
 

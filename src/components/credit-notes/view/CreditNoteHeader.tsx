@@ -10,15 +10,26 @@ interface CreditNoteHeaderProps {
 }
 
 const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice, company }) => {
+  // Format date safely
+  const formatDateSafely = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy');
+    } catch (e) {
+      console.error('Date formatting error:', e);
+      return 'N/A';
+    }
+  };
+
   return (
     <>
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">CREDIT NOTE</h1>
-          <p className="text-gray-500"># {creditNote.credit_note_number}</p>
-          <p className="text-gray-500 mt-2">Date: {creditNote.credit_note_date ? format(new Date(creditNote.credit_note_date), 'dd/MM/yyyy') : 'N/A'}</p>
+          <p className="text-gray-500"># {creditNote.credit_note_number || 'Draft'}</p>
+          <p className="text-gray-500 mt-2">Date: {formatDateSafely(creditNote.credit_note_date)}</p>
           {invoice && (
-            <p className="text-gray-500">Reference Invoice: {invoice.invoice_number}</p>
+            <p className="text-gray-500">Reference Invoice: {invoice.invoice_number || 'N/A'}</p>
           )}
         </div>
         
@@ -32,10 +43,10 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
               />
               <div>
                 <h2 className="text-xl font-bold text-gray-800">{company.name}</h2>
-                <p className="text-sm text-gray-600">{company.address_line1}</p>
+                <p className="text-sm text-gray-600">{company.address_line1 || 'N/A'}</p>
                 {company.address_line2 && <p className="text-sm text-gray-600">{company.address_line2}</p>}
-                <p className="text-sm text-gray-600">{company.city}, {company.state} - {company.pincode}</p>
-                <p className="text-sm text-gray-600">GSTIN: {company.gstin}</p>
+                <p className="text-sm text-gray-600">{company.city || 'N/A'}, {company.state || 'N/A'} - {company.pincode || 'N/A'}</p>
+                <p className="text-sm text-gray-600">GSTIN: {company.gstin || 'N/A'}</p>
                 {company.email && <p className="text-sm text-gray-600">Email: {company.email}</p>}
                 {company.phone && <p className="text-sm text-gray-600">Phone: {company.phone}</p>}
               </div>
@@ -44,10 +55,10 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
           {!company.logo && (
             <div>
               <h2 className="text-xl font-bold text-gray-800">{company.name}</h2>
-              <p className="text-sm text-gray-600">{company.address_line1}</p>
+              <p className="text-sm text-gray-600">{company.address_line1 || 'N/A'}</p>
               {company.address_line2 && <p className="text-sm text-gray-600">{company.address_line2}</p>}
-              <p className="text-sm text-gray-600">{company.city}, {company.state} - {company.pincode}</p>
-              <p className="text-sm text-gray-600">GSTIN: {company.gstin}</p>
+              <p className="text-sm text-gray-600">{company.city || 'N/A'}, {company.state || 'N/A'} - {company.pincode || 'N/A'}</p>
+              <p className="text-sm text-gray-600">GSTIN: {company.gstin || 'N/A'}</p>
               {company.email && <p className="text-sm text-gray-600">Email: {company.email}</p>}
               {company.phone && <p className="text-sm text-gray-600">Phone: {company.phone}</p>}
             </div>

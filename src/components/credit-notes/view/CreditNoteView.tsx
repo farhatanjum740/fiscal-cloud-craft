@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Printer, Download } from 'lucide-react';
@@ -27,6 +27,14 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   isDownloadable = true 
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  
+  // Log data to console for debugging
+  useEffect(() => {
+    console.log("Credit Note Data:", creditNote);
+    console.log("Company Data:", company);
+    console.log("Invoice Data:", invoice);
+    console.log("Customer Data:", customer);
+  }, [creditNote, company, invoice, customer]);
   
   if (!creditNote || !company) {
     return (
@@ -69,6 +77,11 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   // Ensure items is an array
   const safeItems = Array.isArray(creditNote.items) ? creditNote.items : [];
   
+  // Determine if we should show IGST or CGST/SGST based on states
+  const useIGST = company && customer && 
+    company.state && customer.shipping_state && 
+    company.state !== (customer.shipping_state || customer.billing_state);
+  
   // Ensure numerical values are numbers
   const safeSubtotal = Number(creditNote.subtotal) || 0;
   const safeCgst = Number(creditNote.cgst) || 0;
@@ -102,14 +115,15 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         
         <CreditNoteDetails creditNote={creditNote} invoice={invoice} customer={customer} />
         
-        <CreditNoteItemsTable items={safeItems} />
+        <CreditNoteItemsTable items={safeItems} useIGST={useIGST} />
         
         <CreditNoteSummary 
           subtotal={safeSubtotal} 
           cgst={safeCgst} 
           sgst={safeSgst} 
           igst={safeIgst} 
-          totalAmount={safeTotalAmount} 
+          totalAmount={safeTotalAmount}
+          useIGST={useIGST}
         />
         
         {creditNote.reason && (
