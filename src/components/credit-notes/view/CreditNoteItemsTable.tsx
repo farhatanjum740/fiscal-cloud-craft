@@ -26,8 +26,10 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items }) =>
         </thead>
         <tbody>
           {Array.isArray(items) && items.map((item: any, index: number) => {
-            const itemAmount = item.price * item.quantity;
-            const gstRate = item.gst_rate || 0;
+            const itemPrice = Number(item.price) || 0;
+            const itemQuantity = Number(item.quantity) || 0;
+            const itemAmount = itemPrice * itemQuantity;
+            const gstRate = Number(item.gst_rate || 0);
             const gstAmount = (itemAmount * gstRate) / 100;
             const totalWithGst = itemAmount + gstAmount;
             
@@ -38,9 +40,9 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items }) =>
                   <div className="font-medium">{item.product_name || 'N/A'}</div>
                 </td>
                 <td className="py-2 px-2 border text-sm">{item.hsn_code || 'N/A'}</td>
-                <td className="py-2 px-2 border text-sm">{item.quantity}</td>
+                <td className="py-2 px-2 border text-sm">{itemQuantity}</td>
                 <td className="py-2 px-2 border text-sm">{item.unit || 'Unit'}</td>
-                <td className="py-2 px-2 border text-sm">₹{formatAmount(item.price)}</td>
+                <td className="py-2 px-2 border text-sm">₹{formatAmount(itemPrice)}</td>
                 <td className="py-2 px-2 border text-sm">₹{formatAmount(itemAmount)}</td>
                 <td className="py-2 px-2 border text-sm">{gstRate}%</td>
                 <td className="py-2 px-2 border text-sm">₹{formatAmount(gstAmount)}</td>

@@ -9,31 +9,39 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Formats a number for currency display 
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | null | undefined): string {
+  // Ensure we have a valid number
+  const safeAmount = Number(amount) || 0;
+  
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 2,
-  }).format(amount);
+  }).format(safeAmount);
 }
 
 /**
  * Formats a number with 2 decimal places
  */
-export function formatAmount(amount: number): string {
-  return amount.toFixed(2);
+export function formatAmount(amount: number | null | undefined): string {
+  // Ensure we have a valid number
+  const safeAmount = Number(amount) || 0;
+  return safeAmount.toFixed(2);
 }
 
 /**
  * Convert a number to words for Indian currency
  */
-export function amountToWords(amount: number): string {
+export function amountToWords(amount: number | null | undefined): string {
+  // Ensure we have a valid number
+  const safeAmount = Number(amount) || 0;
+  
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 
     'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
   const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
   
   // Round to 2 decimal places and separate rupees and paise
-  const roundedAmount = Math.round(amount * 100) / 100;
+  const roundedAmount = Math.round(safeAmount * 100) / 100;
   const rupees = Math.floor(roundedAmount);
   const paise = Math.round((roundedAmount - rupees) * 100);
   

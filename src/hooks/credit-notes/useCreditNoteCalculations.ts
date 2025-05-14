@@ -17,8 +17,15 @@ export const useCreditNoteCalculations = (
 
   // Calculate totals whenever credit note items change
   useEffect(() => {
+    // Ensure creditNote and items exist
+    if (!creditNote || !Array.isArray(creditNote.items)) {
+      return;
+    }
+    
     const calcSubtotal = creditNote.items.reduce((acc, item) => {
-      return acc + (item.price * item.quantity);
+      const itemPrice = Number(item.price) || 0;
+      const itemQuantity = Number(item.quantity) || 0;
+      return acc + (itemPrice * itemQuantity);
     }, 0);
     
     setSubtotal(calcSubtotal);
@@ -32,7 +39,10 @@ export const useCreditNoteCalculations = (
       const useIgst = invoice.igst > 0;
       
       creditNote.items.forEach(item => {
-        const gstAmount = (item.price * item.quantity * item.gstRate) / 100;
+        const itemPrice = Number(item.price) || 0;
+        const itemQuantity = Number(item.quantity) || 0;
+        const gstRate = Number(item.gstRate) || 0;
+        const gstAmount = (itemPrice * itemQuantity * gstRate) / 100;
         
         if (useIgst) {
           igst += gstAmount;
@@ -46,7 +56,7 @@ export const useCreditNoteCalculations = (
     setGstDetails({ cgst, sgst, igst });
     setTotal(calcSubtotal + cgst + sgst + igst);
     
-  }, [creditNote.items, invoice, company]);
+  }, [creditNote?.items, invoice, company]);
 
   return {
     subtotal,

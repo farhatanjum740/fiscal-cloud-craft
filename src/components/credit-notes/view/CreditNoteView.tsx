@@ -47,7 +47,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
       const options = {
-        filename: `Credit-Note-${creditNote.credit_note_number}.pdf`,
+        filename: `Credit-Note-${creditNote.credit_note_number || 'draft'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -65,6 +65,16 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       });
     }
   };
+
+  // Ensure items is an array
+  const safeItems = Array.isArray(creditNote.items) ? creditNote.items : [];
+  
+  // Ensure numerical values are numbers
+  const safeSubtotal = Number(creditNote.subtotal) || 0;
+  const safeCgst = Number(creditNote.cgst) || 0;
+  const safeSgst = Number(creditNote.sgst) || 0;
+  const safeIgst = Number(creditNote.igst) || 0;
+  const safeTotalAmount = Number(creditNote.total_amount) || 0;
 
   return (
     <div className="bg-white">
@@ -92,14 +102,14 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         
         <CreditNoteDetails creditNote={creditNote} invoice={invoice} customer={customer} />
         
-        <CreditNoteItemsTable items={creditNote.items} />
+        <CreditNoteItemsTable items={safeItems} />
         
         <CreditNoteSummary 
-          subtotal={creditNote.subtotal} 
-          cgst={creditNote.cgst} 
-          sgst={creditNote.sgst} 
-          igst={creditNote.igst} 
-          totalAmount={creditNote.total_amount} 
+          subtotal={safeSubtotal} 
+          cgst={safeCgst} 
+          sgst={safeSgst} 
+          igst={safeIgst} 
+          totalAmount={safeTotalAmount} 
         />
         
         {creditNote.reason && (
