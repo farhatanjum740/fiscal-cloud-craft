@@ -1,9 +1,9 @@
 
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFetchCreditNoteData } from "./useFetchCreditNoteData";
 import { useCreditNoteActions } from "./useCreditNoteActions";
 import { useCreditNoteCalculations } from "./useCreditNoteCalculations";
+import { useCreditNoteCustomer } from "./useCreditNoteCustomer";
 import { UseCreditNoteReturn } from "./types";
 
 export const useCreditNote = (id?: string): UseCreditNoteReturn => {
@@ -44,11 +44,13 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     total
   } = useCreditNoteCalculations(creditNote, invoice, company);
 
+  // Get customer data
+  const customer = useCreditNoteCustomer(invoice);
+
   // Create a wrapper for handleInvoiceChange to update the invoice state
   const handleInvoiceChange = async (value: string) => {
     const fetchedInvoice = await baseHandleInvoiceChange(value);
     if (fetchedInvoice) {
-      // Don't need to set invoice manually as it's done in useFetchCreditNoteData via fetchInvoiceItems
       await fetchInvoiceItems(value);
     }
   };
@@ -61,6 +63,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     invoice,
     invoiceItems,
     company,
+    customer,
     selectedItems,
     showQuantityError,
     setShowQuantityError,

@@ -30,6 +30,7 @@ export interface UseCreditNoteReturn {
   invoice: any;
   invoiceItems: any[];
   company: any;
+  customer: any;
   selectedItems: {[key: string]: boolean};
   showQuantityError: boolean;
   setShowQuantityError: (value: boolean) => void;
@@ -40,7 +41,7 @@ export interface UseCreditNoteReturn {
   total: number;
   isGeneratingNumber: boolean;
   handleInvoiceChange: (value: string) => Promise<void>;
-  toggleItemSelection: (itemId: string) => void;
+  toggleItemSelection: (id: string) => void;
   addSelectedItems: () => void;
   removeItem: (id: string) => void;
   updateItem: (id: string, field: keyof CreditNoteItem, value: any) => void;
