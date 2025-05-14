@@ -1,10 +1,12 @@
 
+import React, { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit } from "lucide-react";
 import { useCreditNote } from "@/hooks/credit-notes";
 import CreditNoteViewComponent from "@/components/credit-notes/view";
 import CreditNoteDeleteDialog from "./CreditNoteDeleteDialog";
+import CreditNoteLoading from "./CreditNoteLoading";
 
 const CreditNoteViewPage = () => {
   const { id } = useParams();
@@ -21,7 +23,7 @@ const CreditNoteViewPage = () => {
   } = useCreditNote(id);
   
   // Auto download if query param is present
-  React.useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const shouldDownload = params.get('download') === 'true';
     
