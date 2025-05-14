@@ -5,7 +5,7 @@ import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { useCreditNote } from "@/hooks/useCreditNote";
 import CreditNoteViewComponent from "@/components/credit-notes/CreditNoteView";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
