@@ -122,6 +122,22 @@ export const useInvoice = (id?: string) => {
     console.log("STATE CHANGE - financialYears:", financialYears);
   }, [customers, products, financialYears]);
 
+  // Initialize the saveInvoice function from the useSaveInvoice hook
+  const { saveInvoice } = useSaveInvoice(
+    user,
+    invoice,
+    company,
+    subtotal,
+    gstDetails,
+    total,
+    isEditing,
+    id,
+    loading,
+    setLoading,
+    generateInvoiceNumber,
+    setGeneratedInvoiceNumber
+  );
+
   return {
     invoice,
     setInvoice,
