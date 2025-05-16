@@ -97,21 +97,23 @@ export const useInvoice = (id?: string) => {
     setInvoice
   );
   
-  // Invoice saving
-  const { saveInvoice } = useSaveInvoice(
-    user,
-    invoice,
-    company,
-    subtotal,
-    gstDetails,
-    total,
-    isEditing,
-    id,
-    loading,
-    setLoading,
-    generateInvoiceNumber,
-    setGeneratedInvoiceNumber
-  );
+  // Automatically generate invoice number once company data is loaded and not editing
+  useEffect(() => {
+    if (company && !isEditing && !invoice.invoiceNumber && !loadingData) {
+      generateInvoiceNumber();
+    }
+  }, [company, isEditing, invoice.invoiceNumber, loadingData, generateInvoiceNumber]);
+
+  // Set default terms and conditions and notes from company settings
+  useEffect(() => {
+    if (companySettings && !isEditing) {
+      setInvoice(prev => ({
+        ...prev,
+        termsAndConditions: companySettings.default_terms || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
+        notes: companySettings.default_notes || ""
+      }));
+    }
+  }, [companySettings, isEditing, setInvoice]);
   
   // Debug logging for state changes
   useEffect(() => {

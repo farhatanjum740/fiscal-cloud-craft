@@ -26,7 +26,7 @@ export function DatePicker({
   className,
   disabled,
   placeholder = "Select date",
-  disableFutureDates = false,
+  disableFutureDates = true,
 }: DatePickerProps) {
   return (
     <Popover>

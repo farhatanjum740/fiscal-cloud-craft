@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +21,7 @@ export const useCreditNoteActions = (
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
   const [generatedCreditNoteNumber, setGeneratedCreditNoteNumber] = useState<string | null>(null);
 
-  // Generate credit note number - modified to prevent auto-incrementing
+  // Generate credit note number - modified to prevent auto-incrementing and format correctly
   const generateCreditNoteNumber = async () => {
     console.log("Generating credit note number with company:", company);
     console.log("Invoice data:", invoice);
@@ -57,7 +56,7 @@ export const useCreditNoteActions = (
         return;
       }
       
-      // Format: CN/INV-NUMBER (without the redundant 001 suffix)
+      // Format: CN/INV-NUMBER (without the redundant suffix)
       const creditNoteNumber = `CN/${invoice.invoice_number}`;
       
       setCreditNote(prev => ({

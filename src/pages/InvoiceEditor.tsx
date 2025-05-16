@@ -57,7 +57,7 @@ const InvoiceEditor = () => {
     if (companySettings) {
       setInvoice(prev => ({
         ...prev,
-        termsAndConditions: companySettings.default_terms || "",
+        termsAndConditions: companySettings.default_terms || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
         notes: companySettings.default_notes || ""
       }));
     }
@@ -133,23 +133,15 @@ const InvoiceEditor = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="invoiceNumber"
-                        value={invoice.invoiceNumber}
-                        onChange={(e) => setInvoice(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                        readOnly
-                        className="flex-1"
-                      />
-                      <Button 
-                        variant="outline" 
-                        onClick={generateInvoiceNumber}
-                        disabled={isGeneratingInvoiceNumber}
-                        className="whitespace-nowrap"
-                      >
-                        {isGeneratingInvoiceNumber ? "Generating..." : "Generate"}
-                      </Button>
-                    </div>
+                    <Input
+                      id="invoiceNumber"
+                      value={invoice.invoiceNumber}
+                      readOnly
+                      className="bg-gray-50"
+                    />
+                    {isGeneratingInvoiceNumber && (
+                      <p className="text-xs text-muted-foreground">Generating invoice number...</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -170,6 +162,7 @@ const InvoiceEditor = () => {
                       selected={invoice.invoiceDate}
                       onSelect={(date) => handleDateChange(date)}
                       className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
+                      disableFutureDates={true}
                     />
                   </div>
                   

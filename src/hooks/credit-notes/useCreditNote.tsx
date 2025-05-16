@@ -5,6 +5,7 @@ import { useCreditNoteActions } from "./useCreditNoteActions";
 import { useCreditNoteCalculations } from "./useCreditNoteCalculations";
 import { useCreditNoteCustomer } from "./useCreditNoteCustomer";
 import { UseCreditNoteReturn } from "./types";
+import { useEffect } from "react";
 
 export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   const { user } = useAuth();
@@ -61,6 +62,11 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
       console.log("Fetched invoice:", fetchedInvoice);
       if (fetchedInvoice) {
         await fetchInvoiceItems(value);
+        
+        // Auto-generate credit note number when invoice is selected and not editing
+        if (!isEditing) {
+          setTimeout(() => generateCreditNoteNumber(), 300);
+        }
       }
     } catch (error) {
       console.error("Error in handleInvoiceChange:", error);
