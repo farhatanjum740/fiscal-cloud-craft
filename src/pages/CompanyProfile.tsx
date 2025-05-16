@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building, Upload } from "lucide-react";
+import { Building, Upload, Phone, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +39,8 @@ const CompanyProfile = () => {
     logo: "",
     gstin: "",
     pan: "",
+    contact_number: "",
+    email_id: "",
     address: {
       line1: "",
       line2: "",
@@ -152,6 +154,8 @@ const CompanyProfile = () => {
         logo: companyData.logo || '',
         gstin: companyData.gstin || '',
         pan: companyData.pan || '',
+        contact_number: companyData.contact_number || '',
+        email_id: companyData.email_id || '',
         address: {
           line1: companyData.address_line1 || '',
           line2: companyData.address_line2 || '',
@@ -278,6 +282,8 @@ const CompanyProfile = () => {
       logo: company.logo,
       gstin: company.gstin || null,
       pan: company.pan || null,
+      contact_number: company.contact_number || null,
+      email_id: company.email_id || null,
       // Address
       address_line1: company.address.line1 || null,
       address_line2: company.address.line2 || null,
@@ -409,6 +415,37 @@ const CompanyProfile = () => {
                   placeholder="E.g., AAAAA0000A"
                   value={company.pan}
                   onChange={(e) => handleInputChange("pan", e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact-number">
+                  <span className="flex items-center">
+                    <Phone className="h-4 w-4 mr-1" /> Contact Number
+                  </span>
+                </Label>
+                <Input
+                  id="contact-number"
+                  placeholder="E.g., +91 9876543210"
+                  value={company.contact_number}
+                  onChange={(e) => handleInputChange("contact_number", e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">
+                  <span className="flex items-center">
+                    <Mail className="h-4 w-4 mr-1" /> Email Address
+                  </span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="E.g., contact@company.com"
+                  value={company.email_id}
+                  onChange={(e) => handleInputChange("email_id", e.target.value)}
                 />
               </div>
             </div>

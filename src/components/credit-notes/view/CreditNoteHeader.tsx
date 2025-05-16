@@ -2,6 +2,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
+import { Phone, Mail } from 'lucide-react';
 
 interface CreditNoteHeaderProps {
   creditNote: any;
@@ -58,8 +59,16 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
                 {company.address_line2 && <p className="text-xs text-gray-600">{company.address_line2}</p>}
                 <p className="text-xs text-gray-600">{company.city || 'N/A'}, {company.state || 'N/A'} - {company.pincode || 'N/A'}</p>
                 <p className="text-xs text-gray-600">GSTIN: {company.gstin || 'N/A'}</p>
-                {company.email_id && <p className="text-xs text-gray-600">Email: {company.email_id}</p>}
-                {company.contact_number && <p className="text-xs text-gray-600">Phone: {company.contact_number}</p>}
+                {company.contact_number && (
+                  <p className="text-xs text-gray-600 flex items-center justify-end">
+                    <Phone className="h-3 w-3 mr-1" /> {company.contact_number}
+                  </p>
+                )}
+                {company.email_id && (
+                  <p className="text-xs text-gray-600 flex items-center justify-end">
+                    <Mail className="h-3 w-3 mr-1" /> {company.email_id}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -70,8 +79,16 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
               {company.address_line2 && <p className="text-xs text-gray-600">{company.address_line2}</p>}
               <p className="text-xs text-gray-600">{company.city || 'N/A'}, {company.state || 'N/A'} - {company.pincode || 'N/A'}</p>
               <p className="text-xs text-gray-600">GSTIN: {company.gstin || 'N/A'}</p>
-              {company.email_id && <p className="text-xs text-gray-600">Email: {company.email_id}</p>}
-              {company.contact_number && <p className="text-xs text-gray-600">Phone: {company.contact_number}</p>}
+              {company.contact_number && (
+                <p className="text-xs text-gray-600 flex items-center justify-end">
+                  <Phone className="h-3 w-3 mr-1" /> {company.contact_number}
+                </p>
+              )}
+              {company.email_id && (
+                <p className="text-xs text-gray-600 flex items-center justify-end">
+                  <Mail className="h-3 w-3 mr-1" /> {company.email_id}
+                </p>
+              )}
             </div>
           )}
         </div>

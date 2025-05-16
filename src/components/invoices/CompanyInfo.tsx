@@ -8,6 +8,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Phone, Mail } from "lucide-react";
 
 interface CompanyInfoProps {
   company: any;
@@ -37,6 +38,20 @@ const CompanyInfo = ({ company }: CompanyInfoProps) => {
               <p className="text-sm text-gray-600 mt-1">
                 GSTIN: {company.gstin || "Not provided"}
               </p>
+              {(company.contact_number || company.email_id) && (
+                <div className="mt-2">
+                  {company.contact_number && (
+                    <p className="text-sm text-gray-600 flex items-center">
+                      <Phone className="h-3 w-3 mr-1" /> {company.contact_number}
+                    </p>
+                  )}
+                  {company.email_id && (
+                    <p className="text-sm text-gray-600 flex items-center">
+                      <Mail className="h-3 w-3 mr-1" /> {company.email_id}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="text-center">
               <Button variant="link" size="sm" onClick={() => navigate("/app/company-profile")}>
