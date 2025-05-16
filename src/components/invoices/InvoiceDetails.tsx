@@ -1,217 +1,307 @@
-
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Trash2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CommandSelect } from "@/components/ui/command-select";
-import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+import { DatePicker } from "@/components/ui/date-picker";
+import { formatCurrency } from "@/lib/utils";
+import { useInvoice } from "@/hooks/useInvoice";
 
 interface InvoiceDetailsProps {
-  invoice: any;
-  setInvoice: React.Dispatch<React.SetStateAction<any>>;
-  financialYears: string[];
-  customers: any[];
-  isEditing: boolean;
-  isGeneratingInvoiceNumber: boolean;
-  generateInvoiceNumber: () => void;
-  handleFinancialYearChange: (year: string) => void;
+  id?: string;
 }
 
-const InvoiceDetails = ({
-  invoice,
-  setInvoice,
-  financialYears,
-  customers,
-  isEditing,
-  isGeneratingInvoiceNumber,
-  generateInvoiceNumber,
-  handleFinancialYearChange,
-}: InvoiceDetailsProps) => {
-  // Auto-generate invoice number when financial year changes or on first load (if not editing)
+const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
+  const navigate = useNavigate();
+  const {
+    invoice,
+    setInvoice,
+    loading,
+    loadingData,
+    customers,
+    products,
+    company,
+    companySettings,
+    financialYears,
+    subtotal,
+    gstDetails,
+    total,
+    isGeneratingInvoiceNumber,
+    addItem,
+    removeItem,
+    updateItem,
+    handleProductSelect,
+    handleDateChange,
+    generateInvoiceNumber,
+    saveInvoice
+  } = useInvoice(id);
+  
   useEffect(() => {
-    if (!isEditing && invoice.financialYear && !invoice.invoiceNumber) {
-      generateInvoiceNumber();
+    if (companySettings) {
+      setInvoice(prev => ({
+        ...prev,
+        termsAndConditions: companySettings.terms_and_conditions,
+        notes: companySettings.notes
+      }));
     }
-  }, [invoice.financialYear, isEditing, generateInvoiceNumber]);
-
-  // Ensure arrays are valid
-  const safeFinancialYears = React.useMemo(() => {
-    return Array.isArray(financialYears) ? financialYears : [];
-  }, [financialYears]);
+  }, [companySettings, setInvoice]);
   
-  const safeCustomers = React.useMemo(() => {
-    return Array.isArray(customers) ? customers : [];
-  }, [customers]);
+  if (loadingData) {
+    return <div className="text-center p-4">Loading...</div>;
+  }
   
-  // Convert customers to options
-  const customerOptions = React.useMemo(() => {
-    return safeCustomers.map(customer => ({
-      value: customer?.id?.toString() || "",
-      label: customer?.name || "Unknown"
-    })).filter(option => option.value !== "");
-  }, [safeCustomers]);
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Invoice Details</CardTitle>
-        <CardDescription>
-          Basic information about the invoice
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="financialYear">Financial Year</Label>
-          <Select 
-            value={invoice.financialYear || ""} 
-            onValueChange={handleFinancialYearChange}
-          >
-            <SelectTrigger id="financialYear">
-              <SelectValue placeholder="Select financial year" />
-            </SelectTrigger>
-            <SelectContent>
-              {safeFinancialYears.map((year) => (
-                <SelectItem key={year} value={year}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="invoiceNumber">Invoice Number</Label>
-          <div className="flex gap-2">
-            <Input
-              id="invoiceNumber"
-              value={invoice.invoiceNumber || ""}
-              readOnly={true}
-              className="flex-1 bg-gray-50"
-            />
-          </div>
-          {isGeneratingInvoiceNumber && <p className="text-xs text-muted-foreground">Generating invoice number...</p>}
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Invoice Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !invoice.invoiceDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {invoice.invoiceDate ? (
-                    format(invoice.invoiceDate, "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={invoice.invoiceDate}
-                  onSelect={(date) => date && setInvoice(prev => ({ ...prev, invoiceDate: date }))}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+    <div className="container max-w-4xl mx-auto p-4">
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Invoice Details</CardTitle>
+          <CardDescription>
+            Fill in the details for the invoice.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="invoiceNumber">Invoice Number</Label>
+              <div className="relative">
+                <Input
+                  id="invoiceNumber"
+                  value={invoice.invoiceNumber || "Generating..."}
+                  disabled={true}
                 />
-              </PopoverContent>
-            </Popover>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2"
+                  onClick={generateInvoiceNumber}
+                  disabled={isGeneratingInvoiceNumber}
+                >
+                  {isGeneratingInvoiceNumber ? "Generating..." : "Generate"}
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="invoiceDate">Invoice Date</Label>
+              <DatePicker
+                selected={invoice.invoiceDate}
+                onSelect={(date) => handleDateChange(date)}
+                disabled={loading}
+                placeholder="Select invoice date"
+                disableFutureDates={true}
+              />
+            </div>
+            <div>
+              <Label htmlFor="dueDate">Due Date</Label>
+              <DatePicker
+                selected={invoice.dueDate}
+                onSelect={(date) => setInvoice(prev => ({ ...prev, dueDate: date }))}
+                disabled={loading}
+                placeholder="Select due date"
+              />
+            </div>
+            <div>
+              <Label htmlFor="financialYear">Financial Year</Label>
+              <Select
+                onValueChange={(value) => setInvoice(prev => ({ ...prev, financialYear: value }))}
+                defaultValue={invoice.financialYear}
+                disabled={true}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select financial year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {financialYears.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="customer">Customer</Label>
+              <Select
+                onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
+                defaultValue={invoice.customerId}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          <div className="space-y-2">
-            <Label>Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !invoice.dueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {invoice.dueDate ? (
-                    format(invoice.dueDate, "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={invoice.dueDate}
-                  onSelect={(date) => date && setInvoice(prev => ({ ...prev, dueDate: date }))}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
+          <Separator />
+          
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold mb-2">Items</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>HSN Code</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead className="text-right">GST Rate</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoice.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Select
+                        onValueChange={(productId) => handleProductSelect(item.id, productId)}
+                        defaultValue={item.productId}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="text"
+                        value={item.hsnCode || ""}
+                        onChange={(e) => updateItem(item.id, "hsnCode", e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={item.quantity || ""}
+                        onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value))}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="text"
+                        value={item.unit || ""}
+                        onChange={(e) => updateItem(item.id, "unit", e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={item.price || ""}
+                        onChange={(e) => updateItem(item.id, "price", parseFloat(e.target.value))}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">{item.gstRate}%</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <Button type="button" size="sm" onClick={addItem}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
           </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="customer">Customer</Label>
-          <CommandSelect
-            options={customerOptions}
-            value={invoice.customerId || ""}
-            onValueChange={(value) => {
-              setInvoice(prev => ({ ...prev, customerId: value }));
-            }}
-            placeholder="Select a customer"
-            searchInputPlaceholder="Search customers..."
-            emptyMessage="No customers found."
-          />
-          {customerOptions.length === 0 && (
-            <p className="text-xs text-amber-500">
-              No customers available. Please add customers first.
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select value={invoice.status || ""} onValueChange={(value) => setInvoice(prev => ({ ...prev, status: value }))}>
-            <SelectTrigger id="status">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Invoice notes"
+                value={invoice.notes || ""}
+                onChange={(e) => setInvoice(prev => ({ ...prev, notes: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="terms">Terms & Conditions</Label>
+              <Textarea
+                id="terms"
+                placeholder="Terms & conditions"
+                value={invoice.termsAndConditions || ""}
+                onChange={(e) => setInvoice(prev => ({ ...prev, termsAndConditions: e.target.value }))}
+              />
+            </div>
+          </div>
+          
+          <Separator />
+          
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Subtotal:</Label>
+                <p>{formatCurrency(subtotal)}</p>
+              </div>
+              <div>
+                <Label>GST Total:</Label>
+                <p>{formatCurrency(gstDetails.totalGst)}</p>
+              </div>
+              <div>
+                <Label>Total:</Label>
+                <p>{formatCurrency(total)}</p>
+              </div>
+            </div>
+          </div>
+          
+          <Button onClick={saveInvoice} disabled={loading}>
+            {loading ? "Saving..." : "Save Invoice"}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

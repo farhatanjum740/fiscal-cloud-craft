@@ -86,10 +86,12 @@ export const useInvoiceNumber = (
         
         // Format with leading zeros (e.g., 001, 010, 100)
         const formattedCounter = String(counter).padStart(3, '0');
-        return `${prefix}${formattedCounter}`;
+        
+        // Include the financial year in the invoice number format
+        return `${prefix}${formattedCounter}/${financialYear}`;
       } else {
-        // If no settings exist, return default
-        return '001';
+        // If no settings exist, return default with financial year
+        return `001/${financialYear}`;
       }
     } catch (error) {
       console.error("Error previewing invoice number:", error);

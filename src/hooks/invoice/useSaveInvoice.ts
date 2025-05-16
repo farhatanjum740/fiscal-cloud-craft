@@ -1,16 +1,13 @@
-
-import { useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { mapFrontendToInvoiceItem } from "@/types/supabase-types";
-import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
 
 export const useSaveInvoice = (
   user: any,
   invoice: any,
   company: any,
   subtotal: number,
-  gstDetails: { cgst: number; sgst: number; igst: number },
+  gstDetails: any,
   total: number,
   isEditing: boolean,
   id: string | undefined,
@@ -19,21 +16,17 @@ export const useSaveInvoice = (
   generateInvoiceNumber: () => Promise<void>,
   setGeneratedInvoiceNumber: (value: string | null) => void
 ) => {
-  // Save invoice
-  const saveInvoice = useCallback(async (navigate: (path: string) => void) => {
-    console.log("saveInvoice called");
+  const saveInvoice = useCallback(async () => {
     if (!user) {
-      console.log("No user found, cannot save invoice");
       toast({
         title: "Error",
-        description: "You must be logged in to save an invoice.",
+        description: "User data not available. Please log in.",
         variant: "destructive",
       });
       return;
     }
-    
+
     if (!invoice.customerId) {
-      console.log("No customer ID provided");
       toast({
         title: "Error",
         description: "Please select a customer.",
@@ -41,9 +34,17 @@ export const useSaveInvoice = (
       });
       return;
     }
-    
-    if (invoice.items.length === 0) {
-      console.log("No invoice items provided");
+
+    if (!invoice.invoiceDate) {
+      toast({
+        title: "Error",
+        description: "Please select an invoice date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!invoice.items || invoice.items.length === 0) {
       toast({
         title: "Error",
         description: "Please add at least one item to the invoice.",
@@ -52,167 +53,90 @@ export const useSaveInvoice = (
       return;
     }
 
-    if (!company) {
-      console.log("No company data found");
-      toast({
-        title: "Error",
-        description: "Please set up your company profile before creating invoices.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!invoice.invoiceNumber) {
-      console.log("No invoice number, generating one");
-      // Auto-generate invoice number if not set
-      await generateInvoiceNumber();
-      if (!invoice.invoiceNumber) {
-        toast({
-          title: "Error",
-          description: "Failed to generate invoice number. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    if (!invoice.financialYear) {
-      console.log("No financial year provided");
-      toast({
-        title: "Error",
-        description: "Please select a financial year.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setLoading(true);
-    
     try {
-      console.log("Processing invoice save...");
-      // Format date for SQL
-      const invoiceDateFormatted = format(invoice.invoiceDate, 'yyyy-MM-dd');
-      const dueDateFormatted = invoice.dueDate ? format(invoice.dueDate, 'yyyy-MM-dd') : null;
-      
-      // Prepare invoice data
+      // Generate invoice number if it's a new invoice
+      if (!isEditing) {
+        await generateInvoiceNumber();
+      }
+
+      // Prepare invoice data for saving
       const invoiceData = {
         user_id: user.id,
-        customer_id: invoice.customerId,
         company_id: company.id,
-        invoice_number: invoice.invoiceNumber,
-        invoice_date: invoiceDateFormatted,
-        due_date: dueDateFormatted,
-        subtotal: subtotal,
-        cgst: gstDetails.cgst,
-        sgst: gstDetails.sgst,
-        igst: gstDetails.igst,
+        customer_id: invoice.customerId,
+        invoice_number: invoice.invoiceNumber, // Use the full invoice number with financial year
+        invoice_date: invoice.invoiceDate,
+        due_date: invoice.dueDate,
+        status: invoice.status || "draft",
+        subtotal_amount: subtotal,
+        gst_details: gstDetails,
         total_amount: total,
-        status: invoice.status,
-        terms_and_conditions: invoice.termsAndConditions,
         notes: invoice.notes,
-        financial_year: invoice.financialYear,
+        terms_and_conditions: invoice.termsAndConditions,
       };
-      
-      console.log("Prepared invoice data:", invoiceData);
-      
-      let invoiceId: string;
-      
-      if (isEditing && id) {
-        console.log("Update mode - editing existing invoice with ID:", id);
-        // Update existing invoice but don't change the invoice number
-        const { data: existingInvoice, error: fetchError } = await supabase
-          .from('invoices')
-          .select('invoice_number')
-          .eq('id', id)
+
+      let invoiceResult;
+      if (isEditing) {
+        // Update existing invoice
+        invoiceResult = await supabase
+          .from("invoices")
+          .update(invoiceData)
+          .eq("id", id)
+          .select()
           .single();
-          
-        if (fetchError) {
-          console.error("Error fetching existing invoice:", fetchError);
-          throw fetchError;
-        }
-        
-        console.log("Existing invoice:", existingInvoice);
-        
-        // Preserve the original invoice number
-        const updateData = {
-          ...invoiceData,
-          invoice_number: existingInvoice.invoice_number
-        };
-        
-        console.log("Update data:", updateData);
-        
-        const { error: updateError } = await supabase
-          .from('invoices')
-          .update(updateData)
-          .eq('id', id);
-          
-        if (updateError) {
-          console.error("Error updating invoice:", updateError);
-          throw updateError;
-        }
-        invoiceId = id;
-        
-        // Delete existing invoice items
-        console.log("Deleting existing invoice items for invoice ID:", id);
-        const { error: deleteError } = await supabase
-          .from('invoice_items')
-          .delete()
-          .eq('invoice_id', id);
-          
-        if (deleteError) {
-          console.error("Error deleting invoice items:", deleteError);
-          throw deleteError;
-        }
       } else {
-        console.log("Insert mode - creating new invoice");
-        // Insert new invoice
-        const { data: insertData, error: insertError } = await supabase
-          .from('invoices')
+        // Create new invoice
+        invoiceResult = await supabase
+          .from("invoices")
           .insert(invoiceData)
-          .select('id')
+          .select()
           .single();
-          
-        if (insertError) {
-          console.error("Error inserting invoice:", insertError);
-          throw insertError;
-        }
-        if (!insertData) {
-          const error = new Error("Failed to create invoice - no data returned");
-          console.error(error);
-          throw error;
-        }
-        
-        console.log("New invoice created with ID:", insertData.id);
-        invoiceId = insertData.id;
       }
-      
-      // Insert invoice items
-      const invoiceItemsData = invoice.items.map((item: any) => 
-        mapFrontendToInvoiceItem(item, invoiceId)
-      );
-      
-      console.log("Inserting invoice items:", invoiceItemsData);
+
+      if (invoiceResult.error) throw invoiceResult.error;
+
+      const invoiceId = invoiceResult.data.id;
+
+      // Save invoice items
+      if (isEditing) {
+        // Delete existing items
+        const { error: deleteError } = await supabase
+          .from("invoice_items")
+          .delete()
+          .eq("invoice_id", id);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Insert current items
+      const itemsToInsert = invoice.items.map((item: any) => ({
+        invoice_id: invoiceId,
+        product_id: item.productId,
+        product_name: item.productName,
+        description: item.description,
+        hsn_code: item.hsnCode,
+        gst_rate: item.gstRate,
+        price: item.price,
+        quantity: item.quantity,
+        unit: item.unit,
+      }));
+
       const { error: itemsError } = await supabase
-        .from('invoice_items')
-        .insert(invoiceItemsData);
-        
-      if (itemsError) {
-        console.error("Error inserting invoice items:", itemsError);
-        throw itemsError;
-      }
-      
-      // Clear the generated invoice number after successful save
-      setGeneratedInvoiceNumber(null);
-      
-      console.log("Invoice save completed successfully");
+        .from("invoice_items")
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+
       toast({
-        title: "Invoice Saved",
-        description: "Your invoice has been saved successfully!",
+        title: "Success",
+        description: `Invoice ${isEditing ? "updated" : "created"} successfully!`,
       });
-      
-      navigate("/app/invoices");
+
+      // Clear generated invoice number after successful save
+      setGeneratedInvoiceNumber(null);
     } catch (error: any) {
-      console.error("Error in saveInvoice:", error);
+      console.error("Error saving invoice:", error);
       toast({
         title: "Error",
         description: `Failed to save invoice: ${error.message}`,
@@ -221,7 +145,20 @@ export const useSaveInvoice = (
     } finally {
       setLoading(false);
     }
-  }, [user, invoice, company, subtotal, gstDetails, total, isEditing, id, loading, setLoading, generateInvoiceNumber, setGeneratedInvoiceNumber]);
+  }, [
+    user,
+    invoice,
+    company,
+    subtotal,
+    gstDetails,
+    total,
+    isEditing,
+    id,
+    loading,
+    setLoading,
+    generateInvoiceNumber,
+    setGeneratedInvoiceNumber,
+  ]);
 
   return { saveInvoice };
 };
