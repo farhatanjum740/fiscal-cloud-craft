@@ -38,8 +38,8 @@ const CreditNoteViewPage = () => {
     
     if (creditNote) {
       console.log("CreditNoteViewPage - Credit Note Details:", {
-        creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
-        date: creditNote.creditNoteDate || creditNote.credit_note_date,
+        creditNoteNumber: creditNote.creditNoteNumber,
+        date: creditNote.creditNoteDate,
         subtotal: creditNote.subtotal,
         cgst: creditNote.cgst,
         sgst: creditNote.sgst,
