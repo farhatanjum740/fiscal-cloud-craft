@@ -30,12 +30,25 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   
   // Log data to console for debugging
   useEffect(() => {
-    console.log("Credit Note View Props:", {
+    console.log("Credit Note View - Data received:", {
       creditNote,
       company,
       invoice,
       customer
     });
+    
+    if (creditNote) {
+      // Log specific credit note properties
+      console.log("Credit Note View - Credit Note Details:", {
+        number: creditNote.credit_note_number || creditNote.creditNoteNumber,
+        date: creditNote.credit_note_date || creditNote.creditNoteDate,
+        subtotal: creditNote.subtotal,
+        cgst: creditNote.cgst,
+        sgst: creditNote.sgst,
+        igst: creditNote.igst,
+        totalAmount: creditNote.total_amount
+      });
+    }
   }, [creditNote, company, invoice, customer]);
   
   if (!creditNote || !company) {
@@ -57,7 +70,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
       const options = {
-        filename: `Credit-Note-${creditNote.credit_note_number || 'draft'}.pdf`,
+        filename: `Credit-Note-${creditNote.credit_note_number || creditNote.creditNoteNumber || 'draft'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -98,20 +111,11 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   });
   
   // Ensure numerical values are numbers
-  const safeSubtotal = typeof creditNote.subtotal === 'number' ? creditNote.subtotal : 
-                       (typeof creditNote.subtotal === 'string' ? parseFloat(creditNote.subtotal) : 0);
-                       
-  const safeCgst = typeof creditNote.cgst === 'number' ? creditNote.cgst : 
-                  (typeof creditNote.cgst === 'string' ? parseFloat(creditNote.cgst) : 0);
-                  
-  const safeSgst = typeof creditNote.sgst === 'number' ? creditNote.sgst : 
-                  (typeof creditNote.sgst === 'string' ? parseFloat(creditNote.sgst) : 0);
-                  
-  const safeIgst = typeof creditNote.igst === 'number' ? creditNote.igst : 
-                  (typeof creditNote.igst === 'string' ? parseFloat(creditNote.igst) : 0);
-                  
-  const safeTotalAmount = typeof creditNote.total_amount === 'number' ? creditNote.total_amount : 
-                         (typeof creditNote.total_amount === 'string' ? parseFloat(creditNote.total_amount) : 0);
+  const safeSubtotal = parseFloat(String(creditNote.subtotal)) || 0;
+  const safeCgst = parseFloat(String(creditNote.cgst)) || 0;
+  const safeSgst = parseFloat(String(creditNote.sgst)) || 0;
+  const safeIgst = parseFloat(String(creditNote.igst)) || 0;
+  const safeTotalAmount = parseFloat(String(creditNote.total_amount)) || 0;
   
   console.log("Credit note values after conversion:", {
     original: {

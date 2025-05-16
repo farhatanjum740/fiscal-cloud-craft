@@ -21,13 +21,25 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
     }
   };
 
+  // Get credit note number and date, handling both formats
+  const creditNoteNumber = creditNote?.credit_note_number || creditNote?.creditNoteNumber || 'Draft';
+  const creditNoteDate = creditNote?.credit_note_date || 
+                        (creditNote?.creditNoteDate instanceof Date ? 
+                         creditNote.creditNoteDate.toISOString() : null);
+
+  console.log("CreditNoteHeader - Display Data:", {
+    number: creditNoteNumber,
+    date: creditNoteDate,
+    formattedDate: creditNoteDate ? formatDateSafely(creditNoteDate) : 'N/A'
+  });
+
   return (
     <>
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">CREDIT NOTE</h1>
-          <p className="text-gray-500"># {creditNote.credit_note_number || 'Draft'}</p>
-          <p className="text-gray-500 mt-2">Date: {formatDateSafely(creditNote.credit_note_date)}</p>
+          <p className="text-gray-500"># {creditNoteNumber}</p>
+          <p className="text-gray-500 mt-2">Date: {formatDateSafely(creditNoteDate)}</p>
           {invoice && (
             <p className="text-gray-500">Reference Invoice: {invoice.invoice_number || 'N/A'}</p>
           )}

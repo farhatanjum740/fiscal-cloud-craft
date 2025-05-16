@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { formatAmount, amountToWords } from '@/lib/utils';
 
 interface CreditNoteSummaryProps {
@@ -20,17 +20,21 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
   useIGST = false
 }) => {
   // Ensure we have numbers, not null values
-  const safeSubtotal = Number(subtotal) || 0;
-  const safeCgst = Number(cgst) || 0;
-  const safeSgst = Number(sgst) || 0;
-  const safeIgst = Number(igst) || 0;
-  const safeTotalAmount = Number(totalAmount) || 0;
+  const safeSubtotal = parseFloat(String(subtotal)) || 0;
+  const safeCgst = parseFloat(String(cgst)) || 0;
+  const safeSgst = parseFloat(String(sgst)) || 0;
+  const safeIgst = parseFloat(String(igst)) || 0;
+  const safeTotalAmount = parseFloat(String(totalAmount)) || 0;
   
-  console.log("Credit Note Summary:", {
-    original: { subtotal, cgst, sgst, igst, totalAmount },
-    safe: { safeSubtotal, safeCgst, safeSgst, safeIgst, safeTotalAmount },
-    useIGST
-  });
+  useEffect(() => {
+    console.log("Credit Note Summary - Original Values:", {
+      subtotal, cgst, sgst, igst, totalAmount, useIGST
+    });
+    
+    console.log("Credit Note Summary - Safe Values:", {
+      safeSubtotal, safeCgst, safeSgst, safeIgst, safeTotalAmount
+    });
+  }, [subtotal, cgst, sgst, igst, totalAmount, useIGST]);
   
   return (
     <>
