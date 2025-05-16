@@ -46,7 +46,7 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Core issue fix: Always ensure options is an array before any operations
+  // Enhanced safety checks for options
   const safeOptions = React.useMemo(() => {
     // First, handle null/undefined case
     if (!options) {
@@ -67,7 +67,7 @@ export function CommandSelect({
         return false;
       }
       
-      if (!('value' in item) || !('label' in item)) {
+      if (typeof item.value === 'undefined' || typeof item.label === 'undefined') {
         console.log("CommandSelect: Option missing required properties", item);
         return false;
       }
@@ -76,9 +76,9 @@ export function CommandSelect({
     });
   }, [options]);
   
-  // Find selected option
+  // Find selected option with extra safety checks
   const selectedOption = React.useMemo(() => {
-    if (!value) return null;
+    if (!value || !safeOptions || safeOptions.length === 0) return null;
     return safeOptions.find(option => option.value === value) || null;
   }, [safeOptions, value]);
 

@@ -45,21 +45,42 @@ const InvoiceItems = ({
   updateItem,
   handleProductSelect,
 }: InvoiceItemsProps) => {
-  // Ensure we have valid arrays
+  // Ensure we have valid arrays with more explicit checks
   const safeItems = React.useMemo(() => {
-    return Array.isArray(items) ? items : [];
+    if (!items) {
+      console.log("InvoiceItems: items is undefined or null");
+      return [];
+    }
+    if (!Array.isArray(items)) {
+      console.log("InvoiceItems: items is not an array", items);
+      return [];
+    }
+    return items;
   }, [items]);
   
   const safeProducts = React.useMemo(() => {
-    return Array.isArray(products) ? products : [];
+    if (!products) {
+      console.log("InvoiceItems: products is undefined or null");
+      return [];
+    }
+    if (!Array.isArray(products)) {
+      console.log("InvoiceItems: products is not an array", products);
+      return [];
+    }
+    return products;
   }, [products]);
   
-  // Convert products to options
+  // Convert products to options with additional safety checks
   const productOptions = React.useMemo(() => {
-    return safeProducts.map(product => ({
-      value: product?.id?.toString() || "",
-      label: product?.name || "Unknown"
-    })).filter(option => option.value !== "");
+    return safeProducts.map(product => {
+      // Extra validation for product object
+      if (!product) return null;
+      const productId = product.id ? product.id.toString() : "";
+      const productName = product.name || "Unknown";
+      
+      return { value: productId, label: productName };
+    })
+    .filter(option => option !== null && option.value !== "");
   }, [safeProducts]);
   
   return (
