@@ -78,6 +78,9 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
     return <div className="text-center p-4">Loading...</div>;
   }
   
+  // Calculate total GST
+  const totalGst = gstDetails.cgst + gstDetails.sgst + gstDetails.igst;
+  
   return (
     <div className="container max-w-4xl mx-auto p-4">
       <Card className="shadow-md">
@@ -287,7 +290,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
               </div>
               <div>
                 <Label>GST Total:</Label>
-                <p>{formatCurrency(gstDetails.totalGst)}</p>
+                <p>{formatCurrency(totalGst)}</p>
               </div>
               <div>
                 <Label>Total:</Label>

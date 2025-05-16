@@ -82,7 +82,7 @@ const InvoiceEditor = () => {
       return;
     }
     
-    saveInvoice(navigate);
+    saveInvoice();
   };
   
   return (

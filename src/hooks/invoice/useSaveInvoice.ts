@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
@@ -60,20 +61,23 @@ export const useSaveInvoice = (
         await generateInvoiceNumber();
       }
 
-      // Prepare invoice data for saving
+      // Prepare invoice data for saving - matching the database schema exactly
       const invoiceData = {
         user_id: user.id,
         company_id: company.id,
         customer_id: invoice.customerId,
-        invoice_number: invoice.invoiceNumber, // Use the full invoice number with financial year
+        invoice_number: invoice.invoiceNumber,
         invoice_date: invoice.invoiceDate,
         due_date: invoice.dueDate,
         status: invoice.status || "draft",
-        subtotal_amount: subtotal,
-        gst_details: gstDetails,
+        subtotal: subtotal, // Changed from subtotal_amount to subtotal
+        cgst: gstDetails.cgst,
+        sgst: gstDetails.sgst,
+        igst: gstDetails.igst,
         total_amount: total,
         notes: invoice.notes,
         terms_and_conditions: invoice.termsAndConditions,
+        financial_year: invoice.financialYear
       };
 
       let invoiceResult;
