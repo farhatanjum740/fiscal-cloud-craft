@@ -58,20 +58,37 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   const handleInvoiceChange = async (value: string) => {
     console.log("handleInvoiceChange called with value:", value);
     try {
+      if (!value) {
+        console.log("Empty invoice ID provided");
+        return;
+      }
+      
       const fetchedInvoice = await baseHandleInvoiceChange(value);
       console.log("Fetched invoice:", fetchedInvoice);
+      
       if (fetchedInvoice) {
+        // Fetch invoice items
         await fetchInvoiceItems(value);
         
         // Auto-generate credit note number when invoice is selected and not editing
         if (!isEditing) {
           setTimeout(() => generateCreditNoteNumber(), 300);
         }
+      } else {
+        console.log("No invoice data returned from baseHandleInvoiceChange");
       }
     } catch (error) {
       console.error("Error in handleInvoiceChange:", error);
     }
   };
+
+  // If there's an initial invoiceId from a query parameter, load it
+  useEffect(() => {
+    if (creditNote.invoiceId && !isEditing && !invoice) {
+      console.log("Initial invoice ID detected, loading:", creditNote.invoiceId);
+      handleInvoiceChange(creditNote.invoiceId);
+    }
+  }, [creditNote.invoiceId, isEditing, invoice]);
 
   return {
     creditNote,

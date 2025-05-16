@@ -7,7 +7,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { 
   Table,
   TableBody,
@@ -24,6 +24,7 @@ interface InvoiceInfoProps {
   toggleItemSelection: (id: string) => void;
   addSelectedItems: () => void;
   isEditing: boolean;
+  isLoading?: boolean;
 }
 
 const InvoiceInfo = ({
@@ -32,7 +33,8 @@ const InvoiceInfo = ({
   selectedItems,
   toggleItemSelection,
   addSelectedItems,
-  isEditing
+  isEditing,
+  isLoading = false
 }: InvoiceInfoProps) => {
   return (
     <Card>
@@ -43,7 +45,12 @@ const InvoiceInfo = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {invoice ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-40">
+            <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+            <p className="text-gray-500">Loading invoice data...</p>
+          </div>
+        ) : invoice ? (
           <div className="space-y-4">
             <div className="p-4 border rounded-md bg-gray-50">
               <div className="flex justify-between mb-2">

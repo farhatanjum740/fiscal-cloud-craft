@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
@@ -20,7 +20,6 @@ const CreditNoteInvoiceSelect = ({
   // Ensure invoiceOptions is always a valid array with proper error handling
   const safeInvoiceOptions = React.useMemo(() => {
     try {
-      // Check if invoiceOptions is defined and an array
       if (!invoiceOptions) {
         console.log("CreditNoteInvoiceSelect: invoiceOptions is undefined or null");
         return [];
@@ -72,6 +71,16 @@ const CreditNoteInvoiceSelect = ({
       });
     }
   };
+
+  // Trigger invoice selection when component loads with an initial value
+  useEffect(() => {
+    if (invoiceId && !isEditing) {
+      console.log("Initial invoice ID detected, triggering selection:", invoiceId);
+      handleInvoiceSelect(invoiceId).catch(error => {
+        console.error("Failed to load initial invoice data:", error);
+      });
+    }
+  }, []); // Empty dependency array means this only runs once on mount
 
   return (
     <div className="space-y-2">

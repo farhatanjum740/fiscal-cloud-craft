@@ -92,6 +92,17 @@ const CreditNoteEditor = () => {
     saveCreditNote
   } = useCreditNote(isEditing ? id : queryId);
   
+  const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+  
+  const handleInvoiceSelect = async (value: string) => {
+    setIsInvoiceLoading(true);
+    try {
+      await handleInvoiceChange(value);
+    } finally {
+      setIsInvoiceLoading(false);
+    }
+  };
+  
   const handleSave = () => {
     if (!creditNote.invoiceId) {
       toast({
@@ -160,7 +171,7 @@ const CreditNoteEditor = () => {
                     invoiceOptions={invoiceOptions || []}
                     isEditing={isEditing}
                     isGeneratingNumber={isGeneratingNumber}
-                    handleInvoiceChange={handleInvoiceChange}
+                    handleInvoiceChange={handleInvoiceSelect}
                     generateCreditNoteNumber={generateCreditNoteNumber}
                   />
                 </CardContent>
@@ -173,6 +184,7 @@ const CreditNoteEditor = () => {
                 toggleItemSelection={toggleItemSelection}
                 addSelectedItems={addSelectedItems}
                 isEditing={isEditing}
+                isLoading={isInvoiceLoading}
               />
             </div>
             
