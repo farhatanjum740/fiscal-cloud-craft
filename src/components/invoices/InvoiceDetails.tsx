@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -31,12 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CommandSelect } from "@/components/ui/command-select";
 import { Separator } from "@/components/ui/separator";
 import { DatePicker } from "@/components/ui/date-picker";
 import { formatCurrency } from "@/lib/utils";
 import { useInvoice } from "@/hooks/useInvoice";
-import InvoiceItemRow from "./invoice-items/InvoiceItemRow";
 
 interface InvoiceDetailsProps {
   id?: string;
@@ -67,15 +64,6 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
     saveInvoice
   } = useInvoice(id);
   
-  // Convert customers to format needed for CommandSelect
-  const customerOptions = customers.map(customer => ({
-    value: customer.id,
-    label: customer.name
-  }));
-  
-  // Calculate total GST
-  const totalGst = gstDetails.cgst + gstDetails.sgst + gstDetails.igst;
-  
   useEffect(() => {
     if (companySettings) {
       setInvoice(prev => ({
@@ -90,11 +78,8 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
     return <div className="text-center p-4">Loading...</div>;
   }
   
-  // Convert products to format needed for CommandSelect
-  const productOptions = products.map(product => ({
-    value: product.id,
-    label: product.name
-  }));
+  // Calculate total GST
+  const totalGst = gstDetails.cgst + gstDetails.sgst + gstDetails.igst;
   
   return (
     <div className="container max-w-4xl mx-auto p-4">
@@ -115,6 +100,15 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
                   value={invoice.invoiceNumber || "Generating..."}
                   disabled={true}
                 />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2"
+                  onClick={generateInvoiceNumber}
+                  disabled={isGeneratingInvoiceNumber}
+                >
+                  {isGeneratingInvoiceNumber ? "Generating..." : "Generate"}
+                </Button>
               </div>
             </div>
             <div>
@@ -157,15 +151,22 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
             </div>
             <div>
               <Label htmlFor="customer">Customer</Label>
-              <CommandSelect
-                options={customerOptions}
-                value={invoice.customerId}
+              <Select
                 onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
-                placeholder="Select customer"
-                searchInputPlaceholder="Search customers..."
-                emptyMessage="No customers found."
+                defaultValue={invoice.customerId}
                 disabled={loading}
-              />
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
@@ -187,14 +188,59 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
               </TableHeader>
               <TableBody>
                 {invoice.items.map((item) => (
-                  <InvoiceItemRow
-                    key={item.id}
-                    item={item}
-                    productOptions={productOptions}
-                    updateItem={updateItem}
-                    removeItem={removeItem}
-                    handleProductSelect={handleProductSelect}
-                  />
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Select
+                        onValueChange={(productId) => handleProductSelect(item.id, productId)}
+                        defaultValue={item.productId}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="text"
+                        value={item.hsnCode || ""}
+                        onChange={(e) => updateItem(item.id, "hsnCode", e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={item.quantity || ""}
+                        onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value))}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="text"
+                        value={item.unit || ""}
+                        onChange={(e) => updateItem(item.id, "unit", e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={item.price || ""}
+                        onChange={(e) => updateItem(item.id, "price", parseFloat(e.target.value))}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">{item.gstRate}%</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
               <TableFooter>

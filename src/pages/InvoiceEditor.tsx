@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -24,9 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { CommandSelect } from "@/components/ui/command-select";
 import { useInvoice } from "@/hooks/useInvoice";
-import InvoiceItemRow from "@/components/invoices/invoice-items/InvoiceItemRow";
 
 const InvoiceEditor = () => {
   const { id } = useParams();
@@ -55,17 +52,6 @@ const InvoiceEditor = () => {
     generateInvoiceNumber,
     saveInvoice
   } = useInvoice(id);
-  
-  // Convert customers and products to format needed for CommandSelect
-  const customerOptions = customers.map(customer => ({
-    value: customer.id,
-    label: customer.name
-  }));
-  
-  const productOptions = products.map(product => ({
-    value: product.id,
-    label: product.name
-  }));
   
   useEffect(() => {
     if (companySettings) {
@@ -130,15 +116,18 @@ const InvoiceEditor = () => {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="customer">Customer</Label>
-                  <CommandSelect
-                    options={customerOptions}
-                    value={invoice.customerId}
-                    onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
-                    placeholder="Select a customer"
-                    searchInputPlaceholder="Search customers..."
-                    emptyMessage="No customers found"
-                    disabled={loading}
-                  />
+                  <Select onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))} value={invoice.customerId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -150,6 +139,9 @@ const InvoiceEditor = () => {
                       readOnly
                       className="bg-gray-50"
                     />
+                    {isGeneratingInvoiceNumber && (
+                      <p className="text-xs text-muted-foreground">Generating invoice number...</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -169,7 +161,7 @@ const InvoiceEditor = () => {
                     <DatePicker
                       selected={invoice.invoiceDate}
                       onSelect={(date) => handleDateChange(date)}
-                      className="w-full"
+                      className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
                       disableFutureDates={true}
                     />
                   </div>
@@ -179,7 +171,7 @@ const InvoiceEditor = () => {
                     <DatePicker
                       selected={invoice.dueDate}
                       onSelect={(date) => setInvoice(prev => ({ ...prev, dueDate: date }))}
-                      className="w-full"
+                      className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -241,14 +233,62 @@ const InvoiceEditor = () => {
                 </TableHeader>
                 <TableBody>
                   {invoice.items.map((item) => (
-                    <InvoiceItemRow
-                      key={item.id}
-                      item={item}
-                      productOptions={productOptions}
-                      updateItem={updateItem}
-                      removeItem={removeItem}
-                      handleProductSelect={handleProductSelect}
-                    />
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <Select onValueChange={(value) => handleProductSelect(item.id, value)} value={item.productId || ""}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select a product" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {products.map((product) => (
+                              <SelectItem key={product.id} value={product.id}>
+                                {product.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="text"
+                          value={item.hsnCode || ""}
+                          onChange={(e) => updateItem(item.id, "hsnCode", e.target.value)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={String(item.quantity || "")}
+                          onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="text"
+                          value={item.unit || ""}
+                          onChange={(e) => updateItem(item.id, "unit", e.target.value)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={String(item.price || "")}
+                          onChange={(e) => updateItem(item.id, "price", Number(e.target.value))}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={String(item.gstRate || "")}
+                          onChange={(e) => updateItem(item.id, "gstRate", Number(e.target.value))}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
                 </TableBody>
               </Table>
