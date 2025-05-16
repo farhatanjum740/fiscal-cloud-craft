@@ -54,6 +54,8 @@ const CreditNoteDetails: React.FC<CreditNoteDetailsProps> = ({ creditNote, invoi
           <p><span className="font-medium">Reference Invoice:</span> {invoice?.invoice_number || 'N/A'}</p>
           <p><span className="font-medium">Invoice Date:</span> {invoice?.invoice_date ? formatDateSafely(invoice.invoice_date) : 'N/A'}</p>
           <p><span className="font-medium">Customer:</span> {customer?.name || 'N/A'}</p>
+          {customer?.phone && <p><span className="font-medium">Phone:</span> {customer.phone}</p>}
+          {customer?.email && <p><span className="font-medium">Email:</span> {customer.email}</p>}
         </div>
       </div>
     </div>

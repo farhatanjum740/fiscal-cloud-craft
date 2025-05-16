@@ -37,10 +37,10 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-xl font-bold text-gray-800">CREDIT NOTE</h1>
-          <p className="text-sm text-gray-500"># {creditNoteNumber}</p>
-          <p className="text-sm text-gray-500 mt-1">Date: {formatDateSafely(creditNoteDate)}</p>
+          <p className="text-xs text-gray-500"># {creditNoteNumber}</p>
+          <p className="text-xs text-gray-500 mt-1">Date: {formatDateSafely(creditNoteDate)}</p>
           {invoice && (
-            <p className="text-sm text-gray-500">Reference Invoice: {invoice.invoice_number || 'N/A'}</p>
+            <p className="text-xs text-gray-500">Reference Invoice: {invoice.invoice_number || 'N/A'}</p>
           )}
         </div>
         
@@ -58,8 +58,8 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
                 {company.address_line2 && <p className="text-xs text-gray-600">{company.address_line2}</p>}
                 <p className="text-xs text-gray-600">{company.city || 'N/A'}, {company.state || 'N/A'} - {company.pincode || 'N/A'}</p>
                 <p className="text-xs text-gray-600">GSTIN: {company.gstin || 'N/A'}</p>
-                {company.email && <p className="text-xs text-gray-600">Email: {company.email}</p>}
-                {company.phone && <p className="text-xs text-gray-600">Phone: {company.phone}</p>}
+                {company.email_id && <p className="text-xs text-gray-600">Email: {company.email_id}</p>}
+                {company.contact_number && <p className="text-xs text-gray-600">Phone: {company.contact_number}</p>}
               </div>
             </div>
           )}
@@ -70,8 +70,8 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({ creditNote, invoice
               {company.address_line2 && <p className="text-xs text-gray-600">{company.address_line2}</p>}
               <p className="text-xs text-gray-600">{company.city || 'N/A'}, {company.state || 'N/A'} - {company.pincode || 'N/A'}</p>
               <p className="text-xs text-gray-600">GSTIN: {company.gstin || 'N/A'}</p>
-              {company.email && <p className="text-xs text-gray-600">Email: {company.email}</p>}
-              {company.phone && <p className="text-xs text-gray-600">Phone: {company.phone}</p>}
+              {company.email_id && <p className="text-xs text-gray-600">Email: {company.email_id}</p>}
+              {company.contact_number && <p className="text-xs text-gray-600">Phone: {company.contact_number}</p>}
             </div>
           )}
         </div>

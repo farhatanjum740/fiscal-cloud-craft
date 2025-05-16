@@ -22,12 +22,16 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
             <th className="py-1 px-1 border font-semibold">Unit</th>
             <th className="py-1 px-1 border font-semibold">Rate</th>
             <th className="py-1 px-1 border font-semibold">Amount</th>
-            <th className="py-1 px-1 border font-semibold">GST %</th>
             {useIGST ? (
-              <th className="py-1 px-1 border font-semibold">IGST</th>
+              <>
+                <th className="py-1 px-1 border font-semibold">IGST %</th>
+                <th className="py-1 px-1 border font-semibold">IGST</th>
+              </>
             ) : (
               <>
+                <th className="py-1 px-1 border font-semibold">CGST %</th>
                 <th className="py-1 px-1 border font-semibold">CGST</th>
+                <th className="py-1 px-1 border font-semibold">SGST %</th>
                 <th className="py-1 px-1 border font-semibold">SGST</th>
               </>
             )}
@@ -44,6 +48,10 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
               const gstRate = Number(item.gst_rate || item.gstRate || 0);
               const gstAmount = (itemAmount * gstRate) / 100;
               const totalWithGst = itemAmount + gstAmount;
+              
+              // Calculate split rates for CGST/SGST (half of GST rate for each)
+              const splitRate = gstRate / 2;
+              const splitAmount = gstAmount / 2;
               
               // Get item name and HSN code from the appropriate properties
               const productName = item.product_name || item.productName || 'N/A';
@@ -69,13 +77,18 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
                   <td className="py-1 px-1 border text-xs">{item.unit || 'Unit'}</td>
                   <td className="py-1 px-1 border text-xs">₹{formatAmount(itemPrice)}</td>
                   <td className="py-1 px-1 border text-xs">₹{formatAmount(itemAmount)}</td>
-                  <td className="py-1 px-1 border text-xs">{gstRate}%</td>
+                  
                   {useIGST ? (
-                    <td className="py-1 px-1 border text-xs">₹{formatAmount(gstAmount)}</td>
+                    <>
+                      <td className="py-1 px-1 border text-xs">{gstRate}%</td>
+                      <td className="py-1 px-1 border text-xs">₹{formatAmount(gstAmount)}</td>
+                    </>
                   ) : (
                     <>
-                      <td className="py-1 px-1 border text-xs">₹{formatAmount(gstAmount / 2)}</td>
-                      <td className="py-1 px-1 border text-xs">₹{formatAmount(gstAmount / 2)}</td>
+                      <td className="py-1 px-1 border text-xs">{splitRate}%</td>
+                      <td className="py-1 px-1 border text-xs">₹{formatAmount(splitAmount)}</td>
+                      <td className="py-1 px-1 border text-xs">{splitRate}%</td>
+                      <td className="py-1 px-1 border text-xs">₹{formatAmount(splitAmount)}</td>
                     </>
                   )}
                   <td className="py-1 px-1 border text-xs text-right">₹{formatAmount(totalWithGst)}</td>
@@ -84,7 +97,7 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
             })
           ) : (
             <tr>
-              <td colSpan={useIGST ? 10 : 11} className="py-2 text-center border text-xs">
+              <td colSpan={useIGST ? 10 : 12} className="py-2 text-center border text-xs">
                 No items found
               </td>
             </tr>

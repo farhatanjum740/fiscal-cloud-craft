@@ -19,7 +19,9 @@ export type Database = {
           bank_ifsc_code: string | null
           bank_name: string | null
           city: string | null
+          contact_number: string | null
           created_at: string | null
+          email_id: string | null
           gstin: string | null
           id: string
           logo: string | null
@@ -44,7 +46,9 @@ export type Database = {
           bank_ifsc_code?: string | null
           bank_name?: string | null
           city?: string | null
+          contact_number?: string | null
           created_at?: string | null
+          email_id?: string | null
           gstin?: string | null
           id?: string
           logo?: string | null
@@ -69,7 +73,9 @@ export type Database = {
           bank_ifsc_code?: string | null
           bank_name?: string | null
           city?: string | null
+          contact_number?: string | null
           created_at?: string | null
+          email_id?: string | null
           gstin?: string | null
           id?: string
           logo?: string | null
