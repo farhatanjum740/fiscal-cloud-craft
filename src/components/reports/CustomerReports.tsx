@@ -111,6 +111,19 @@ const CustomerReports = () => {
     enabled: !!user
   });
 
+  // Helper function to get all invoice IDs for a customer
+  async function getCustomerInvoiceIds(customerId: string): Promise<string> {
+    if (!user) return '';
+    
+    const { data } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('customer_id', customerId);
+      
+    return data && data.length > 0 ? data[0].id : '';
+  }
+
   const { data: customerLedgerData, isLoading: loadingCustomerLedger } = useQuery({
     queryKey: ['customer-ledger', selectedCustomerId, dateRange, refreshTrigger, user?.id],
     queryFn: async () => {
@@ -200,19 +213,6 @@ const CustomerReports = () => {
     },
     enabled: !!user && !!selectedCustomerId
   });
-
-  // Helper function to get all invoice IDs for a customer
-  async function getCustomerInvoiceIds(customerId: string): Promise<string[]> {
-    if (!user) return [];
-    
-    const { data } = await supabase
-      .from('invoices')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('customer_id', customerId);
-      
-    return (data || []).map(i => i.id);
-  }
 
   // Define columns for export
   const outstandingPaymentsColumns = [
@@ -445,7 +445,7 @@ const CustomerReports = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant={
-                            entry.status === 'paid' ? 'success' : 
+                            entry.status === 'paid' ? 'secondary' : 
                             entry.status === 'pending' ? 'default' : 
                             entry.status === 'draft' ? 'outline' : 'secondary'
                           }>

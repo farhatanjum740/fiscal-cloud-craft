@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
+// Augment jsPDF type for autoTable plugin
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;

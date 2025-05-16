@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState } from "react";
-import { startOfYear, endOfYear, startOfFinancialYear, endOfFinancialYear } from "date-fns";
+import { startOfYear, endOfYear } from "date-fns";
 
 // Financial year utility functions
 export const startOfFinancialYear = (date: Date): Date => {

@@ -15,6 +15,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+// Define typings for creditNotes data
+interface CreditNote {
+  id: string;
+  creditNoteNumber: string;
+  creditNoteDate: string;
+  amount: number;
+  reason: string;
+  status: string;
+  invoiceId: string;
+  invoiceNumber: string;
+}
+
+interface CreditNoteSummaryItem {
+  reason: string;
+  count: number;
+  totalAmount: number;
+}
+
+interface CreditNoteData {
+  creditNotes: CreditNote[];
+  summary: CreditNoteSummaryItem[];
+}
+
 const InvoiceReports = () => {
   const { user } = useAuth();
   const { dateRange, refreshTrigger } = useReportContext();
@@ -67,10 +90,10 @@ const InvoiceReports = () => {
   });
 
   // Credit Note Summary
-  const { data: creditNotesData, isLoading: loadingCreditNotes } = useQuery({
+  const { data: creditNotesData, isLoading: loadingCreditNotes } = useQuery<CreditNoteData>({
     queryKey: ['credit-note-summary', dateRange, refreshTrigger, user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return { creditNotes: [], summary: [] };
 
       const formattedFrom = format(dateRange.from, 'yyyy-MM-dd');
       const formattedTo = format(dateRange.to, 'yyyy-MM-dd');
@@ -332,7 +355,7 @@ const InvoiceReports = () => {
                           </TableCell>
                           <TableCell>
                             <Badge variant={
-                              invoice.status === 'paid' ? 'success' : 
+                              invoice.status === 'paid' ? 'secondary' : 
                               isOverdue ? 'destructive' :
                               invoice.status === 'pending' ? 'default' : 
                               invoice.status === 'draft' ? 'outline' : 
@@ -452,7 +475,7 @@ const InvoiceReports = () => {
                             <TableCell>{note.reason}</TableCell>
                             <TableCell>
                               <Badge variant={
-                                note.status === 'issued' ? 'success' : 
+                                note.status === 'issued' ? 'secondary' : 
                                 note.status === 'draft' ? 'outline' : 
                                 note.status === 'cancelled' ? 'secondary' : 'default'
                               }>
