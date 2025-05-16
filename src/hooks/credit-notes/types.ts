@@ -9,6 +9,12 @@ export interface CreditNoteData {
   reason: string;
   items: CreditNoteItem[];
   status: string;
+  // Add these properties to fix TypeScript errors
+  subtotal?: number;
+  cgst?: number;
+  sgst?: number;
+  igst?: number;
+  total_amount?: number;
 }
 
 export interface CreditNoteGSTDetails {

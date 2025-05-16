@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CreditNoteData, CreditNoteGSTDetails } from "./types";
 
@@ -18,7 +19,7 @@ export const useCreditNoteCalculations = (
   useEffect(() => {
     console.log("Calculation triggered with data:", { creditNote, invoice, company });
     
-    // If the credit note already has calculated values, use those
+    // If the credit note already has calculated values from database, use those
     if (creditNote && typeof creditNote.subtotal === 'number' && typeof creditNote.total_amount === 'number') {
       console.log("Using credit note's existing calculated values");
       setSubtotal(Number(creditNote.subtotal) || 0);
