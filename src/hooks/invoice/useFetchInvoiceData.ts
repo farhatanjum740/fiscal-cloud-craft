@@ -160,8 +160,9 @@ export const useFetchInvoiceData = (
       );
       console.log("Transformed invoice items:", transformedItems);
       
-      // Set invoice state
-      setInvoice({
+      // Set invoice state - Fix for this issue: using a function to properly update state
+      setInvoice((prev) => ({
+        ...prev,
         customerId: invoiceData.customer_id,
         invoiceNumber: invoiceData.invoice_number,
         invoiceDate: new Date(invoiceData.invoice_date),
@@ -171,7 +172,7 @@ export const useFetchInvoiceData = (
         notes: invoiceData.notes || "",
         status: invoiceData.status,
         financialYear: invoiceData.financial_year,
-      });
+      }));
     } else {
       console.log("No invoice data found");
     }
