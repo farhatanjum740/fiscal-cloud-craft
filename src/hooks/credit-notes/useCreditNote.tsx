@@ -20,7 +20,8 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     invoiceOptions,
     creditNote,
     setCreditNote,
-    fetchInvoiceItems
+    fetchInvoiceItems,
+    setInvoice
   } = useFetchCreditNoteData(user?.id, id, isEditing);
 
   // Log fetched data for debugging
@@ -63,15 +64,26 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         return;
       }
       
+      // First, update the creditNote.invoiceId (this will trigger any UI updates)
+      setCreditNote(prev => ({
+        ...prev,
+        invoiceId: value
+      }));
+      
+      // Then fetch the invoice data
       const fetchedInvoice = await baseHandleInvoiceChange(value);
       console.log("Fetched invoice:", fetchedInvoice);
       
       if (fetchedInvoice) {
+        // Make sure to update the invoice state (this is crucial)
+        setInvoice(fetchedInvoice);
+        
         // Fetch invoice items
         await fetchInvoiceItems(value);
         
         // Auto-generate credit note number when invoice is selected and not editing
-        if (!isEditing) {
+        if (!isEditing && fetchedInvoice) {
+          console.log("Auto-generating credit note number");
           setTimeout(() => generateCreditNoteNumber(), 300);
         }
       } else {

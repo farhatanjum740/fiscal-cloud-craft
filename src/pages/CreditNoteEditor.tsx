@@ -96,8 +96,11 @@ const CreditNoteEditor = () => {
   
   const handleInvoiceSelect = async (value: string) => {
     setIsInvoiceLoading(true);
+    console.log("CreditNoteEditor: Calling handleInvoiceChange with value:", value);
     try {
       await handleInvoiceChange(value);
+    } catch (error) {
+      console.error("Error in handleInvoiceSelect:", error);
     } finally {
       setIsInvoiceLoading(false);
     }
@@ -128,9 +131,11 @@ const CreditNoteEditor = () => {
   // Log the state of key data to help track down issues
   React.useEffect(() => {
     console.log("CreditNoteEditor - Credit Note:", creditNote);
+    console.log("CreditNoteEditor - Invoice:", invoice);
     console.log("CreditNoteEditor - Invoice Options:", invoiceOptions);
     console.log("CreditNoteEditor - Selected Items:", selectedItems);
-  }, [creditNote, invoiceOptions, selectedItems]);
+    console.log("CreditNoteEditor - Is Invoice Loading:", isInvoiceLoading);
+  }, [creditNote, invoice, invoiceOptions, selectedItems, isInvoiceLoading]);
   
   return (
     <ErrorBoundary>

@@ -56,17 +56,19 @@ const InvoiceInfo = ({
               <div className="flex justify-between mb-2">
                 <h3 className="font-semibold text-lg">Invoice: {invoice.invoice_number}</h3>
                 <span className="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                  {invoice.status && typeof invoice.status === 'string' ? 
+                    invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : 
+                    'Unknown'}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-gray-600">Invoice Date:</p>
-                  <p>{new Date(invoice.invoice_date).toLocaleDateString('en-IN')}</p>
+                  <p>{invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Amount:</p>
-                  <p>₹{Number(invoice.total_amount).toLocaleString()}</p>
+                  <p>₹{invoice.total_amount ? Number(invoice.total_amount).toLocaleString() : '0'}</p>
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface CreditNoteInvoiceSelectProps {
   invoiceId: string;
@@ -71,16 +71,6 @@ const CreditNoteInvoiceSelect = ({
       });
     }
   };
-
-  // Trigger invoice selection when component loads with an initial value
-  useEffect(() => {
-    if (invoiceId && !isEditing) {
-      console.log("Initial invoice ID detected, triggering selection:", invoiceId);
-      handleInvoiceSelect(invoiceId).catch(error => {
-        console.error("Failed to load initial invoice data:", error);
-      });
-    }
-  }, []); // Empty dependency array means this only runs once on mount
 
   return (
     <div className="space-y-2">

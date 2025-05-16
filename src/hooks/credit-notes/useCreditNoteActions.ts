@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -24,7 +25,7 @@ export const useCreditNoteActions = (
   // Generate credit note number - modified to prevent auto-incrementing and format correctly
   const generateCreditNoteNumber = async () => {
     console.log("Generating credit note number with company:", company);
-    console.log("Invoice data:", invoice);
+    console.log("Invoice data for credit note number generation:", invoice);
     
     if (!company) {
       toast({
@@ -36,6 +37,7 @@ export const useCreditNoteActions = (
     }
     
     if (!invoice) {
+      console.error("Invoice is required but not available for credit note number generation");
       toast({
         title: "Error",
         description: "Invoice is required to generate credit note number",
@@ -93,8 +95,6 @@ export const useCreditNoteActions = (
         return null;
       }
       
-      setCreditNote(prev => ({ ...prev, invoiceId: value }));
-      
       // Reset generated credit note number when invoice changes
       setGeneratedCreditNoteNumber(null);
       
@@ -114,7 +114,11 @@ export const useCreditNoteActions = (
       
       if (data) {
         // Update financial year to match invoice
-        setCreditNote(prev => ({ ...prev, financialYear: data.financial_year || "" }));
+        setCreditNote(prev => ({ 
+          ...prev, 
+          financialYear: data.financial_year || "",
+          invoiceId: value
+        }));
         
         return data; // Return the invoice data for the main hook to use
       } else {

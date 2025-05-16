@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -231,7 +230,13 @@ export const useFetchCreditNoteData = (
   
   // Fetch invoice items
   const fetchInvoiceItems = async (invoiceId: string) => {
+    console.log("Calling fetchInvoiceItems for invoice ID:", invoiceId);
     try {
+      if (!invoiceId) {
+        console.log("No invoice ID provided to fetchInvoiceItems");
+        return;
+      }
+      
       console.log("Fetching invoice items for invoice ID:", invoiceId);
       
       // Fetch invoice items
@@ -291,6 +296,7 @@ export const useFetchCreditNoteData = (
     loadingData,
     company,
     invoice,
+    setInvoice, // Expose this function
     invoiceItems,
     invoiceOptions,
     creditNote,
