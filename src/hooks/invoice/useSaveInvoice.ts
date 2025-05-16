@@ -56,9 +56,26 @@ export const useSaveInvoice = (
 
     setLoading(true);
     try {
-      // Generate invoice number if it's a new invoice
+      // Only increment the invoice counter when actually saving
       if (!isEditing) {
-        await generateInvoiceNumber();
+        // Get the invoice number components
+        const parts = invoice.invoiceNumber.split('/');
+        const financialYear = parts[0];
+        const counter = parseInt(parts[1], 10);
+        
+        // Update the counter in the database
+        const { error: updateError } = await supabase
+          .from('company_settings')
+          .upsert({
+            company_id: company.id,
+            user_id: user.id,
+            current_financial_year: financialYear,
+            invoice_counter: counter + 1, // Increment for the next invoice
+          }, {
+            onConflict: 'company_id',
+          });
+          
+        if (updateError) throw updateError;
       }
 
       // Prepare invoice data for saving - matching the database schema exactly
@@ -137,7 +154,7 @@ export const useSaveInvoice = (
         description: `Invoice ${isEditing ? "updated" : "created"} successfully!`,
       });
 
-      // Clear generated invoice number after successful save
+      // Clear generated invoice number after successful save to ensure a new one is generated for the next new invoice
       setGeneratedInvoiceNumber(null);
     } catch (error: any) {
       console.error("Error saving invoice:", error);
@@ -160,7 +177,6 @@ export const useSaveInvoice = (
     id,
     loading,
     setLoading,
-    generateInvoiceNumber,
     setGeneratedInvoiceNumber,
   ]);
 

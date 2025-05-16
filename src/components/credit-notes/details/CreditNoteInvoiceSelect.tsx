@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Label } from "@/components/ui/label";
-import { CommandSelect } from "@/components/ui/command-select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 
 interface CreditNoteInvoiceSelectProps {
@@ -76,15 +76,31 @@ const CreditNoteInvoiceSelect = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="invoice">Invoice Reference</Label>
-      <CommandSelect
-        options={safeInvoiceOptions}
+      <Select
         value={invoiceId || ""}
         onValueChange={handleChange}
-        placeholder="Select an invoice"
-        searchInputPlaceholder="Search invoices..."
-        emptyMessage={safeInvoiceOptions.length === 0 ? "No invoices available" : "No matching invoices found"}
-        disabled={isEditing} // Can't change invoice in edit mode
-      />
+        disabled={isEditing}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select an invoice" />
+        </SelectTrigger>
+        <SelectContent>
+          {safeInvoiceOptions.length === 0 ? (
+            <div className="py-2 px-2 text-sm text-muted-foreground">
+              No invoices available
+            </div>
+          ) : (
+            safeInvoiceOptions.map(option => (
+              <SelectItem 
+                key={option.value} 
+                value={option.value}
+              >
+                {option.label}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
       {safeInvoiceOptions.length === 0 && !isEditing && (
         <p className="text-xs text-amber-500 mt-1">
           No invoices available. Please create an invoice first.

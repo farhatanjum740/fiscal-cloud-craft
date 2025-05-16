@@ -27,35 +27,52 @@ export const useInvoiceNumber = (
     
     try {
       setIsGeneratingInvoiceNumber(true);
-      console.log("Generating invoice number for financial year:", invoice.financialYear);
       
-      // Call the database function that will properly increment the counter
-      const { data, error } = await supabase.rpc(
-        'get_next_invoice_number',
-        {
-          p_company_id: company.id,
-          p_financial_year: invoice.financialYear,
-          p_prefix: '',
-        }
-      );
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (data) {
-        // Using the new format: YYYY-YYYY/001
-        const invoiceNumber = `${invoice.financialYear}/${data.split('/').pop()}`;
-        
-        console.log("Generated invoice number:", invoiceNumber);
+      // If we already have a generated number for this session, reuse it instead of regenerating
+      if (generatedInvoiceNumber) {
+        console.log("Reusing previously generated invoice number:", generatedInvoiceNumber);
         setInvoice(prev => ({
           ...prev,
-          invoiceNumber
+          invoiceNumber: generatedInvoiceNumber
         }));
-        
-        // Store the generated number
-        setGeneratedInvoiceNumber(invoiceNumber);
+        return;
       }
+      
+      console.log("Generating invoice number for financial year:", invoice.financialYear);
+      
+      // Instead of incrementing, just fetch the next available number without updating the counter
+      // The counter will only be updated when an invoice is actually saved
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('company_settings')
+        .select('invoice_counter, current_financial_year')
+        .eq('company_id', company.id)
+        .single();
+        
+      if (settingsError) {
+        throw settingsError;
+      }
+      
+      // Calculate the next invoice number but don't save it yet
+      let nextCounter = 1; // Default to 1 if no settings exist
+      
+      if (settingsData) {
+        if (settingsData.current_financial_year === invoice.financialYear) {
+          nextCounter = settingsData.invoice_counter;
+        }
+        // If financial year has changed, start from 1
+      }
+      
+      // Format the invoice number: YYYY-YYYY/001
+      const invoiceNumber = `${invoice.financialYear}/${nextCounter.toString().padStart(3, '0')}`;
+      
+      console.log("Generated invoice number (preview):", invoiceNumber);
+      setInvoice(prev => ({
+        ...prev,
+        invoiceNumber
+      }));
+      
+      // Store the generated number for future use within this session
+      setGeneratedInvoiceNumber(invoiceNumber);
     } catch (error: any) {
       console.error("Error generating invoice number:", error);
       toast({
@@ -66,7 +83,7 @@ export const useInvoiceNumber = (
     } finally {
       setIsGeneratingInvoiceNumber(false);
     }
-  }, [company, invoice.financialYear, setInvoice, setIsGeneratingInvoiceNumber, setGeneratedInvoiceNumber]);
+  }, [company, invoice.financialYear, setInvoice, setIsGeneratingInvoiceNumber, setGeneratedInvoiceNumber, generatedInvoiceNumber]);
 
   return { generateInvoiceNumber };
 };
