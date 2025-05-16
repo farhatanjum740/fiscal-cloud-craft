@@ -46,57 +46,21 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Comprehensive defensive checks for options
+  // Ensure options is always a valid array
   const safeOptions = React.useMemo(() => {
-    try {
-      // Handle invalid options
-      if (options === null || options === undefined) {
-        console.log("CommandSelect: options is null or undefined");
-        return [];
-      }
-      
-      // Handle non-array options 
-      if (!Array.isArray(options)) {
-        console.log("CommandSelect: options is not an array", options);
-        return [];
-      }
-      
-      // Filter out invalid items
-      return options.filter(item => {
-        if (!item || typeof item !== 'object') {
-          console.log("CommandSelect: Invalid option item", item);
-          return false;
-        }
-        
-        if ('value' in item === false || 'label' in item === false) {
-          console.log("CommandSelect: Option missing required properties", item);
-          return false;
-        }
-        
-        // Add more stringent checks - make sure values are not undefined
-        if (item.value === undefined || item.label === undefined) {
-          console.log("CommandSelect: Option has undefined value or label", item);
-          return false;
-        }
-        
-        return true;
-      });
-    } catch (error) {
-      // Catch any unexpected errors in options processing
-      console.error("CommandSelect: Error processing options:", error);
-      return [];
-    }
+    if (!options) return [];
+    if (!Array.isArray(options)) return [];
+    
+    // Filter out invalid items
+    return options.filter(item => {
+      return item && typeof item === 'object' && 'value' in item && 'label' in item;
+    });
   }, [options]);
   
-  // Extra safe selected option lookup with try/catch
+  // Extra safe selected option lookup
   const selectedOption = React.useMemo(() => {
-    try {
-      if (!value || !safeOptions || safeOptions.length === 0) return null;
-      return safeOptions.find(option => option.value === value) || null;
-    } catch (error) {
-      console.error("CommandSelect: Error finding selected option:", error);
-      return null;
-    }
+    if (!value || !safeOptions.length) return null;
+    return safeOptions.find(option => option.value === value) || null;
   }, [safeOptions, value]);
 
   return (
