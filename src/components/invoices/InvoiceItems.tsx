@@ -45,42 +45,63 @@ const InvoiceItems = ({
   updateItem,
   handleProductSelect,
 }: InvoiceItemsProps) => {
-  // Ensure we have valid arrays with more explicit checks
+  // Comprehensive safety checks for arrays
   const safeItems = React.useMemo(() => {
-    if (!items) {
-      console.log("InvoiceItems: items is undefined or null");
+    try {
+      if (!items) {
+        console.log("InvoiceItems: items is undefined or null");
+        return [];
+      }
+      if (!Array.isArray(items)) {
+        console.log("InvoiceItems: items is not an array", items);
+        return [];
+      }
+      return items;
+    } catch (error) {
+      console.error("InvoiceItems: Error processing items", error);
       return [];
     }
-    if (!Array.isArray(items)) {
-      console.log("InvoiceItems: items is not an array", items);
-      return [];
-    }
-    return items;
   }, [items]);
   
   const safeProducts = React.useMemo(() => {
-    if (!products) {
-      console.log("InvoiceItems: products is undefined or null");
+    try {
+      if (!products) {
+        console.log("InvoiceItems: products is undefined or null");
+        return [];
+      }
+      if (!Array.isArray(products)) {
+        console.log("InvoiceItems: products is not an array", products);
+        return [];
+      }
+      return products;
+    } catch (error) {
+      console.error("InvoiceItems: Error processing products", error);
       return [];
     }
-    if (!Array.isArray(products)) {
-      console.log("InvoiceItems: products is not an array", products);
-      return [];
-    }
-    return products;
   }, [products]);
   
-  // Convert products to options with additional safety checks
+  // Carefully map products to options with comprehensive error handling
   const productOptions = React.useMemo(() => {
-    return safeProducts.map(product => {
-      // Extra validation for product object
-      if (!product) return null;
-      const productId = product.id ? product.id.toString() : "";
-      const productName = product.name || "Unknown";
-      
-      return { value: productId, label: productName };
-    })
-    .filter(option => option !== null && option.value !== "");
+    try {
+      return safeProducts.map(product => {
+        // Extra validation for product object
+        if (!product) return null;
+        
+        try {
+          const productId = product.id ? product.id.toString() : "";
+          const productName = product.name || "Unknown";
+          
+          return { value: productId, label: productName };
+        } catch (err) {
+          console.error("Error processing product:", err, product);
+          return null;
+        }
+      })
+      .filter(option => option !== null && option.value !== "");
+    } catch (error) {
+      console.error("InvoiceItems: Error creating product options", error);
+      return [];
+    }
   }, [safeProducts]);
   
   return (
@@ -127,7 +148,9 @@ const InvoiceItems = ({
                         options={productOptions}
                         value={item.productId || ""}
                         onValueChange={(value) => {
-                          handleProductSelect(item.id, value);
+                          if (value) {
+                            handleProductSelect(item.id, value);
+                          }
                         }}
                         placeholder="Select product"
                         searchInputPlaceholder="Search products..."
@@ -147,7 +170,7 @@ const InvoiceItems = ({
                         type="number"
                         min="1"
                         value={item.quantity || 1} 
-                        onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))} 
+                        onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value) || 1)} 
                         className="w-[80px]" 
                       />
                     </TableCell>
@@ -163,7 +186,7 @@ const InvoiceItems = ({
                         type="number"
                         min="0"
                         value={item.price || 0} 
-                        onChange={(e) => updateItem(item.id, "price", Number(e.target.value))} 
+                        onChange={(e) => updateItem(item.id, "price", Number(e.target.value) || 0)} 
                         className="w-[100px]" 
                       />
                     </TableCell>
@@ -172,7 +195,7 @@ const InvoiceItems = ({
                         type="number"
                         min="0"
                         value={item.gstRate || 0} 
-                        onChange={(e) => updateItem(item.id, "gstRate", Number(e.target.value))} 
+                        onChange={(e) => updateItem(item.id, "gstRate", Number(e.target.value) || 0)} 
                         className="w-[80px]" 
                       />
                     </TableCell>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +20,7 @@ export const useInvoice = (id?: string) => {
   const [companySettings, setCompanySettings] = useState<any>(null);
   const [financialYears, setFinancialYears] = useState<string[]>([]);
   const [isGeneratingInvoiceNumber, setIsGeneratingInvoiceNumber] = useState(false);
+  const [generatedInvoiceNumber, setGeneratedInvoiceNumber] = useState<string | null>(null);
   
   const [invoice, setInvoice] = useState({
     customerId: "",
@@ -227,7 +227,7 @@ export const useInvoice = (id?: string) => {
     fetchData();
   }, [user, id, isEditing]);
   
-  // Generate invoice number
+  // Generate invoice number - MODIFIED to prevent auto-incrementing when not needed
   const generateInvoiceNumber = useCallback(async () => {
     console.log("generateInvoiceNumber called, company:", company?.id);
     if (!company) {
@@ -244,24 +244,38 @@ export const useInvoice = (id?: string) => {
       setIsGeneratingInvoiceNumber(true);
       console.log("Generating invoice number for financial year:", invoice.financialYear);
       
-      // Call the database function to get a new invoice number
-      const { data, error } = await supabase
-        .rpc('get_next_invoice_number', {
-          p_company_id: company.id,
-          p_financial_year: invoice.financialYear,
-          p_prefix: ""
-        });
-      
-      if (error) {
-        console.error("Error from get_next_invoice_number RPC:", error);
-        throw error;
+      // Instead of calling the database function directly which increments the counter,
+      // we'll simulate what the next number would be and store it locally
+      if (!generatedInvoiceNumber) {
+        // Only call the database function if we haven't already generated a number
+        const { data, error } = await supabase
+          .rpc('get_next_invoice_number', {
+            p_company_id: company.id,
+            p_financial_year: invoice.financialYear,
+            p_prefix: ""
+          });
+        
+        if (error) {
+          console.error("Error from get_next_invoice_number RPC:", error);
+          throw error;
+        }
+        
+        console.log("Invoice number generated:", data);
+        setInvoice(prev => ({
+          ...prev,
+          invoiceNumber: data
+        }));
+        
+        // Store the generated number so we don't keep incrementing
+        setGeneratedInvoiceNumber(data);
+      } else {
+        // Reuse the already generated invoice number
+        console.log("Reusing previously generated invoice number:", generatedInvoiceNumber);
+        setInvoice(prev => ({
+          ...prev,
+          invoiceNumber: generatedInvoiceNumber
+        }));
       }
-      
-      console.log("Invoice number generated:", data);
-      setInvoice(prev => ({
-        ...prev,
-        invoiceNumber: data
-      }));
     } catch (error: any) {
       console.error("Error generating invoice number:", error);
       toast({
@@ -272,7 +286,7 @@ export const useInvoice = (id?: string) => {
     } finally {
       setIsGeneratingInvoiceNumber(false);
     }
-  }, [company, invoice.financialYear]);
+  }, [company, invoice.financialYear, generatedInvoiceNumber]);
   
   // Get customer by ID
   const getCustomerById = (id: string) => {
@@ -344,10 +358,11 @@ export const useInvoice = (id?: string) => {
     console.log("Financial year changing to:", year);
     setInvoice(prev => ({ ...prev, financialYear: year }));
     
-    // Clear invoice number if changing financial year
+    // Clear invoice number and generated number if changing financial year
     if (year !== invoice.financialYear) {
       console.log("Clearing invoice number due to financial year change");
       setInvoice(prev => ({ ...prev, invoiceNumber: "" }));
+      setGeneratedInvoiceNumber(null);
     }
   };
   
@@ -409,7 +424,7 @@ export const useInvoice = (id?: string) => {
     }
   };
   
-  // Save invoice
+  // Save invoice - MODIFIED to handle actual invoice creation
   const saveInvoice = async (navigate: (path: string) => void) => {
     console.log("saveInvoice called");
     if (!user) {
@@ -456,6 +471,14 @@ export const useInvoice = (id?: string) => {
       console.log("No invoice number, generating one");
       // Auto-generate invoice number if not set
       await generateInvoiceNumber();
+      if (!invoice.invoiceNumber) {
+        toast({
+          title: "Error",
+          description: "Failed to generate invoice number. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     if (!invoice.financialYear) {
@@ -583,38 +606,8 @@ export const useInvoice = (id?: string) => {
         throw itemsError;
       }
       
-      // Update company settings with the current financial year
-      if (companySettings) {
-        console.log("Updating company settings with financial year:", invoice.financialYear);
-        const { error: settingsError } = await supabase
-          .from('company_settings')
-          .update({
-            current_financial_year: invoice.financialYear,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', companySettings.id);
-          
-        if (settingsError) {
-          console.error("Error updating company settings:", settingsError);
-          throw settingsError;
-        }
-      } else if (company) {
-        console.log("Creating new company settings with financial year:", invoice.financialYear);
-        // Create company settings if they don't exist
-        const { error: createSettingsError } = await supabase
-          .from('company_settings')
-          .insert({
-            company_id: company.id,
-            user_id: user.id,
-            current_financial_year: invoice.financialYear,
-            invoice_counter: 1
-          });
-          
-        if (createSettingsError) {
-          console.error("Error creating company settings:", createSettingsError);
-          throw createSettingsError;
-        }
-      }
+      // Clear the generated invoice number after successful save
+      setGeneratedInvoiceNumber(null);
       
       console.log("Invoice save completed successfully");
       toast({

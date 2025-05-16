@@ -50,11 +50,34 @@ const CreditNoteDetails = ({
   handleInvoiceChange,
   generateCreditNoteNumber
 }: CreditNoteDetailsProps) => {
-  // Ensure invoiceOptions is always an array
+  // Ensure invoiceOptions is always a valid array with proper error handling
   const safeInvoiceOptions = React.useMemo(() => {
     try {
-      if (!invoiceOptions) return [];
-      return Array.isArray(invoiceOptions) ? invoiceOptions : [];
+      // Check if invoiceOptions is defined and an array
+      if (!invoiceOptions) {
+        console.log("CreditNoteDetails: invoiceOptions is undefined or null");
+        return [];
+      }
+      
+      if (!Array.isArray(invoiceOptions)) {
+        console.log("CreditNoteDetails: invoiceOptions is not an array", invoiceOptions);
+        return [];
+      }
+      
+      // Filter out invalid options
+      return invoiceOptions.filter(option => {
+        if (!option || typeof option !== 'object') {
+          console.log("CreditNoteDetails: Invalid option item", option);
+          return false;
+        }
+        
+        if (!('value' in option) || !('label' in option)) {
+          console.log("CreditNoteDetails: Option missing required properties", option);
+          return false;
+        }
+        
+        return true;
+      });
     } catch (error) {
       console.error("Error processing invoice options:", error);
       return [];
@@ -65,6 +88,12 @@ const CreditNoteDetails = ({
 
   const handleInvoiceSelect = async (value: string) => {
     try {
+      if (!value) {
+        console.log("No invoice selected");
+        return;
+      }
+      
+      console.log("Selected invoice ID:", value);
       await handleInvoiceChange(value);
     } catch (error) {
       console.error("Error changing invoice:", error);
@@ -82,7 +111,7 @@ const CreditNoteDetails = ({
         <Label htmlFor="invoice">Invoice Reference</Label>
         <CommandSelect
           options={safeInvoiceOptions}
-          value={creditNote.invoiceId}
+          value={creditNote.invoiceId || ""}
           onValueChange={handleInvoiceSelect}
           placeholder="Select an invoice"
           searchInputPlaceholder="Search invoices..."
@@ -100,7 +129,7 @@ const CreditNoteDetails = ({
         <Label htmlFor="financialYear">Financial Year</Label>
         <Input
           id="financialYear"
-          value={creditNote.financialYear}
+          value={creditNote.financialYear || ""}
           disabled
           className="bg-gray-50"
         />
@@ -115,7 +144,7 @@ const CreditNoteDetails = ({
           <div className="flex gap-2">
             <Input
               id="creditNoteNumber"
-              value={creditNote.creditNoteNumber}
+              value={creditNote.creditNoteNumber || ""}
               onChange={(e) => setCreditNote(prev => ({ ...prev, creditNoteNumber: e.target.value }))}
               readOnly={isEditing}
               className="flex-1"
@@ -174,7 +203,7 @@ const CreditNoteDetails = ({
         <Label htmlFor="reason">Reason for Credit Note</Label>
         <Textarea
           id="reason"
-          value={creditNote.reason}
+          value={creditNote.reason || ""}
           onChange={(e) => setCreditNote(prev => ({ ...prev, reason: e.target.value }))}
           placeholder="E.g., Goods returned, Quality issues, etc."
           rows={3}

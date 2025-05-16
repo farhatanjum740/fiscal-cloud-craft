@@ -46,40 +46,57 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Enhanced safety checks for options
+  // Comprehensive defensive checks for options
   const safeOptions = React.useMemo(() => {
-    // First, handle null/undefined case
-    if (!options) {
-      console.log("CommandSelect: options is null or undefined");
-      return [];
-    }
-    
-    // Then handle non-array case
-    if (!Array.isArray(options)) {
-      console.log("CommandSelect: options is not an array", options);
-      return [];
-    }
-    
-    // Filter out invalid items
-    return options.filter(item => {
-      if (!item || typeof item !== 'object') {
-        console.log("CommandSelect: Invalid option item", item);
-        return false;
+    try {
+      // Handle invalid options
+      if (options === null || options === undefined) {
+        console.log("CommandSelect: options is null or undefined");
+        return [];
       }
       
-      if (typeof item.value === 'undefined' || typeof item.label === 'undefined') {
-        console.log("CommandSelect: Option missing required properties", item);
-        return false;
+      // Handle non-array options 
+      if (!Array.isArray(options)) {
+        console.log("CommandSelect: options is not an array", options);
+        return [];
       }
       
-      return true;
-    });
+      // Filter out invalid items
+      return options.filter(item => {
+        if (!item || typeof item !== 'object') {
+          console.log("CommandSelect: Invalid option item", item);
+          return false;
+        }
+        
+        if ('value' in item === false || 'label' in item === false) {
+          console.log("CommandSelect: Option missing required properties", item);
+          return false;
+        }
+        
+        // Add more stringent checks - make sure values are not undefined
+        if (item.value === undefined || item.label === undefined) {
+          console.log("CommandSelect: Option has undefined value or label", item);
+          return false;
+        }
+        
+        return true;
+      });
+    } catch (error) {
+      // Catch any unexpected errors in options processing
+      console.error("CommandSelect: Error processing options:", error);
+      return [];
+    }
   }, [options]);
   
-  // Find selected option with extra safety checks
+  // Extra safe selected option lookup with try/catch
   const selectedOption = React.useMemo(() => {
-    if (!value || !safeOptions || safeOptions.length === 0) return null;
-    return safeOptions.find(option => option.value === value) || null;
+    try {
+      if (!value || !safeOptions || safeOptions.length === 0) return null;
+      return safeOptions.find(option => option.value === value) || null;
+    } catch (error) {
+      console.error("CommandSelect: Error finding selected option:", error);
+      return null;
+    }
   }, [safeOptions, value]);
 
   return (
@@ -115,7 +132,7 @@ export function CommandSelect({
             ) : (
               safeOptions.map((option) => (
                 <CommandItem
-                  key={option.value || `option-${Math.random()}`}
+                  key={`option-${option.value || Math.random().toString()}`}
                   value={option.value}
                   onSelect={() => {
                     onValueChange(option.value === value ? "" : option.value);

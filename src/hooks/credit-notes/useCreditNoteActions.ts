@@ -20,8 +20,9 @@ export const useCreditNoteActions = (
   const [showQuantityError, setShowQuantityError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
+  const [generatedCreditNoteNumber, setGeneratedCreditNoteNumber] = useState<string | null>(null);
 
-  // Generate credit note number
+  // Generate credit note number - modified to prevent auto-incrementing
   const generateCreditNoteNumber = async () => {
     if (!company || !invoice) {
       toast({
@@ -35,6 +36,15 @@ export const useCreditNoteActions = (
     try {
       setIsGeneratingNumber(true);
       
+      // If we already have a generated number, reuse it instead of regenerating
+      if (generatedCreditNoteNumber) {
+        setCreditNote(prev => ({
+          ...prev,
+          creditNoteNumber: generatedCreditNoteNumber
+        }));
+        return;
+      }
+      
       // Format: CN/INV-NUMBER (without the redundant 001 suffix)
       const creditNoteNumber = `CN/${invoice.invoice_number}`;
       
@@ -42,6 +52,9 @@ export const useCreditNoteActions = (
         ...prev,
         creditNoteNumber
       }));
+      
+      // Store the generated number for future use
+      setGeneratedCreditNoteNumber(creditNoteNumber);
       
       toast({
         title: "Success",
@@ -59,115 +72,183 @@ export const useCreditNoteActions = (
     }
   };
   
-  // Handle invoice selection
+  // Handle invoice selection with improved error handling
   const handleInvoiceChange = async (value: string) => {
     console.log("Invoice changed to:", value);
-    setCreditNote(prev => ({ ...prev, invoiceId: value }));
     
-    if (value) {
+    try {
+      if (!value) {
+        console.log("Empty invoice value provided");
+        return null;
+      }
+      
+      setCreditNote(prev => ({ ...prev, invoiceId: value }));
+      
+      // Reset generated credit note number when invoice changes
+      setGeneratedCreditNoteNumber(null);
+      
       // Fetch invoice data
-      try {
-        const { data, error } = await supabase
-          .from('invoices')
-          .select('*')
-          .eq('id', value)
-          .maybeSingle();
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', value)
+        .maybeSingle();
           
-        if (error) throw error;
+      if (error) {
+        console.error("Error fetching invoice data:", error);
+        throw error;
+      }
+      
+      console.log("Selected invoice data:", data);
+      
+      if (data) {
+        // Update financial year to match invoice
+        setCreditNote(prev => ({ ...prev, financialYear: data.financial_year || "" }));
         
-        console.log("Selected invoice data:", data);
-        
-        if (data) {
-          // Update financial year to match invoice
-          setCreditNote(prev => ({ ...prev, financialYear: data.financial_year || "" }));
-          
-          return data; // Return the invoice data for the main hook to use
-        } else {
-          console.log("Invoice not found");
-          toast({
-            title: "Invoice Not Found",
-            description: "The selected invoice could not be found.",
-            variant: "destructive",
-          });
-        }
-      } catch (error: any) {
-        console.error("Error fetching invoice:", error);
+        return data; // Return the invoice data for the main hook to use
+      } else {
+        console.log("Invoice not found");
         toast({
-          title: "Error",
-          description: `Failed to load invoice data: ${error.message}`,
+          title: "Invoice Not Found",
+          description: "The selected invoice could not be found.",
           variant: "destructive",
         });
       }
+    } catch (error: any) {
+      console.error("Error fetching invoice:", error);
+      toast({
+        title: "Error",
+        description: `Failed to load invoice data: ${error.message}`,
+        variant: "destructive",
+      });
     }
     
     return null;
   };
   
-  // Toggle item selection
+  // Toggle item selection with improved error handling
   const toggleItemSelection = (itemId: string) => {
-    setSelectedItems(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
+    try {
+      if (!itemId) {
+        console.log("Invalid item ID for selection toggle");
+        return;
+      }
+      
+      setSelectedItems(prev => ({
+        ...prev,
+        [itemId]: !prev[itemId]
+      }));
+    } catch (error) {
+      console.error("Error toggling item selection:", error);
+    }
   };
   
-  // Add selected items to credit note
+  // Add selected items to credit note with improved error handling
   const addSelectedItems = () => {
-    const itemsToAdd = invoiceItems
-      .filter(item => selectedItems[item.id])
-      .map(item => ({
-        id: `temp-${Date.now()}-${item.id}`,
-        invoiceItemId: item.id,
-        productId: item.product_id || "",
-        productName: item.product_name || item.productName, // Use the correct field based on what's available
-        hsnCode: item.hsn_code || item.hsnCode || "", // Use the correct field based on what's available
-        quantity: item.availableQuantity, // Default to max available
-        price: item.price,
-        unit: item.unit,
-        gstRate: item.gst_rate || item.gstRate, // Use the correct field based on what's available
-        maxQuantity: item.availableQuantity
+    try {
+      if (!Array.isArray(invoiceItems)) {
+        console.log("Invoice items is not an array");
+        return;
+      }
+      
+      const itemsToAdd = invoiceItems
+        .filter(item => selectedItems[item.id])
+        .map(item => ({
+          id: `temp-${Date.now()}-${item.id}`,
+          invoiceItemId: item.id,
+          productId: item.product_id || "",
+          productName: item.product_name || item.productName || "Unknown Product", // Use the correct field or fallback
+          hsnCode: item.hsn_code || item.hsnCode || "", // Use the correct field or fallback
+          quantity: item.availableQuantity || 0, // Default to max available
+          price: item.price || 0,
+          unit: item.unit || "",
+          gstRate: item.gst_rate || item.gstRate || 0, // Use the correct field or fallback
+          maxQuantity: item.availableQuantity || 0
+        }));
+        
+      if (itemsToAdd.length === 0) {
+        console.log("No items selected to add");
+        return;
+      }
+      
+      setCreditNote(prev => ({
+        ...prev,
+        items: [...(Array.isArray(prev.items) ? prev.items : []), ...itemsToAdd]
       }));
       
-    setCreditNote(prev => ({
-      ...prev,
-      items: [...prev.items, ...itemsToAdd]
-    }));
-    
-    // Clear selections
-    setSelectedItems({});
+      // Clear selections
+      setSelectedItems({});
+    } catch (error) {
+      console.error("Error adding selected items:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add selected items. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
-  // Remove an item from the credit note
+  // Remove an item from the credit note with improved error handling
   const removeItem = (id: string) => {
-    setCreditNote(prev => ({
-      ...prev,
-      items: prev.items.filter(item => item.id !== id)
-    }));
+    try {
+      if (!id) {
+        console.log("Invalid item ID for removal");
+        return;
+      }
+      
+      setCreditNote(prev => {
+        if (!Array.isArray(prev.items)) {
+          return { ...prev, items: [] };
+        }
+        
+        return {
+          ...prev,
+          items: prev.items.filter(item => item.id !== id)
+        };
+      });
+    } catch (error) {
+      console.error("Error removing item:", error);
+    }
   };
   
-  // Update an item in the credit note
+  // Update an item in the credit note with improved error handling
   const updateItem = (id: string, field: keyof CreditNoteItem, value: any) => {
-    setCreditNote(prev => ({
-      ...prev,
-      items: prev.items.map(item => {
-        if (item.id === id) {
-          // For quantity, check if it exceeds maximum
-          if (field === "quantity") {
-            const maxQty = (item as any).maxQuantity;
-            if (maxQty !== undefined && Number(value) > maxQty) {
-              setErrorMessage(`Maximum available quantity is ${maxQty}`);
-              setShowQuantityError(true);
-              return item;
-            }
-          }
-          return { ...item, [field]: value };
+    try {
+      if (!id) {
+        console.log("Invalid item ID for update");
+        return;
+      }
+      
+      setCreditNote(prev => {
+        if (!Array.isArray(prev.items)) {
+          return { ...prev, items: [] };
         }
-        return item;
-      })
-    }));
+        
+        return {
+          ...prev,
+          items: prev.items.map(item => {
+            if (item.id === id) {
+              // For quantity, check if it exceeds maximum
+              if (field === "quantity") {
+                const maxQty = (item as any).maxQuantity;
+                if (maxQty !== undefined && Number(value) > maxQty) {
+                  setErrorMessage(`Maximum available quantity is ${maxQty}`);
+                  setShowQuantityError(true);
+                  return item;
+                }
+              }
+              return { ...item, [field]: value };
+            }
+            return item;
+          })
+        };
+      });
+    } catch (error) {
+      console.error("Error updating item:", error);
+    }
   };
 
-  // Save credit note
+  // Save credit note with improved error handling and preventing invoice number issues
   const saveCreditNote = async (navigate: (path: string) => void) => {
     if (!userId) {
       toast({
@@ -187,7 +268,7 @@ export const useCreditNoteActions = (
       return;
     }
     
-    if (creditNote.items.length === 0) {
+    if (!Array.isArray(creditNote.items) || creditNote.items.length === 0) {
       toast({
         title: "Error",
         description: "Please add at least one item to the credit note.",
@@ -237,7 +318,7 @@ export const useCreditNoteActions = (
         credit_note_number: creditNote.creditNoteNumber,
         credit_note_date: creditNoteDateFormatted,
         financial_year: creditNote.financialYear,
-        reason: creditNote.reason,
+        reason: creditNote.reason || "",
         subtotal: 0, // Will be calculated based on items
         cgst: 0,     // Will be calculated based on items
         sgst: 0,     // Will be calculated based on items
@@ -246,8 +327,14 @@ export const useCreditNoteActions = (
         status: creditNote.status,
       };
       
-      // Calculate totals
-      const subtotal = creditNote.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+      // Calculate totals with safety checks
+      const safeItems = Array.isArray(creditNote.items) ? creditNote.items : [];
+      const subtotal = safeItems.reduce((acc, item) => {
+        const price = Number(item.price) || 0;
+        const quantity = Number(item.quantity) || 0;
+        return acc + (price * quantity);
+      }, 0);
+      
       let cgst = 0;
       let sgst = 0;
       let igst = 0;
@@ -255,8 +342,11 @@ export const useCreditNoteActions = (
       // Determine whether to use CGST+SGST or IGST based on invoice
       const useIgst = invoice && invoice.igst > 0;
       
-      creditNote.items.forEach(item => {
-        const gstAmount = (item.price * item.quantity * item.gstRate) / 100;
+      safeItems.forEach(item => {
+        const price = Number(item.price) || 0;
+        const quantity = Number(item.quantity) || 0;
+        const gstRate = Number(item.gstRate) || 0;
+        const gstAmount = (price * quantity * gstRate) / 100;
         
         if (useIgst) {
           igst += gstAmount;
@@ -308,16 +398,16 @@ export const useCreditNoteActions = (
       }
       
       // Insert credit note items
-      const creditNoteItemsData = creditNote.items.map(item => ({
+      const creditNoteItemsData = safeItems.map(item => ({
         credit_note_id: creditNoteId,
-        invoice_item_id: item.invoiceItemId,
+        invoice_item_id: item.invoiceItemId || null,
         product_id: item.productId || null,
-        product_name: item.productName,
-        hsn_code: item.hsnCode,
-        quantity: item.quantity,
-        price: item.price,
-        unit: item.unit,
-        gst_rate: item.gstRate,
+        product_name: item.productName || "Unknown",
+        hsn_code: item.hsnCode || "",
+        quantity: Number(item.quantity) || 0,
+        price: Number(item.price) || 0,
+        unit: item.unit || "",
+        gst_rate: Number(item.gstRate) || 0,
       }));
       
       const { error: itemsError } = await supabase
@@ -325,6 +415,9 @@ export const useCreditNoteActions = (
         .insert(creditNoteItemsData);
         
       if (itemsError) throw itemsError;
+      
+      // Reset generated credit note number after successful save
+      setGeneratedCreditNoteNumber(null);
       
       toast({
         title: "Credit Note Saved",
