@@ -76,15 +76,15 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     }
   };
 
-  // Ensure items is an array
+  // Ensure items is an array and log for debugging
   let safeItems = [];
   if (creditNote.items) {
     safeItems = Array.isArray(creditNote.items) ? creditNote.items : [];
+    console.log("Using credit note items:", safeItems);
   } else if (Array.isArray(creditNote.credit_note_items)) {
     safeItems = creditNote.credit_note_items;
+    console.log("Using credit_note_items:", safeItems);
   }
-  
-  console.log("Safe items for table:", safeItems);
   
   // Determine if we should show IGST or CGST/SGST based on states
   const useIGST = company && customer && 
@@ -98,18 +98,36 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   });
   
   // Ensure numerical values are numbers
-  const safeSubtotal = Number(creditNote.subtotal) || 0;
-  const safeCgst = Number(creditNote.cgst) || 0;
-  const safeSgst = Number(creditNote.sgst) || 0;
-  const safeIgst = Number(creditNote.igst) || 0;
-  const safeTotalAmount = Number(creditNote.total_amount) || 0;
+  const safeSubtotal = typeof creditNote.subtotal === 'number' ? creditNote.subtotal : 
+                       (typeof creditNote.subtotal === 'string' ? parseFloat(creditNote.subtotal) : 0);
+                       
+  const safeCgst = typeof creditNote.cgst === 'number' ? creditNote.cgst : 
+                  (typeof creditNote.cgst === 'string' ? parseFloat(creditNote.cgst) : 0);
+                  
+  const safeSgst = typeof creditNote.sgst === 'number' ? creditNote.sgst : 
+                  (typeof creditNote.sgst === 'string' ? parseFloat(creditNote.sgst) : 0);
+                  
+  const safeIgst = typeof creditNote.igst === 'number' ? creditNote.igst : 
+                  (typeof creditNote.igst === 'string' ? parseFloat(creditNote.igst) : 0);
+                  
+  const safeTotalAmount = typeof creditNote.total_amount === 'number' ? creditNote.total_amount : 
+                         (typeof creditNote.total_amount === 'string' ? parseFloat(creditNote.total_amount) : 0);
   
-  console.log("Credit note values:", {
-    safeSubtotal,
-    safeCgst,
-    safeSgst, 
-    safeIgst,
-    safeTotalAmount
+  console.log("Credit note values after conversion:", {
+    original: {
+      subtotal: creditNote.subtotal,
+      cgst: creditNote.cgst,
+      sgst: creditNote.sgst,
+      igst: creditNote.igst,
+      totalAmount: creditNote.total_amount
+    },
+    converted: {
+      safeSubtotal,
+      safeCgst,
+      safeSgst, 
+      safeIgst,
+      safeTotalAmount
+    }
   });
 
   return (

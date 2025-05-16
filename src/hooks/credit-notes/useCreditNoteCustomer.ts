@@ -26,7 +26,12 @@ export const useCreditNoteCustomer = (invoice: any) => {
         }
 
         console.log("Customer data fetched successfully:", data);
-        setCustomer(data);
+        
+        if (data) {
+          setCustomer(data);
+        } else {
+          console.log("No customer found with ID:", invoice.customer_id);
+        }
       } catch (error) {
         console.error("Exception fetching customer:", error);
       }
@@ -34,6 +39,12 @@ export const useCreditNoteCustomer = (invoice: any) => {
 
     fetchCustomer();
   }, [invoice]);
+  
+  // Additional debugging
+  useEffect(() => {
+    console.log("Current customer state:", customer);
+    console.log("Current invoice state:", invoice);
+  }, [customer, invoice]);
 
   return customer;
 };

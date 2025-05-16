@@ -80,6 +80,7 @@ export const useFetchCreditNoteData = (
         if (isEditing && id) {
           console.log("Editing existing credit note, id:", id);
           try {
+            // Use * to fetch all fields from the credit_notes table
             const { data: creditNoteData, error: creditNoteError } = await supabase
               .from('credit_notes')
               .select('*, invoices(*)')
@@ -120,7 +121,7 @@ export const useFetchCreditNoteData = (
               // Set invoice information
               setInvoice(creditNoteData.invoices);
               
-              // Set credit note state
+              // Set credit note state - include ALL fields from the database
               setCreditNote({
                 invoiceId: creditNoteData.invoice_id || "",
                 creditNoteNumber: creditNoteData.credit_note_number || "",
@@ -129,6 +130,28 @@ export const useFetchCreditNoteData = (
                 reason: creditNoteData.reason || "",
                 items: transformedItems,
                 status: creditNoteData.status || "draft",
+                subtotal: creditNoteData.subtotal || 0,
+                cgst: creditNoteData.cgst || 0,
+                sgst: creditNoteData.sgst || 0,
+                igst: creditNoteData.igst || 0,
+                total_amount: creditNoteData.total_amount || 0,
+              });
+              
+              // For debugging - log the original credit note and the transformed version
+              console.log("Original credit note data:", creditNoteData);
+              console.log("Transformed credit note data:", {
+                invoiceId: creditNoteData.invoice_id || "",
+                creditNoteNumber: creditNoteData.credit_note_number || "",
+                creditNoteDate: new Date(creditNoteData.credit_note_date),
+                financialYear: creditNoteData.financial_year || "",
+                reason: creditNoteData.reason || "",
+                items: transformedItems,
+                status: creditNoteData.status || "draft",
+                subtotal: creditNoteData.subtotal || 0,
+                cgst: creditNoteData.cgst || 0,
+                sgst: creditNoteData.sgst || 0,
+                igst: creditNoteData.igst || 0,
+                total_amount: creditNoteData.total_amount || 0,
               });
               
               // Load invoice items if we have an invoice ID

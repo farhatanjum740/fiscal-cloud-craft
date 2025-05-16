@@ -24,9 +24,9 @@ const CreditNoteViewPage = () => {
     customer
   } = useCreditNote(id);
   
-  // Log data for debugging 
+  // Enhanced logging for debugging 
   useEffect(() => {
-    console.log("CreditNoteViewPage data:", {
+    console.log("CreditNoteViewPage - Raw data:", {
       creditNote,
       loading,
       loadingData,
@@ -35,6 +35,34 @@ const CreditNoteViewPage = () => {
       customer,
       id
     });
+    
+    if (creditNote) {
+      console.log("CreditNoteViewPage - Credit Note Details:", {
+        creditNoteNumber: creditNote.credit_note_number || creditNote.creditNoteNumber,
+        date: creditNote.credit_note_date || (creditNote.creditNoteDate instanceof Date ? creditNote.creditNoteDate.toISOString() : null),
+        subtotal: creditNote.subtotal,
+        cgst: creditNote.cgst,
+        sgst: creditNote.sgst,
+        igst: creditNote.igst,
+        total: creditNote.total_amount
+      });
+    }
+    
+    if (invoice) {
+      console.log("CreditNoteViewPage - Invoice Details:", {
+        invoiceNumber: invoice.invoice_number,
+        date: invoice.invoice_date,
+        customerId: invoice.customer_id
+      });
+    }
+    
+    if (customer) {
+      console.log("CreditNoteViewPage - Customer Details:", {
+        name: customer.name,
+        billingState: customer.billing_state,
+        shippingState: customer.shipping_state
+      });
+    }
   }, [creditNote, loading, loadingData, company, invoice, customer, id]);
   
   // Error handling
