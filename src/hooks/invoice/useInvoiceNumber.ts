@@ -31,47 +31,21 @@ export const useInvoiceNumber = (
       
       // Only call the database function if we haven't already generated a number
       if (!generatedInvoiceNumber) {
-        // Try to call the RPC function
-        try {
-          // Use get_next_invoice_number with a flag to preview only
-          const { data, error } = await supabase
-            .rpc('get_next_invoice_number', {
-              p_company_id: company.id,
-              p_financial_year: invoice.financialYear,
-              p_preview_only: true
-            });
+        // Since the database function doesn't have a preview parameter,
+        // We'll use our manual preview method instead
+        const previewNumber = await getInvoiceNumberPreview(company.id, invoice.financialYear);
           
-          if (error) {
-            console.error("Error from RPC function:", error);
-            throw error;
-          }
-          
-          console.log("Invoice number previewed:", data);
+        if (previewNumber) {
+          console.log("Manually previewed invoice number:", previewNumber);
           setInvoice(prev => ({
             ...prev,
-            invoiceNumber: data
+            invoiceNumber: previewNumber
           }));
           
           // Store the previewed number
-          setGeneratedInvoiceNumber(data);
-        } catch (rpcError) {
-          console.log("RPC error, falling back to manual preview:", rpcError);
-          
-          // Fallback to manual preview method
-          const previewNumber = await getInvoiceNumberPreview(company.id, invoice.financialYear);
-          
-          if (previewNumber) {
-            console.log("Manually previewed invoice number:", previewNumber);
-            setInvoice(prev => ({
-              ...prev,
-              invoiceNumber: previewNumber
-            }));
-            
-            // Store the previewed number
-            setGeneratedInvoiceNumber(previewNumber);
-          } else {
-            throw new Error("Failed to generate invoice number preview");
-          }
+          setGeneratedInvoiceNumber(previewNumber);
+        } else {
+          throw new Error("Failed to generate invoice number preview");
         }
       } else {
         // Reuse the already generated invoice number
