@@ -140,7 +140,7 @@ const CreditNoteViewPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/app/invoices")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-3xl font-bold">Credit Note Details</h1>
+          <h1 className="text-2xl font-bold">Credit Note Details</h1>
         </div>
         
         <div className="flex gap-2">

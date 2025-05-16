@@ -40,8 +40,8 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     if (creditNote) {
       // Log specific credit note properties
       console.log("Credit Note View - Credit Note Details:", {
-        number: creditNote.credit_note_number || creditNote.creditNoteNumber,
-        date: creditNote.credit_note_date || creditNote.creditNoteDate,
+        number: creditNote.creditNoteNumber,
+        date: creditNote.creditNoteDate,
         subtotal: creditNote.subtotal,
         cgst: creditNote.cgst,
         sgst: creditNote.sgst,
@@ -70,7 +70,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
       const options = {
-        filename: `Credit-Note-${creditNote.credit_note_number || creditNote.creditNoteNumber || 'draft'}.pdf`,
+        filename: `Credit-Note-${creditNote.creditNoteNumber || 'draft'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -151,7 +151,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       
       <div 
         ref={printRef} 
-        className="bg-white p-8 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none"
+        className="bg-white p-6 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
         style={{ width: '210mm', minHeight: '297mm' }}
       >
         <CreditNoteHeader creditNote={creditNote} invoice={invoice} company={company} />
@@ -172,7 +172,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         />
         
         {creditNote.reason && (
-          <div className="mb-6">
+          <div className="mb-4 text-xs">
             <h4 className="font-semibold mb-1">Reason:</h4>
             <p className="whitespace-pre-line">{creditNote.reason}</p>
           </div>

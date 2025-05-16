@@ -22,8 +22,8 @@ const CreditNoteDetails: React.FC<CreditNoteDetailsProps> = ({ creditNote, invoi
 
   console.log("Credit Note Details Props:", { 
     creditNote: {
-      credit_note_number: creditNote?.credit_note_number,
-      credit_note_date: creditNote?.credit_note_date,
+      credit_note_number: creditNote?.creditNoteNumber,
+      credit_note_date: creditNote?.creditNoteDate,
       status: creditNote?.status
     }, 
     invoice: {
@@ -36,16 +36,15 @@ const CreditNoteDetails: React.FC<CreditNoteDetailsProps> = ({ creditNote, invoi
   });
 
   // Get credit note number and date, handling both formats
-  const creditNoteNumber = creditNote?.credit_note_number || creditNote?.creditNoteNumber || 'N/A';
-  const creditNoteDate = creditNote?.credit_note_date || 
-                         (creditNote?.creditNoteDate instanceof Date ? 
-                          creditNote.creditNoteDate.toISOString() : null);
+  const creditNoteNumber = creditNote?.creditNoteNumber || 'N/A';
+  const creditNoteDate = creditNote?.creditNoteDate instanceof Date ? 
+                         creditNote.creditNoteDate.toISOString() : creditNote?.creditNoteDate;
   const creditNoteStatus = creditNote?.status || 'Draft';
 
   return (
-    <div className="mb-6 bg-gray-50 p-4 border border-gray-200 rounded">
-      <h3 className="font-semibold text-gray-800 mb-2">Credit Note Details:</h3>
-      <div className="grid grid-cols-2 gap-4 text-sm">
+    <div className="mb-5 bg-gray-50 p-3 border border-gray-200 rounded">
+      <h3 className="font-semibold text-sm text-gray-800 mb-2">Credit Note Details:</h3>
+      <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
           <p><span className="font-medium">Credit Note Number:</span> {creditNoteNumber}</p>
           <p><span className="font-medium">Credit Note Date:</span> {formatDateSafely(creditNoteDate)}</p>
