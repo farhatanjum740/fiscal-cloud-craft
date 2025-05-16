@@ -41,26 +41,48 @@ export const useFinancialYear = (
     setInvoice(prev => ({ ...prev, financialYear: defaultFinancialYear }));
   }, [setFinancialYears, setInvoice]);
 
-  // Handle financial year change
-  const handleFinancialYearChange = (
-    year: string,
-    invoice: any,
+  // Determine financial year from a date
+  const getFinancialYearFromDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    // Financial year runs from April 1 to March 31
+    // If date is Jan-Mar, financial year is previous year to current year
+    // If date is Apr-Dec, financial year is current year to next year
+    if (month < 3) { // Jan, Feb, Mar
+      return `${year-1}-${year}`;
+    } else { // Apr to Dec
+      return `${year}-${year+1}`;
+    }
+  };
+
+  // Update financial year when invoice date changes
+  const updateFinancialYearFromDate = (
+    date: Date,
     setInvoice: (setter: (prev: any) => any) => void,
     setGeneratedInvoiceNumber: (value: string | null) => void
   ) => {
-    console.log("Financial year changing to:", year);
-    setInvoice(prev => ({ ...prev, financialYear: year }));
+    const newFinancialYear = getFinancialYearFromDate(date);
+    console.log(`Date ${date.toISOString()} corresponds to financial year ${newFinancialYear}`);
     
-    // Clear invoice number and generated number if changing financial year
-    if (year !== invoice.financialYear) {
-      console.log("Clearing invoice number due to financial year change");
-      setInvoice(prev => ({ ...prev, invoiceNumber: "" }));
-      setGeneratedInvoiceNumber(null);
-    }
+    setInvoice(prev => {
+      // Only reset invoice number if financial year is changing
+      if (prev.financialYear !== newFinancialYear) {
+        console.log(`Financial year changing from ${prev.financialYear} to ${newFinancialYear}`);
+        setGeneratedInvoiceNumber(null);
+        return { 
+          ...prev, 
+          financialYear: newFinancialYear,
+          invoiceNumber: "" 
+        };
+      }
+      return { ...prev, financialYear: newFinancialYear };
+    });
   };
 
   return {
     getCurrentFinancialYear,
-    handleFinancialYearChange
+    getFinancialYearFromDate,
+    updateFinancialYearFromDate
   };
 };

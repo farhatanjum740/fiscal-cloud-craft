@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -28,30 +29,47 @@ export const useInvoiceNumber = (
       setIsGeneratingInvoiceNumber(true);
       console.log("Generating invoice number for financial year:", invoice.financialYear);
       
-      // Instead of calling the database function directly which increments the counter,
-      // we'll simulate what the next number would be and store it locally
+      // Only call the database function if we haven't already generated a number
       if (!generatedInvoiceNumber) {
-        // Only call the database function if we haven't already generated a number
+        // This RPC function only simulates what the next number would be without incrementing the DB counter
         const { data, error } = await supabase
-          .rpc('get_next_invoice_number', {
+          .rpc('get_next_invoice_number_preview', {
             p_company_id: company.id,
-            p_financial_year: invoice.financialYear,
-            p_prefix: ""
+            p_financial_year: invoice.financialYear
           });
         
         if (error) {
-          console.error("Error from get_next_invoice_number RPC:", error);
-          throw error;
+          // If the preview function doesn't exist, fallback to the regular function
+          if (error.message.includes('does not exist')) {
+            console.log("Preview function not found, using regular function");
+            
+            // Store in local state that we intend to generate a number
+            const previewNumber = await getInvoiceNumberPreview(company.id, invoice.financialYear);
+            
+            if (previewNumber) {
+              console.log("Previewed invoice number:", previewNumber);
+              setInvoice(prev => ({
+                ...prev,
+                invoiceNumber: previewNumber
+              }));
+              
+              // Store the previewed number
+              setGeneratedInvoiceNumber(previewNumber);
+            }
+          } else {
+            console.error("Error from get_next_invoice_number_preview RPC:", error);
+            throw error;
+          }
+        } else {
+          console.log("Invoice number previewed:", data);
+          setInvoice(prev => ({
+            ...prev,
+            invoiceNumber: data
+          }));
+          
+          // Store the previewed number
+          setGeneratedInvoiceNumber(data);
         }
-        
-        console.log("Invoice number generated:", data);
-        setInvoice(prev => ({
-          ...prev,
-          invoiceNumber: data
-        }));
-        
-        // Store the generated number so we don't keep incrementing
-        setGeneratedInvoiceNumber(data);
       } else {
         // Reuse the already generated invoice number
         console.log("Reusing previously generated invoice number:", generatedInvoiceNumber);
@@ -71,6 +89,36 @@ export const useInvoiceNumber = (
       setIsGeneratingInvoiceNumber(false);
     }
   }, [company, invoice.financialYear, generatedInvoiceNumber, setInvoice, setIsGeneratingInvoiceNumber, setGeneratedInvoiceNumber]);
+
+  // Function to preview the next invoice number without incrementing the counter
+  const getInvoiceNumberPreview = async (companyId: string, financialYear: string) => {
+    try {
+      // Get current company settings for this financial year
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('invoice_counter, invoice_prefix')
+        .eq('company_id', companyId)
+        .eq('current_financial_year', financialYear)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      if (data) {
+        const counter = data.invoice_counter || 1;
+        const prefix = data.invoice_prefix || '';
+        
+        // Format with leading zeros (e.g., 001, 010, 100)
+        const formattedCounter = String(counter).padStart(3, '0');
+        return `${prefix}${formattedCounter}`;
+      } else {
+        // If no settings exist, return default
+        return '001';
+      }
+    } catch (error) {
+      console.error("Error previewing invoice number:", error);
+      return null;
+    }
+  };
 
   return { generateInvoiceNumber };
 };

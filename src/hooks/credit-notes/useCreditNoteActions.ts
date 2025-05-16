@@ -24,10 +24,22 @@ export const useCreditNoteActions = (
 
   // Generate credit note number - modified to prevent auto-incrementing
   const generateCreditNoteNumber = async () => {
-    if (!company || !invoice) {
+    console.log("Generating credit note number with company:", company);
+    console.log("Invoice data:", invoice);
+    
+    if (!company) {
       toast({
         title: "Error",
-        description: "Company profile and invoice are required to generate credit note number",
+        description: "Company profile is required to generate credit note number",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!invoice) {
+      toast({
+        title: "Error",
+        description: "Invoice is required to generate credit note number",
         variant: "destructive",
       });
       return;

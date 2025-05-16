@@ -55,9 +55,15 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
 
   // Create a wrapper for handleInvoiceChange to update the invoice state
   const handleInvoiceChange = async (value: string) => {
-    const fetchedInvoice = await baseHandleInvoiceChange(value);
-    if (fetchedInvoice) {
-      await fetchInvoiceItems(value);
+    console.log("handleInvoiceChange called with value:", value);
+    try {
+      const fetchedInvoice = await baseHandleInvoiceChange(value);
+      console.log("Fetched invoice:", fetchedInvoice);
+      if (fetchedInvoice) {
+        await fetchInvoiceItems(value);
+      }
+    } catch (error) {
+      console.error("Error in handleInvoiceChange:", error);
     }
   };
 

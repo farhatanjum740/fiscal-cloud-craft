@@ -46,9 +46,14 @@ export const useInvoice = (id?: string) => {
   } = useInvoiceState();
   
   // Financial year management
-  const { handleFinancialYearChange: baseHandleFinancialYearChange } = useFinancialYear(setFinancialYears, setInvoice);
-  const handleFinancialYearChange = (year: string) => {
-    baseHandleFinancialYearChange(year, invoice, setInvoice, setGeneratedInvoiceNumber);
+  const { 
+    updateFinancialYearFromDate 
+  } = useFinancialYear(setFinancialYears, setInvoice);
+  
+  // Update financial year when invoice date changes
+  const handleDateChange = (date: Date) => {
+    setInvoice(prev => ({ ...prev, invoiceDate: date }));
+    updateFinancialYearFromDate(date, setInvoice, setGeneratedInvoiceNumber);
   };
   
   // Invoice items management
@@ -133,7 +138,7 @@ export const useInvoice = (id?: string) => {
     removeItem,
     updateItem: baseUpdateItem,
     handleProductSelect,
-    handleFinancialYearChange,
+    handleDateChange,
     generateInvoiceNumber,
     saveInvoice
   };

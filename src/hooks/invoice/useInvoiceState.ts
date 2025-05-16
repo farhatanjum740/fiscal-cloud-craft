@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { InvoiceItem } from "@/types";
 
 export const useInvoiceState = () => {
@@ -24,6 +24,29 @@ export const useInvoiceState = () => {
     status: "draft",
     financialYear: "",
   });
+  
+  // Automatically update financial year when invoice date changes
+  useEffect(() => {
+    const month = invoice.invoiceDate.getMonth();
+    const year = invoice.invoiceDate.getFullYear();
+    
+    // Determine financial year (April to March in India)
+    const financialYear = month >= 3 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+    
+    // Only update if different from current value
+    if (invoice.financialYear !== financialYear) {
+      console.log(`Auto-updating financial year to ${financialYear} based on invoice date`);
+      setInvoice(prev => ({
+        ...prev,
+        financialYear
+      }));
+      
+      // Reset generated invoice number when financial year changes
+      if (generatedInvoiceNumber) {
+        setGeneratedInvoiceNumber(null);
+      }
+    }
+  }, [invoice.invoiceDate, invoice.financialYear, generatedInvoiceNumber]);
   
   const [subtotal, setSubtotal] = useState(0);
   const [gstDetails, setGstDetails] = useState({ cgst: 0, sgst: 0, igst: 0 });

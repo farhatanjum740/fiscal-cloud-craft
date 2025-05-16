@@ -52,6 +52,7 @@ const CreditNoteInvoiceSelect = ({
   }, [invoiceOptions]);
 
   console.log("Invoice options for dropdown:", safeInvoiceOptions);
+  console.log("Current invoiceId:", invoiceId);
 
   const handleChange = async (value: string) => {
     try {
