@@ -3,26 +3,11 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { RefreshCw, CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { CommandSelect } from "@/components/ui/command-select";
-import type { CreditNoteItem } from "@/types";
-import { toast } from "@/components/ui/use-toast";
+import { RefreshCw } from "lucide-react";
+import CreditNoteInvoiceSelect from "./details/CreditNoteInvoiceSelect";
+import CreditNoteDatePicker from "./details/CreditNoteDatePicker";
+import CreditNoteStatus from "./details/CreditNoteStatus";
 
 interface CreditNoteDetailsProps {
   creditNote: {
@@ -50,80 +35,14 @@ const CreditNoteDetails = ({
   handleInvoiceChange,
   generateCreditNoteNumber
 }: CreditNoteDetailsProps) => {
-  // Ensure invoiceOptions is always a valid array with proper error handling
-  const safeInvoiceOptions = React.useMemo(() => {
-    try {
-      // Check if invoiceOptions is defined and an array
-      if (!invoiceOptions) {
-        console.log("CreditNoteDetails: invoiceOptions is undefined or null");
-        return [];
-      }
-      
-      if (!Array.isArray(invoiceOptions)) {
-        console.log("CreditNoteDetails: invoiceOptions is not an array", invoiceOptions);
-        return [];
-      }
-      
-      // Filter out invalid options
-      return invoiceOptions.filter(option => {
-        if (!option || typeof option !== 'object') {
-          console.log("CreditNoteDetails: Invalid option item", option);
-          return false;
-        }
-        
-        if (!('value' in option) || !('label' in option)) {
-          console.log("CreditNoteDetails: Option missing required properties", option);
-          return false;
-        }
-        
-        return true;
-      });
-    } catch (error) {
-      console.error("Error processing invoice options:", error);
-      return [];
-    }
-  }, [invoiceOptions]);
-
-  console.log("Invoice options for dropdown:", safeInvoiceOptions);
-
-  const handleInvoiceSelect = async (value: string) => {
-    try {
-      if (!value) {
-        console.log("No invoice selected");
-        return;
-      }
-      
-      console.log("Selected invoice ID:", value);
-      await handleInvoiceChange(value);
-    } catch (error) {
-      console.error("Error changing invoice:", error);
-      toast({
-        title: "Error",
-        description: "Failed to change invoice. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="invoice">Invoice Reference</Label>
-        <CommandSelect
-          options={safeInvoiceOptions}
-          value={creditNote.invoiceId || ""}
-          onValueChange={handleInvoiceSelect}
-          placeholder="Select an invoice"
-          searchInputPlaceholder="Search invoices..."
-          emptyMessage={safeInvoiceOptions.length === 0 ? "No invoices available" : "No matching invoices found"}
-          disabled={isEditing} // Can't change invoice in edit mode
-        />
-        {safeInvoiceOptions.length === 0 && !isEditing && (
-          <p className="text-xs text-amber-500 mt-1">
-            No invoices available. Please create an invoice first.
-          </p>
-        )}
-      </div>
+      <CreditNoteInvoiceSelect
+        invoiceId={creditNote.invoiceId || ""}
+        invoiceOptions={invoiceOptions}
+        isEditing={isEditing}
+        handleInvoiceSelect={handleInvoiceChange}
+      />
       
       <div className="space-y-2">
         <Label htmlFor="financialYear">Financial Year</Label>
@@ -168,36 +87,10 @@ const CreditNoteDetails = ({
         </div>
       </div>
       
-      <div className="space-y-2">
-        <Label>Credit Note Date</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !creditNote.creditNoteDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {creditNote.creditNoteDate ? (
-                format(creditNote.creditNoteDate, "PPP")
-              ) : (
-                <span>Pick a date</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={creditNote.creditNoteDate}
-              onSelect={(date) => date && setCreditNote(prev => ({ ...prev, creditNoteDate: date }))}
-              initialFocus
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+      <CreditNoteDatePicker
+        date={creditNote.creditNoteDate}
+        onDateChange={(date) => setCreditNote(prev => ({ ...prev, creditNoteDate: date }))}
+      />
       
       <div className="space-y-2">
         <Label htmlFor="reason">Reason for Credit Note</Label>
@@ -210,22 +103,10 @@ const CreditNoteDetails = ({
         />
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="status">Status</Label>
-        <Select 
-          value={creditNote.status} 
-          onValueChange={(value) => setCreditNote(prev => ({ ...prev, status: value }))}
-        >
-          <SelectTrigger id="status">
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="issued">Issued</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <CreditNoteStatus
+        status={creditNote.status}
+        onStatusChange={(value) => setCreditNote(prev => ({ ...prev, status: value }))}
+      />
     </div>
   );
 };
