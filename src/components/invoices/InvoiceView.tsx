@@ -1,8 +1,7 @@
-
 import React, { useRef } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
-import { Printer, Download } from 'lucide-react';
+import { Printer, Download, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -118,15 +117,15 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
       
       <div 
         ref={printRef} 
-        className="bg-white p-8 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none"
+        className="bg-white p-6 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
         style={{ width: '210mm', minHeight: '297mm' }}
       >
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">INVOICE</h1>
+            <h1 className="text-lg font-bold text-gray-800">INVOICE</h1>
             <p className="text-xs text-gray-500"># {invoice.invoiceNumber}</p>
-            <p className="text-xs text-gray-500 mt-2">Date: {invoice.invoiceDate ? format(new Date(invoice.invoiceDate), 'dd/MM/yyyy') : ''}</p>
+            <p className="text-xs text-gray-500 mt-1">Date: {invoice.invoiceDate ? format(new Date(invoice.invoiceDate), 'dd/MM/yyyy') : ''}</p>
             {invoice.dueDate && (
               <p className="text-xs text-gray-500">Due Date: {format(new Date(invoice.dueDate), 'dd/MM/yyyy')}</p>
             )}
@@ -138,44 +137,52 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                 <img 
                   src={company.logo} 
                   alt={`${company.name} logo`} 
-                  className="h-12 w-auto object-contain" 
+                  className="h-10 w-auto object-contain" 
                 />
               )}
               <div>
-                <h2 className="text-lg font-bold text-gray-800">{company.name}</h2>
+                <h2 className="text-base font-bold text-gray-800">{company.name}</h2>
                 <p className="text-xs text-gray-600">{company.address_line1}</p>
                 {company.address_line2 && <p className="text-xs text-gray-600">{company.address_line2}</p>}
                 <p className="text-xs text-gray-600">{company.city}, {company.state} - {company.pincode}</p>
                 <p className="text-xs text-gray-600">GSTIN: {company.gstin}</p>
-                {company.email_id && <p className="text-xs text-gray-600">Email: {company.email_id}</p>}
-                {company.contact_number && <p className="text-xs text-gray-600">Phone: {company.contact_number}</p>}
+                {company.contact_number && (
+                  <p className="text-xs text-gray-600 flex items-center justify-end">
+                    <Phone className="h-3 w-3 mr-1" /> {company.contact_number}
+                  </p>
+                )}
+                {company.email_id && (
+                  <p className="text-xs text-gray-600 flex items-center justify-end">
+                    <Mail className="h-3 w-3 mr-1" /> {company.email_id}
+                  </p>
+                )}
               </div>
             </div>
           </div>
         </div>
         
-        <Separator className="my-6" />
+        <Separator className="my-4" />
         
         {/* Customer Information */}
-        <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <h3 className="font-semibold text-gray-800 mb-2">Bill To:</h3>
-            <p className="font-medium">{customer.name}</p>
-            <p>{customer.billing_address_line1}</p>
-            {customer.billing_address_line2 && <p>{customer.billing_address_line2}</p>}
-            <p>{customer.billing_city}, {customer.billing_state} {customer.billing_pincode}</p>
-            {customer.gstin && <p>GSTIN: {customer.gstin}</p>}
-            {customer.email && <p>Email: {customer.email}</p>}
-            {customer.phone && <p>Phone: {customer.phone}</p>}
+            <h3 className="font-semibold text-xs text-gray-800 mb-1">Bill To:</h3>
+            <p className="font-medium text-xs">{customer.name}</p>
+            <p className="text-xs">{customer.billing_address_line1}</p>
+            {customer.billing_address_line2 && <p className="text-xs">{customer.billing_address_line2}</p>}
+            <p className="text-xs">{customer.billing_city}, {customer.billing_state} {customer.billing_pincode}</p>
+            {customer.gstin && <p className="text-xs">GSTIN: {customer.gstin}</p>}
+            {customer.email && <p className="text-xs">Email: {customer.email}</p>}
+            {customer.phone && <p className="text-xs">Phone: {customer.phone}</p>}
           </div>
           
           {(customer.shipping_address_line1 || customer.shipping_city) && (
             <div>
-              <h3 className="font-semibold text-gray-800 mb-2">Ship To:</h3>
-              <p className="font-medium">{customer.name}</p>
-              <p>{customer.shipping_address_line1 || customer.billing_address_line1}</p>
-              {customer.shipping_address_line2 && <p>{customer.shipping_address_line2}</p>}
-              <p>
+              <h3 className="font-semibold text-xs text-gray-800 mb-1">Ship To:</h3>
+              <p className="font-medium text-xs">{customer.name}</p>
+              <p className="text-xs">{customer.shipping_address_line1 || customer.billing_address_line1}</p>
+              {customer.shipping_address_line2 && <p className="text-xs">{customer.shipping_address_line2}</p>}
+              <p className="text-xs">
                 {customer.shipping_city || customer.billing_city}, 
                 {customer.shipping_state || customer.billing_state} 
                 {customer.shipping_pincode || customer.billing_pincode}
@@ -186,7 +193,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         
         {/* Invoice Items */}
         <div className="w-full overflow-visible print:overflow-visible">
-          <table className="w-full text-left border-collapse mb-6 text-xs">
+          <table className="w-full text-left border-collapse mb-4 text-xs">
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-2 px-2 border font-semibold">S.No</th>
@@ -228,31 +235,31 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-2 px-2 border text-xs">{index + 1}</td>
-                    <td className="py-2 px-2 border text-xs">
+                    <td className="py-1 px-2 border text-xs">{index + 1}</td>
+                    <td className="py-1 px-2 border text-xs">
                       <div className="font-medium">{item.productName}</div>
                       {item.description && <div className="text-xs text-gray-600">{item.description}</div>}
                     </td>
-                    <td className="py-2 px-2 border text-xs">{item.hsnCode}</td>
-                    <td className="py-2 px-2 border text-xs">{item.quantity}</td>
-                    <td className="py-2 px-2 border text-xs">{item.unit}</td>
-                    <td className="py-2 px-2 border text-xs">₹{formatAmount(price)}</td>
-                    <td className="py-2 px-2 border text-xs">₹{formatAmount(itemTotal)}</td>
+                    <td className="py-1 px-2 border text-xs">{item.hsnCode}</td>
+                    <td className="py-1 px-2 border text-xs">{item.quantity}</td>
+                    <td className="py-1 px-2 border text-xs">{item.unit}</td>
+                    <td className="py-1 px-2 border text-xs">₹{formatAmount(price)}</td>
+                    <td className="py-1 px-2 border text-xs">₹{formatAmount(itemTotal)}</td>
                     
                     {useIGST ? (
                       <>
-                        <td className="py-2 px-2 border text-xs">{gstRate}%</td>
-                        <td className="py-2 px-2 border text-xs">₹{formatAmount(gstAmount)}</td>
+                        <td className="py-1 px-2 border text-xs">{gstRate}%</td>
+                        <td className="py-1 px-2 border text-xs">₹{formatAmount(gstAmount)}</td>
                       </>
                     ) : (
                       <>
-                        <td className="py-2 px-2 border text-xs">{splitRate}%</td>
-                        <td className="py-2 px-2 border text-xs">₹{formatAmount(splitAmount)}</td>
-                        <td className="py-2 px-2 border text-xs">{splitRate}%</td>
-                        <td className="py-2 px-2 border text-xs">₹{formatAmount(splitAmount)}</td>
+                        <td className="py-1 px-2 border text-xs">{splitRate}%</td>
+                        <td className="py-1 px-2 border text-xs">₹{formatAmount(splitAmount)}</td>
+                        <td className="py-1 px-2 border text-xs">{splitRate}%</td>
+                        <td className="py-1 px-2 border text-xs">₹{formatAmount(splitAmount)}</td>
                       </>
                     )}
-                    <td className="py-2 px-2 border text-xs text-right">₹{formatAmount(itemTotal + gstAmount)}</td>
+                    <td className="py-1 px-2 border text-xs text-right">₹{formatAmount(itemTotal + gstAmount)}</td>
                   </tr>
                 );
               })}
@@ -261,20 +268,20 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Summary */}
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-end mb-4">
           <div className="w-64">
-            <div className="flex justify-between py-2">
+            <div className="flex justify-between py-1 text-xs">
               <span>Subtotal:</span>
               <span>₹{formatAmount(subtotal)}</span>
             </div>
             
             {!useIGST && (cgst > 0 || sgst > 0) && (
               <>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between py-1 text-xs">
                   <span>CGST:</span>
                   <span>₹{formatAmount(cgst)}</span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between py-1 text-xs">
                   <span>SGST:</span>
                   <span>₹{formatAmount(sgst)}</span>
                 </div>
@@ -282,20 +289,20 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
             )}
             
             {useIGST && igst > 0 && (
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between py-1 text-xs">
                 <span>IGST:</span>
                 <span>₹{formatAmount(igst)}</span>
               </div>
             )}
             
             {roundOffAmount !== 0 && (
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between py-1 text-xs">
                 <span>Round off:</span>
                 <span>₹{formatAmount(roundOffAmount)}</span>
               </div>
             )}
             
-            <div className="flex justify-between py-2 font-bold border-t border-gray-300 mt-2">
+            <div className="flex justify-between py-1 font-bold border-t border-gray-300 mt-2 text-xs">
               <span>Total:</span>
               <span>₹{formatAmount(roundedTotal)}</span>
             </div>
@@ -303,37 +310,37 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Amount in words */}
-        <div className="mb-6 border p-3 bg-gray-50 rounded">
+        <div className="mb-4 border p-2 bg-gray-50 rounded text-xs">
           <p><span className="font-medium">Amount in words:</span> {amountToWords(roundedTotal)}</p>
         </div>
         
         {/* Notes and Terms */}
-        <div className="grid grid-cols-1 gap-4 mb-6">
+        <div className="grid grid-cols-1 gap-2 mb-4">
           {invoice.termsAndConditions && (
             <div>
-              <h4 className="font-semibold mb-1">Terms & Conditions:</h4>
+              <h4 className="font-semibold mb-1 text-xs">Terms & Conditions:</h4>
               <p className="text-xs whitespace-pre-line">{invoice.termsAndConditions}</p>
             </div>
           )}
           
           {invoice.notes && (
             <div>
-              <h4 className="font-semibold mb-1">Notes:</h4>
+              <h4 className="font-semibold mb-1 text-xs">Notes:</h4>
               <p className="text-xs whitespace-pre-line">{invoice.notes}</p>
             </div>
           )}
         </div>
         
         {/* Bank Details */}
-        <div className="border-t pt-4 mt-4">
-          <h4 className="font-semibold mb-1">Bank Details:</h4>
+        <div className="border-t pt-3 mt-3">
+          <h4 className="font-semibold mb-1 text-xs">Bank Details:</h4>
           <p className="text-xs">
             {company.bank_account_name} ({company.bank_account_number}) | {company.bank_name}, {company.bank_branch} | IFSC: {company.bank_ifsc_code}
           </p>
         </div>
         
         {/* Footer */}
-        <div className="text-center mt-8 text-xs text-gray-500">
+        <div className="text-center mt-6 text-xs text-gray-500">
           <p>This is a computer generated invoice.</p>
         </div>
       </div>
