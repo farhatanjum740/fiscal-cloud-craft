@@ -30,10 +30,12 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   
   // Log data to console for debugging
   useEffect(() => {
-    console.log("Credit Note Data:", creditNote);
-    console.log("Company Data:", company);
-    console.log("Invoice Data:", invoice);
-    console.log("Customer Data:", customer);
+    console.log("Credit Note View Props:", {
+      creditNote,
+      company,
+      invoice,
+      customer
+    });
   }, [creditNote, company, invoice, customer]);
   
   if (!creditNote || !company) {
@@ -75,12 +77,25 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
 
   // Ensure items is an array
-  const safeItems = Array.isArray(creditNote.items) ? creditNote.items : [];
+  let safeItems = [];
+  if (creditNote.items) {
+    safeItems = Array.isArray(creditNote.items) ? creditNote.items : [];
+  } else if (Array.isArray(creditNote.credit_note_items)) {
+    safeItems = creditNote.credit_note_items;
+  }
+  
+  console.log("Safe items for table:", safeItems);
   
   // Determine if we should show IGST or CGST/SGST based on states
   const useIGST = company && customer && 
-    company.state && customer.shipping_state && 
+    company.state && (customer.shipping_state || customer.billing_state) && 
     company.state !== (customer.shipping_state || customer.billing_state);
+  
+  console.log("States comparison:", {
+    companyState: company?.state,
+    customerState: customer?.shipping_state || customer?.billing_state,
+    useIGST
+  });
   
   // Ensure numerical values are numbers
   const safeSubtotal = Number(creditNote.subtotal) || 0;
@@ -88,6 +103,14 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   const safeSgst = Number(creditNote.sgst) || 0;
   const safeIgst = Number(creditNote.igst) || 0;
   const safeTotalAmount = Number(creditNote.total_amount) || 0;
+  
+  console.log("Credit note values:", {
+    safeSubtotal,
+    safeCgst,
+    safeSgst, 
+    safeIgst,
+    safeTotalAmount
+  });
 
   return (
     <div className="bg-white">

@@ -26,6 +26,15 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
   const safeIgst = Number(igst) || 0;
   const safeTotalAmount = Number(totalAmount) || 0;
   
+  console.log("Credit Note Summary:", {
+    safeSubtotal,
+    safeCgst,
+    safeSgst,
+    safeIgst,
+    safeTotalAmount,
+    useIGST
+  });
+  
   return (
     <>
       <div className="flex justify-end mb-6">

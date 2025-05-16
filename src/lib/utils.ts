@@ -11,7 +11,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatCurrency(amount: number | null | undefined): string {
   // Ensure we have a valid number
-  const safeAmount = Number(amount) || 0;
+  const safeAmount = amount !== null && amount !== undefined ? Number(amount) : 0;
   
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -25,7 +25,7 @@ export function formatCurrency(amount: number | null | undefined): string {
  */
 export function formatAmount(amount: number | null | undefined): string {
   // Ensure we have a valid number
-  const safeAmount = Number(amount) || 0;
+  const safeAmount = amount !== null && amount !== undefined ? Number(amount) : 0;
   return safeAmount.toFixed(2);
 }
 
@@ -34,7 +34,7 @@ export function formatAmount(amount: number | null | undefined): string {
  */
 export function amountToWords(amount: number | null | undefined): string {
   // Ensure we have a valid number
-  const safeAmount = Number(amount) || 0;
+  const safeAmount = amount !== null && amount !== undefined ? Number(amount) : 0;
   
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 
     'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];

@@ -18,14 +18,14 @@ export const useCreditNoteCustomer = (invoice: any) => {
           .from('customers')
           .select('*')
           .eq('id', invoice.customer_id)
-          .maybeSingle();
+          .single();
 
         if (error) {
           console.error("Error fetching customer:", error);
           return;
         }
 
-        console.log("Customer data fetched:", data);
+        console.log("Customer data fetched successfully:", data);
         setCustomer(data);
       } catch (error) {
         console.error("Exception fetching customer:", error);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CreditNoteData, CreditNoteGSTDetails } from "./types";
 
@@ -17,6 +16,24 @@ export const useCreditNoteCalculations = (
 
   // Calculate totals whenever credit note items change
   useEffect(() => {
+    console.log("Calculation triggered with data:", { creditNote, invoice, company });
+    
+    // If the credit note already has calculated values, use those
+    if (creditNote && typeof creditNote.subtotal === 'number' && typeof creditNote.total_amount === 'number') {
+      console.log("Using credit note's existing calculated values");
+      setSubtotal(Number(creditNote.subtotal) || 0);
+      
+      setGstDetails({
+        cgst: Number(creditNote.cgst) || 0,
+        sgst: Number(creditNote.sgst) || 0,
+        igst: Number(creditNote.igst) || 0
+      });
+      
+      setTotal(Number(creditNote.total_amount) || 0);
+      return;
+    }
+    
+    // Otherwise calculate from items
     // Ensure creditNote and items exist
     if (!creditNote || !Array.isArray(creditNote.items) || creditNote.items.length === 0) {
       console.log("No items found in credit note for calculations");
@@ -78,7 +95,7 @@ export const useCreditNoteCalculations = (
     console.log("Calculated total:", calculatedTotal);
     setTotal(calculatedTotal);
     
-  }, [creditNote?.items, invoice, company]);
+  }, [creditNote, invoice, company]);
 
   return {
     subtotal,

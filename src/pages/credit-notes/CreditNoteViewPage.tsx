@@ -2,12 +2,13 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { useCreditNote } from "@/hooks/credit-notes";
 import CreditNoteViewComponent from "@/components/credit-notes/view";
 import CreditNoteDeleteDialog from "./CreditNoteDeleteDialog";
 import CreditNoteLoading from "./CreditNoteLoading";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreditNoteViewPage = () => {
   const { id } = useParams();
@@ -22,6 +23,19 @@ const CreditNoteViewPage = () => {
     invoice,
     customer
   } = useCreditNote(id);
+  
+  // Log data for debugging 
+  useEffect(() => {
+    console.log("CreditNoteViewPage data:", {
+      creditNote,
+      loading,
+      loadingData,
+      company,
+      invoice,
+      customer,
+      id
+    });
+  }, [creditNote, loading, loadingData, company, invoice, customer, id]);
   
   // Error handling
   useEffect(() => {
@@ -50,6 +64,47 @@ const CreditNoteViewPage = () => {
     }
   }, [location.search, loadingData, navigate, location.pathname]);
   
+  const handleDeleteCreditNote = async () => {
+    if (!id) return;
+    
+    try {
+      toast({
+        title: "Deleting...",
+        description: "Deleting credit note"
+      });
+      
+      // Delete credit note items first
+      const { error: itemsError } = await supabase
+        .from('credit_note_items')
+        .delete()
+        .eq('credit_note_id', id);
+        
+      if (itemsError) throw itemsError;
+      
+      // Then delete the credit note
+      const { error } = await supabase
+        .from('credit_notes')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Credit note has been deleted successfully"
+      });
+      
+      navigate("/app/invoices");
+    } catch (error: any) {
+      console.error("Error deleting credit note:", error);
+      toast({
+        title: "Error",
+        description: `Failed to delete credit note: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -69,7 +124,13 @@ const CreditNoteViewPage = () => {
             Edit
           </Button>
           
-          <CreditNoteDeleteDialog id={id} navigate={navigate} />
+          <Button
+            variant="destructive"
+            onClick={handleDeleteCreditNote}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
       </div>
 
