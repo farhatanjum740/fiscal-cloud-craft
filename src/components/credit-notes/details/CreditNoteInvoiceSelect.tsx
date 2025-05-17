@@ -17,8 +17,11 @@ const CreditNoteInvoiceSelect = ({
   isEditing,
   handleInvoiceSelect
 }: CreditNoteInvoiceSelectProps) => {
-  // Ensure invoiceOptions is always a valid array with proper error handling
+  // Enhanced safety check for invoiceOptions
   const safeInvoiceOptions = React.useMemo(() => {
+    // Log for debugging
+    console.log("Original invoiceOptions:", invoiceOptions);
+    
     try {
       if (!invoiceOptions) {
         console.log("CreditNoteInvoiceSelect: invoiceOptions is undefined or null");
@@ -50,7 +53,7 @@ const CreditNoteInvoiceSelect = ({
     }
   }, [invoiceOptions]);
 
-  console.log("Invoice options for dropdown:", safeInvoiceOptions);
+  console.log("Processed invoice options:", safeInvoiceOptions);
   console.log("Current invoiceId:", invoiceId);
 
   const handleChange = async (value: string) => {

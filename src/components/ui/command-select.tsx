@@ -46,8 +46,10 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Comprehensive defensive checks for options
+  // Enhanced safety checks for options
   const safeOptions = React.useMemo(() => {
+    console.log("Command Select original options:", options);
+    
     try {
       // Handle invalid options
       if (options === null || options === undefined) {
@@ -87,6 +89,8 @@ export function CommandSelect({
       return [];
     }
   }, [options]);
+  
+  console.log("Command Select processed options:", safeOptions);
   
   // Extra safe selected option lookup with try/catch
   const selectedOption = React.useMemo(() => {

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -133,7 +134,7 @@ const CreditNoteEditor = () => {
   };
 
   // Create a wrapper function that properly handles the return type matching the expected void return
-  const handleGenerateCreditNoteNumber = async () => {
+  const handleGenerateCreditNoteNumber = async (): Promise<void> => {
     try {
       await generateCreditNoteNumber();
       // No return statement, making this function return Promise<void>
