@@ -46,43 +46,62 @@ export function CommandSelect({
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Enhanced safety checks for options
+  // Enhanced safety checks for options with explicit force to array format
   const safeOptions = React.useMemo(() => {
     console.log("Command Select original options:", options);
     
     try {
-      // Handle invalid options
-      if (options === null || options === undefined) {
+      // Always ensure we have an array to work with
+      if (!options) {
         console.log("CommandSelect: options is null or undefined");
         return [];
       }
       
-      // Handle non-array options 
+      // Handle non-array options by forcing array conversion
       if (!Array.isArray(options)) {
-        console.log("CommandSelect: options is not an array", options);
+        console.log("CommandSelect: options is not an array, type:", typeof options);
         return [];
       }
       
-      // Filter out invalid items
-      return options.filter(item => {
-        if (!item || typeof item !== 'object') {
-          console.log("CommandSelect: Invalid option item", item);
+      // Filter out invalid items and ensure each item has valid properties
+      const filteredOptions = options.filter(item => {
+        if (!item) {
+          console.log("CommandSelect: Skipping null or undefined item");
           return false;
         }
         
-        if ('value' in item === false || 'label' in item === false) {
-          console.log("CommandSelect: Option missing required properties", item);
+        if (typeof item !== 'object') {
+          console.log("CommandSelect: Item is not an object", item);
           return false;
         }
         
-        // Add more stringent checks - make sure values are not undefined
-        if (item.value === undefined || item.label === undefined) {
-          console.log("CommandSelect: Option has undefined value or label", item);
+        if (!('value' in item) || !('label' in item)) {
+          console.log("CommandSelect: Item missing required properties", item);
           return false;
+        }
+        
+        // Make sure value and label are not undefined
+        if (item.value === undefined || item.value === null || item.label === undefined || item.label === null) {
+          console.log("CommandSelect: Item has undefined/null value or label", item);
+          return false;
+        }
+        
+        // Ensure values are strings (or convertible to strings)
+        if (typeof item.value !== 'string') {
+          console.log("CommandSelect: Converting non-string value to string:", item.value);
+          item.value = String(item.value);
+        }
+        
+        if (typeof item.label !== 'string') {
+          console.log("CommandSelect: Converting non-string label to string:", item.label);
+          item.label = String(item.label);
         }
         
         return true;
       });
+      
+      console.log("CommandSelect: Filtered options:", filteredOptions);
+      return filteredOptions;
     } catch (error) {
       // Catch any unexpected errors in options processing
       console.error("CommandSelect: Error processing options:", error);
@@ -91,17 +110,23 @@ export function CommandSelect({
   }, [options]);
   
   console.log("Command Select processed options:", safeOptions);
+  console.log("Command Select current value:", value);
   
   // Extra safe selected option lookup with try/catch
   const selectedOption = React.useMemo(() => {
     try {
-      if (!value || !safeOptions || safeOptions.length === 0) return null;
+      if (!value || value === "" || !safeOptions || safeOptions.length === 0) {
+        return null;
+      }
       return safeOptions.find(option => option.value === value) || null;
     } catch (error) {
       console.error("CommandSelect: Error finding selected option:", error);
       return null;
     }
   }, [safeOptions, value]);
+
+  // Log the selected option for debugging
+  console.log("CommandSelect selected option:", selectedOption);
 
   return (
     <Popover open={open && !disabled} onOpenChange={setOpen}>
@@ -130,10 +155,9 @@ export function CommandSelect({
       >
         <Command>
           <CommandInput placeholder={searchInputPlaceholder} />
+          <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup style={{ maxHeight, overflowY: 'auto' }}>
-            {safeOptions.length === 0 ? (
-              <CommandEmpty>{emptyMessage}</CommandEmpty>
-            ) : (
+            {safeOptions && safeOptions.length > 0 ? (
               safeOptions.map((option) => (
                 <CommandItem
                   key={`option-${option.value || Math.random().toString()}`}
@@ -152,6 +176,10 @@ export function CommandSelect({
                   {option.label}
                 </CommandItem>
               ))
+            ) : (
+              <div className="py-6 text-center text-sm text-gray-500">
+                {emptyMessage}
+              </div>
             )}
           </CommandGroup>
         </Command>

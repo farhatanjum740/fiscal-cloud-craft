@@ -17,44 +17,66 @@ const CreditNoteInvoiceSelect = ({
   isEditing,
   handleInvoiceSelect
 }: CreditNoteInvoiceSelectProps) => {
-  // Enhanced safety check for invoiceOptions
+  // Enhanced safety check for invoiceOptions with more detailed logging
   const safeInvoiceOptions = React.useMemo(() => {
     // Log for debugging
-    console.log("Original invoiceOptions:", invoiceOptions);
+    console.log("CreditNoteInvoiceSelect - Original invoiceOptions:", invoiceOptions);
+    console.log("CreditNoteInvoiceSelect - Type of invoiceOptions:", typeof invoiceOptions);
+    console.log("CreditNoteInvoiceSelect - Is Array:", Array.isArray(invoiceOptions));
     
     try {
+      // Immediately check if it's an array and handle appropriately
       if (!invoiceOptions) {
         console.log("CreditNoteInvoiceSelect: invoiceOptions is undefined or null");
         return [];
       }
       
       if (!Array.isArray(invoiceOptions)) {
-        console.log("CreditNoteInvoiceSelect: invoiceOptions is not an array", invoiceOptions);
-        return [];
+        console.log("CreditNoteInvoiceSelect: invoiceOptions is not an array:", invoiceOptions);
+        // Try to convert to array if possible
+        return typeof invoiceOptions === 'object' ? [invoiceOptions] : [];
       }
       
-      // Filter out invalid options
-      return invoiceOptions.filter(option => {
-        if (!option || typeof option !== 'object') {
-          console.log("CreditNoteInvoiceSelect: Invalid option item", option);
+      // Filter out invalid options and ensure each has required properties
+      const filtered = invoiceOptions.filter(option => {
+        // Skip null/undefined items
+        if (!option) {
+          console.log("CreditNoteInvoiceSelect: Skipping null/undefined option");
           return false;
         }
         
+        // Check if it's an object
+        if (typeof option !== 'object') {
+          console.log("CreditNoteInvoiceSelect: Invalid option item (not an object):", option);
+          return false;
+        }
+        
+        // Check for required properties
         if (!('value' in option) || !('label' in option)) {
-          console.log("CreditNoteInvoiceSelect: Option missing required properties", option);
+          console.log("CreditNoteInvoiceSelect: Option missing required properties:", option);
+          return false;
+        }
+        
+        // Ensure values are not undefined/null
+        if (option.value === undefined || option.value === null || 
+            option.label === undefined || option.label === null) {
+          console.log("CreditNoteInvoiceSelect: Option has undefined/null value or label:", option);
           return false;
         }
         
         return true;
       });
+      
+      console.log("CreditNoteInvoiceSelect - Filtered invoice options:", filtered);
+      return filtered;
     } catch (error) {
       console.error("Error processing invoice options:", error);
       return [];
     }
   }, [invoiceOptions]);
 
-  console.log("Processed invoice options:", safeInvoiceOptions);
-  console.log("Current invoiceId:", invoiceId);
+  console.log("CreditNoteInvoiceSelect - Final processed invoice options:", safeInvoiceOptions);
+  console.log("CreditNoteInvoiceSelect - Current invoiceId:", invoiceId);
 
   const handleChange = async (value: string) => {
     try {

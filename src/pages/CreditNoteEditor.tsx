@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -92,6 +91,11 @@ const CreditNoteEditor = () => {
     saveCreditNote
   } = useCreditNote(isEditing ? id : queryId);
   
+  // Log available invoice options for debugging
+  console.log("CreditNoteEditor - Invoice options received:", invoiceOptions);
+  console.log("CreditNoteEditor - Invoice options type:", typeof invoiceOptions);
+  console.log("CreditNoteEditor - Is array:", Array.isArray(invoiceOptions));
+  
   const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
   
   const handleInvoiceSelect = async (value: string) => {
@@ -133,11 +137,11 @@ const CreditNoteEditor = () => {
     saveCreditNote(navigate);
   };
 
-  // Create a wrapper function that properly handles the return type matching the expected void return
+  // Fixed wrapper function with explicit Promise<void> return type
   const handleGenerateCreditNoteNumber = async (): Promise<void> => {
     try {
       await generateCreditNoteNumber();
-      // No return statement, making this function return Promise<void>
+      // No return value needed as we're returning void
     } catch (error) {
       console.error("Error generating credit note number:", error);
       toast({

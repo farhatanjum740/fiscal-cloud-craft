@@ -24,11 +24,15 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     setInvoice
   } = useFetchCreditNoteData(user?.id, id, isEditing);
 
+  // Ensure invoiceOptions is always an array, even if the data is malformed
+  const safeInvoiceOptions = Array.isArray(invoiceOptions) ? invoiceOptions : [];
+
   // Log fetched data for debugging
   console.log("useCreditNote - Credit Note Data:", creditNote);
   console.log("useCreditNote - Invoice Data:", invoice);
   console.log("useCreditNote - Company Data:", company);
-  console.log("useCreditNote - Invoice Options:", invoiceOptions);
+  console.log("useCreditNote - Invoice Options (raw):", invoiceOptions);
+  console.log("useCreditNote - Invoice Options (safe):", safeInvoiceOptions);
 
   const {
     loading,
@@ -110,7 +114,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     showQuantityError,
     setShowQuantityError,
     errorMessage,
-    invoiceOptions: invoiceOptions || [],
+    invoiceOptions: safeInvoiceOptions,  // Always return a safe array
     subtotal,
     gstDetails,
     total,
