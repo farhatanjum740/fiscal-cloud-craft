@@ -133,6 +133,22 @@ const CreditNoteEditor = () => {
     saveCreditNote(navigate);
   };
 
+  // Create a wrapper function that properly handles the return type
+  const handleGenerateCreditNoteNumber = async () => {
+    try {
+      const result = await generateCreditNoteNumber();
+      return result; // This will now correctly return string | null
+    } catch (error) {
+      console.error("Error generating credit note number:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate credit note number",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   return (
     <ErrorBoundary>
       <div className="space-y-6">
@@ -173,7 +189,7 @@ const CreditNoteEditor = () => {
                     isEditing={isEditing}
                     isGeneratingNumber={isGeneratingNumber}
                     handleInvoiceChange={handleInvoiceSelect}
-                    generateCreditNoteNumber={generateCreditNoteNumber}
+                    generateCreditNoteNumber={handleGenerateCreditNoteNumber}
                   />
                 </CardContent>
               </Card>
