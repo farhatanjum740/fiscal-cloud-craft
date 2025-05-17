@@ -120,7 +120,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     addSelectedItems,
     removeItem,
     updateItem,
-    generateCreditNoteNumber,
+    generateCreditNoteNumber, // This now correctly returns Promise<string | null> as per our updated type definition
     saveCreditNote
   };
 };

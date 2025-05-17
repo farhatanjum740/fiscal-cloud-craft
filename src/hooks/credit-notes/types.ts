@@ -51,6 +51,6 @@ export interface UseCreditNoteReturn {
   addSelectedItems: () => void;
   removeItem: (id: string) => void;
   updateItem: (id: string, field: keyof CreditNoteItem, value: any) => void;
-  generateCreditNoteNumber: () => Promise<void>;
+  generateCreditNoteNumber: () => Promise<string | null>; // Updated return type to string | null
   saveCreditNote: (navigate: (path: string) => void) => Promise<void>;
 }
