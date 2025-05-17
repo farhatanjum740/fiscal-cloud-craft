@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -133,11 +132,11 @@ const CreditNoteEditor = () => {
     saveCreditNote(navigate);
   };
 
-  // Create a wrapper function that properly handles the return type
+  // Create a wrapper function that properly handles the return type matching the expected void return
   const handleGenerateCreditNoteNumber = async () => {
     try {
-      const result = await generateCreditNoteNumber();
-      return result; // This will now correctly return string | null
+      await generateCreditNoteNumber();
+      // No return statement, making this function return Promise<void>
     } catch (error) {
       console.error("Error generating credit note number:", error);
       toast({
@@ -145,7 +144,6 @@ const CreditNoteEditor = () => {
         description: "Failed to generate credit note number",
         variant: "destructive",
       });
-      return null;
     }
   };
 
