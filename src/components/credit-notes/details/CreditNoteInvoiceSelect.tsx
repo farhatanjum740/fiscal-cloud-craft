@@ -1,7 +1,7 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CommandSelect } from "@/components/ui/command-select";
 import { toast } from "@/hooks/use-toast";
 
 interface CreditNoteInvoiceSelectProps {
@@ -75,31 +75,16 @@ const CreditNoteInvoiceSelect = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="invoice">Invoice Reference</Label>
-      <Select
+      <CommandSelect 
         value={invoiceId || ""}
         onValueChange={handleChange}
+        options={safeInvoiceOptions}
+        placeholder="Select an invoice"
+        searchInputPlaceholder="Search invoices..."
+        emptyMessage="No invoices available"
         disabled={isEditing}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an invoice" />
-        </SelectTrigger>
-        <SelectContent>
-          {safeInvoiceOptions.length === 0 ? (
-            <div className="py-2 px-2 text-sm text-muted-foreground">
-              No invoices available
-            </div>
-          ) : (
-            safeInvoiceOptions.map(option => (
-              <SelectItem 
-                key={option.value} 
-                value={option.value}
-              >
-                {option.label}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
+        className="w-full"
+      />
       {safeInvoiceOptions.length === 0 && !isEditing && (
         <p className="text-xs text-amber-500 mt-1">
           No invoices available. Please create an invoice first.

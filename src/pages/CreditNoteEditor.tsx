@@ -127,16 +127,7 @@ const CreditNoteEditor = () => {
     
     saveCreditNote(navigate);
   };
-  
-  // Log the state of key data to help track down issues
-  React.useEffect(() => {
-    console.log("CreditNoteEditor - Credit Note:", creditNote);
-    console.log("CreditNoteEditor - Invoice:", invoice);
-    console.log("CreditNoteEditor - Invoice Options:", invoiceOptions);
-    console.log("CreditNoteEditor - Selected Items:", selectedItems);
-    console.log("CreditNoteEditor - Is Invoice Loading:", isInvoiceLoading);
-  }, [creditNote, invoice, invoiceOptions, selectedItems, isInvoiceLoading]);
-  
+
   return (
     <ErrorBoundary>
       <div className="space-y-6">

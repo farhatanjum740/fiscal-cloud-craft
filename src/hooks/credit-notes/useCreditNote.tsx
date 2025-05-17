@@ -81,11 +81,8 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         // Fetch invoice items
         await fetchInvoiceItems(value);
         
-        // Auto-generate credit note number when invoice is selected and not editing
-        if (!isEditing && fetchedInvoice) {
-          console.log("Auto-generating credit note number");
-          setTimeout(() => generateCreditNoteNumber(), 300);
-        }
+        // Removed auto-generation of credit note number here
+        // Let it be generated only when saving the credit note
       } else {
         console.log("No invoice data returned from baseHandleInvoiceChange");
       }
