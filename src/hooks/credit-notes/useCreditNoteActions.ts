@@ -21,7 +21,7 @@ export const useCreditNoteActions = (
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
 
   // Generate credit note number function - now checks for the financial year
-  const generateCreditNoteNumber = async () => {
+  const generateCreditNoteNumber = async (): Promise<string | null> => {
     console.log("Generating credit note number with company:", company);
     console.log("Invoice data for credit note number generation:", invoice);
     console.log("Financial year for credit note number generation:", creditNote.financialYear);

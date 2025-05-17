@@ -1,31 +1,27 @@
-
-import { CreditNoteItem } from "@/types";
+import React from "react";
 
 export interface CreditNoteData {
+  id?: string;
   invoiceId: string;
   creditNoteNumber: string;
   creditNoteDate: Date;
   financialYear: string;
   reason: string;
-  items: CreditNoteItem[];
   status: string;
-  // Add these properties to fix TypeScript errors
-  subtotal?: number;
-  cgst?: number;
-  sgst?: number;
-  igst?: number;
-  total_amount?: number;
+  items: CreditNoteItem[];
 }
 
-export interface CreditNoteGSTDetails {
-  cgst: number;
-  sgst: number;
-  igst: number;
-}
-
-export interface InvoiceOption {
-  value: string;
-  label: string;
+export interface CreditNoteItem {
+  id: string;
+  invoiceItemId: string;
+  productId: string;
+  productName: string;
+  hsnCode: string;
+  quantity: number;
+  price: number;
+  unit: string;
+  gstRate: number;
+  maxQuantity?: number;
 }
 
 export interface UseCreditNoteReturn {
@@ -41,16 +37,23 @@ export interface UseCreditNoteReturn {
   showQuantityError: boolean;
   setShowQuantityError: (value: boolean) => void;
   errorMessage: string;
-  invoiceOptions: InvoiceOption[];
+  invoiceOptions: { value: string; label: string }[];
   subtotal: number;
-  gstDetails: CreditNoteGSTDetails;
+  gstDetails: {
+    cgstRate: number;
+    sgstRate: number;
+    igstRate: number;
+    cgstAmount: number;
+    sgstAmount: number;
+    igstAmount: number;
+  };
   total: number;
   isGeneratingNumber: boolean;
   handleInvoiceChange: (value: string) => Promise<void>;
-  toggleItemSelection: (id: string) => void;
+  toggleItemSelection: (itemId: string) => void;
   addSelectedItems: () => void;
   removeItem: (id: string) => void;
-  updateItem: (id: string, field: keyof CreditNoteItem, value: any) => void;
-  generateCreditNoteNumber: () => Promise<string | null>; // Updated return type to string | null
-  saveCreditNote: (navigate: (path: string) => void) => Promise<void>;
+  updateItem: (id: string, field: any, value: any) => void;
+  generateCreditNoteNumber: () => Promise<string | null>;  // Update the return type here
+  saveCreditNote: (navigate: (path: string) => void) => void;
 }
