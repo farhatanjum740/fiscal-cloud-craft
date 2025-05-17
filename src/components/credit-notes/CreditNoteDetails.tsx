@@ -2,9 +2,8 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { RefreshCw } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import CreditNoteInvoiceSelect from "./details/CreditNoteInvoiceSelect";
 import CreditNoteDatePicker from "./details/CreditNoteDatePicker";
 import CreditNoteStatus from "./details/CreditNoteStatus";
@@ -32,8 +31,7 @@ const CreditNoteDetails = ({
   invoiceOptions,
   isEditing,
   isGeneratingNumber,
-  handleInvoiceChange,
-  generateCreditNoteNumber
+  handleInvoiceChange
 }: CreditNoteDetailsProps) => {
   return (
     <div className="space-y-4">
@@ -57,34 +55,25 @@ const CreditNoteDetails = ({
         </p>
       </div>
       
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2 col-span-2">
-          <Label htmlFor="creditNoteNumber">Credit Note Number</Label>
-          <Input
-            id="creditNoteNumber"
-            value={creditNote.creditNoteNumber || ""}
-            readOnly
-            className="bg-gray-50"
-          />
-          {isGeneratingNumber && (
-            <p className="text-xs text-muted-foreground">Generating credit note number...</p>
-          )}
-        </div>
-        <div className="space-y-2 col-span-1 flex items-end">
-          <Button 
-            onClick={generateCreditNoteNumber}
-            disabled={isGeneratingNumber || !creditNote.invoiceId || !creditNote.financialYear}
-            className="w-full"
-            variant="outline"
-          >
-            {isGeneratingNumber ? (
-              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            Generate
-          </Button>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="creditNoteNumber">Credit Note Number</Label>
+        <Input
+          id="creditNoteNumber"
+          value={creditNote.creditNoteNumber || ""}
+          readOnly
+          className="bg-gray-50"
+        />
+        {isGeneratingNumber && (
+          <p className="text-xs text-muted-foreground flex items-center">
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            Generating credit note number...
+          </p>
+        )}
+        {!creditNote.creditNoteNumber && !isGeneratingNumber && (
+          <p className="text-xs text-muted-foreground">
+            Credit note number will be generated automatically when you select an invoice
+          </p>
+        )}
       </div>
       
       <CreditNoteDatePicker

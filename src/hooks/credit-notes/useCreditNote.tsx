@@ -112,7 +112,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
             console.error("Error auto-generating credit note number:", error);
             toast({
               title: "Note",
-              description: "Invoice selected, but couldn't generate credit note number automatically. Please use the Generate button.",
+              description: "Invoice selected, but couldn't generate credit note number automatically. Please try again.",
               variant: "default",
             });
           }
@@ -124,6 +124,26 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
       console.error("Error in handleInvoiceChange:", error);
     }
   };
+
+  // Auto-generate credit note number when page loads if we're not editing and have the required data
+  useEffect(() => {
+    const autoGenerateCreditNoteNumber = async () => {
+      // Only auto-generate if we're creating a new credit note (not editing), have a company, and no existing credit note number
+      if (!isEditing && company && !creditNote.creditNoteNumber && creditNote.financialYear) {
+        console.log("Auto-generating credit note number on page load");
+        try {
+          await generateCreditNoteNumber();
+        } catch (error) {
+          console.error("Error auto-generating credit note number on page load:", error);
+        }
+      }
+    };
+    
+    // Run auto-generation once page has loaded and we have the required data
+    if (!loadingData) {
+      autoGenerateCreditNoteNumber();
+    }
+  }, [isEditing, company, creditNote.creditNoteNumber, creditNote.financialYear, loadingData, generateCreditNoteNumber]);
 
   // If there's an initial invoiceId from a query parameter, load it
   useEffect(() => {

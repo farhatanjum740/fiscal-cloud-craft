@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -21,10 +20,11 @@ export const useCreditNoteActions = (
   const [errorMessage, setErrorMessage] = useState("");
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
 
-  // Generate credit note number function - will only be called on demand or during save
+  // Generate credit note number function - now checks for the financial year
   const generateCreditNoteNumber = async () => {
     console.log("Generating credit note number with company:", company);
     console.log("Invoice data for credit note number generation:", invoice);
+    console.log("Financial year for credit note number generation:", creditNote.financialYear);
     
     if (!company) {
       toast({
@@ -35,32 +35,32 @@ export const useCreditNoteActions = (
       return null;
     }
     
-    if (!invoice) {
-      console.error("Invoice is required but not available for credit note number generation");
-      toast({
-        title: "Error",
-        description: "Invoice is required to generate credit note number",
-        variant: "destructive",
-      });
-      return null;
-    }
-
+    // We can generate based on financial year even without an invoice
+    // But we still need a financial year
     if (!creditNote.financialYear) {
-      toast({
-        title: "Error",
-        description: "Financial year is required to generate credit note number",
-        variant: "destructive",
-      });
-      return null;
+      // If we have an invoice, get the financial year from it
+      if (invoice && invoice.financial_year) {
+        setCreditNote(prev => ({
+          ...prev,
+          financialYear: invoice.financial_year
+        }));
+      } else {
+        toast({
+          title: "Error",
+          description: "Financial year is required to generate credit note number",
+          variant: "destructive",
+        });
+        return null;
+      }
     }
     
     try {
       setIsGeneratingNumber(true);
       
-      // Call our new database function to get next credit note number
+      // Call our database function to get next credit note number for this financial year
       const { data, error } = await supabase.rpc('get_next_credit_note_number', {
         p_company_id: company.id,
-        p_financial_year: creditNote.financialYear,
+        p_financial_year: creditNote.financialYear || invoice?.financial_year,
         p_prefix: 'CN'
       });
       

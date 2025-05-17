@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -161,21 +160,6 @@ const CreditNoteEditor = () => {
     saveCreditNote(navigate);
   };
 
-  // Fixed wrapper function with explicit Promise<void> return type
-  const handleGenerateCreditNoteNumber = async (): Promise<void> => {
-    try {
-      await generateCreditNoteNumber();
-      // No return value needed as we're returning void
-    } catch (error) {
-      console.error("Error generating credit note number:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate credit note number",
-        variant: "destructive",
-      });
-    }
-  };
-
   // Defensive check for loading and having data
   const hasRequiredData = company && safeInvoiceOptions;
   const isStillLoading = loadingData && !hasRequiredData;
@@ -236,7 +220,7 @@ const CreditNoteEditor = () => {
                       isEditing={isEditing}
                       isGeneratingNumber={isGeneratingNumber}
                       handleInvoiceChange={handleInvoiceSelect}
-                      generateCreditNoteNumber={handleGenerateCreditNoteNumber}
+                      generateCreditNoteNumber={generateCreditNoteNumber}
                     />
                   )}
                 </CardContent>
