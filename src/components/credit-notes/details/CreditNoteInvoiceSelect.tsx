@@ -1,8 +1,15 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
-import { CommandSelect } from "@/components/ui/command-select";
 import { toast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AlertCircle } from "lucide-react";
 
 interface CreditNoteInvoiceSelectProps {
   invoiceId: string;
@@ -94,20 +101,47 @@ const CreditNoteInvoiceSelect = ({
       });
     }
   };
+  
+  // Log any time the component renders to trace potential issues
+  useEffect(() => {
+    console.log("CreditNoteInvoiceSelect rendered with", {
+      invoiceId,
+      optionsCount: safeInvoiceOptions.length,
+      isEditing
+    });
+  }, [invoiceId, safeInvoiceOptions, isEditing]);
 
   return (
     <div className="space-y-2">
       <Label htmlFor="invoice">Invoice Reference</Label>
-      <CommandSelect 
-        value={invoiceId || ""}
-        onValueChange={handleChange}
-        options={safeInvoiceOptions}
-        placeholder="Select an invoice"
-        searchInputPlaceholder="Search invoices..."
-        emptyMessage="No invoices available"
-        disabled={isEditing}
-        className="w-full"
-      />
+      
+      {safeInvoiceOptions.length > 0 ? (
+        <Select
+          value={invoiceId || undefined}
+          onValueChange={handleChange}
+          disabled={isEditing}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select an invoice" />
+          </SelectTrigger>
+          <SelectContent>
+            {safeInvoiceOptions.map(option => (
+              <SelectItem 
+                key={option.value || `invoice-${Math.random()}`} 
+                value={option.value}
+              >
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <div className="flex items-center p-3 border border-amber-200 bg-amber-50 rounded-md text-amber-700 text-sm">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <span>No invoices available. Please create an invoice first.</span>
+        </div>
+      )}
+      
       {safeInvoiceOptions.length === 0 && !isEditing && (
         <p className="text-xs text-amber-500 mt-1">
           No invoices available. Please create an invoice first.

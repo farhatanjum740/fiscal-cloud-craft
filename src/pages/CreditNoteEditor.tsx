@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Card,
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCreditNote } from "@/hooks/credit-notes";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import CreditNoteDetails from "@/components/credit-notes/CreditNoteDetails";
 import InvoiceInfo from "@/components/credit-notes/InvoiceInfo";
@@ -26,6 +27,7 @@ class ErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error) {
+    console.log("ErrorBoundary caught an error:", error.message);
     return { hasError: true, errorMessage: error.message };
   }
 
@@ -43,7 +45,10 @@ class ErrorBoundary extends React.Component<
           </div>
           <p className="text-red-700 mb-4">{this.state.errorMessage}</p>
           <Button 
-            onClick={() => this.setState({ hasError: false })} 
+            onClick={() => {
+              console.log("Attempting to reset error state");
+              this.setState({ hasError: false });
+            }} 
             variant="outline"
           >
             Try again
@@ -64,6 +69,18 @@ const CreditNoteEditor = () => {
   
   const isEditing = !!id;
   const queryId = invoiceIdFromQuery || undefined;
+  
+  // Add component mounted state to debug lifecycle issues
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    console.log("CreditNoteEditor component mounted");
+    setMounted(true);
+    return () => {
+      console.log("CreditNoteEditor component unmounting");
+    };
+  }, []);
+  
+  console.log("CreditNoteEditor render - isEditing:", isEditing, "queryId:", queryId);
   
   const {
     creditNote,
@@ -89,7 +106,7 @@ const CreditNoteEditor = () => {
     updateItem,
     generateCreditNoteNumber,
     saveCreditNote
-  } = useCreditNote(isEditing ? id : queryId);
+  } = useCreditNote(isEditing ? id : undefined);
   
   // Log available invoice options for debugging
   console.log("CreditNoteEditor - Invoice options received:", invoiceOptions);
@@ -159,6 +176,25 @@ const CreditNoteEditor = () => {
     }
   };
 
+  // Defensive check for loading and having data
+  const hasRequiredData = company && safeInvoiceOptions;
+  const isStillLoading = loadingData && !hasRequiredData;
+  
+  // Prevent rendering main content until we have data
+  if (isStillLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">
+          {isEditing ? "Edit Credit Note" : "Create New Credit Note"}
+        </h1>
+        <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border">
+          <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+          <p className="text-muted-foreground">Loading credit note data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <div className="space-y-6">
@@ -178,7 +214,7 @@ const CreditNoteEditor = () => {
         
         {loadingData ? (
           <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border">
-            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4"></div>
+            <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
             <p className="text-muted-foreground">Loading credit note data...</p>
           </div>
         ) : (
@@ -192,15 +228,17 @@ const CreditNoteEditor = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <CreditNoteDetails
-                    creditNote={creditNote}
-                    setCreditNote={setCreditNote}
-                    invoiceOptions={safeInvoiceOptions}
-                    isEditing={isEditing}
-                    isGeneratingNumber={isGeneratingNumber}
-                    handleInvoiceChange={handleInvoiceSelect}
-                    generateCreditNoteNumber={handleGenerateCreditNoteNumber}
-                  />
+                  {company && (
+                    <CreditNoteDetails
+                      creditNote={creditNote}
+                      setCreditNote={setCreditNote}
+                      invoiceOptions={safeInvoiceOptions}
+                      isEditing={isEditing}
+                      isGeneratingNumber={isGeneratingNumber}
+                      handleInvoiceChange={handleInvoiceSelect}
+                      generateCreditNoteNumber={handleGenerateCreditNoteNumber}
+                    />
+                  )}
                 </CardContent>
               </Card>
               

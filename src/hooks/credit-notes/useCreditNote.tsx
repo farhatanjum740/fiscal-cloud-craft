@@ -24,8 +24,18 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     setInvoice
   } = useFetchCreditNoteData(user?.id, id, isEditing);
 
+  // DEBUG: Add more specific and detailed logging about each piece of data
+  console.log("useCreditNote.tsx - loadingData:", loadingData);
+  console.log("useCreditNote.tsx - user ID:", user?.id);
+  console.log("useCreditNote.tsx - company:", company ? "loaded" : "null");
+  console.log("useCreditNote.tsx - invoiceOptions type:", typeof invoiceOptions);
+  console.log("useCreditNote.tsx - invoiceOptions isArray:", Array.isArray(invoiceOptions));
+  console.log("useCreditNote.tsx - invoiceOptions raw:", invoiceOptions);
+
   // Ensure invoiceOptions is always an array, even if the data is malformed
-  const safeInvoiceOptions = Array.isArray(invoiceOptions) ? invoiceOptions : [];
+  const safeInvoiceOptions = Array.isArray(invoiceOptions) 
+    ? invoiceOptions.filter(option => option && typeof option === 'object' && 'value' in option && 'label' in option)
+    : [];
 
   // Log fetched data for debugging
   console.log("useCreditNote - Credit Note Data:", creditNote);
