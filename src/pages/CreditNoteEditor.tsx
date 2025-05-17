@@ -98,6 +98,13 @@ const CreditNoteEditor = () => {
   
   const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
   
+  // Ensure we have a valid array of invoiceOptions
+  const safeInvoiceOptions = React.useMemo(() => {
+    if (!invoiceOptions) return [];
+    if (!Array.isArray(invoiceOptions)) return [];
+    return invoiceOptions;
+  }, [invoiceOptions]);
+  
   const handleInvoiceSelect = async (value: string) => {
     setIsInvoiceLoading(true);
     console.log("CreditNoteEditor: Calling handleInvoiceChange with value:", value);
@@ -188,7 +195,7 @@ const CreditNoteEditor = () => {
                   <CreditNoteDetails
                     creditNote={creditNote}
                     setCreditNote={setCreditNote}
-                    invoiceOptions={Array.isArray(invoiceOptions) ? invoiceOptions : []}
+                    invoiceOptions={safeInvoiceOptions}
                     isEditing={isEditing}
                     isGeneratingNumber={isGeneratingNumber}
                     handleInvoiceChange={handleInvoiceSelect}

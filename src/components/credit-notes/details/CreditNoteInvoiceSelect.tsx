@@ -21,8 +21,6 @@ const CreditNoteInvoiceSelect = ({
   const safeInvoiceOptions = React.useMemo(() => {
     // Log for debugging
     console.log("CreditNoteInvoiceSelect - Original invoiceOptions:", invoiceOptions);
-    console.log("CreditNoteInvoiceSelect - Type of invoiceOptions:", typeof invoiceOptions);
-    console.log("CreditNoteInvoiceSelect - Is Array:", Array.isArray(invoiceOptions));
     
     try {
       // Immediately check if it's an array and handle appropriately

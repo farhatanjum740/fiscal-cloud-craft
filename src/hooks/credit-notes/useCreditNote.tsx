@@ -48,7 +48,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     generateCreditNoteNumber,
     handleInvoiceChange: baseHandleInvoiceChange,
     saveCreditNote
-  } = useCreditNoteActions(creditNote, setCreditNote, invoice, invoiceItems || [], company, user?.id, id);
+  } = useCreditNoteActions(creditNote, setCreditNote, invoice, Array.isArray(invoiceItems) ? invoiceItems : [], company, user?.id, id);
 
   const {
     subtotal,
@@ -61,7 +61,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   console.log("useCreditNote - Customer Data:", customer);
 
   // Create a wrapper for handleInvoiceChange to update the invoice state
-  const handleInvoiceChange = async (value: string) => {
+  const handleInvoiceChange = async (value: string): Promise<void> => {
     console.log("handleInvoiceChange called with value:", value);
     try {
       if (!value) {
@@ -107,7 +107,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     loading,
     loadingData,
     invoice,
-    invoiceItems: invoiceItems || [],
+    invoiceItems: Array.isArray(invoiceItems) ? invoiceItems : [],
     company,
     customer,
     selectedItems,

@@ -50,63 +50,57 @@ export function CommandSelect({
   const safeOptions = React.useMemo(() => {
     console.log("Command Select original options:", options);
     
-    try {
-      // Always ensure we have an array to work with
-      if (!options) {
-        console.log("CommandSelect: options is null or undefined");
-        return [];
-      }
-      
-      // Handle non-array options by forcing array conversion
-      if (!Array.isArray(options)) {
-        console.log("CommandSelect: options is not an array, type:", typeof options);
-        return [];
-      }
-      
-      // Filter out invalid items and ensure each item has valid properties
-      const filteredOptions = options.filter(item => {
-        if (!item) {
-          console.log("CommandSelect: Skipping null or undefined item");
-          return false;
-        }
-        
-        if (typeof item !== 'object') {
-          console.log("CommandSelect: Item is not an object", item);
-          return false;
-        }
-        
-        if (!('value' in item) || !('label' in item)) {
-          console.log("CommandSelect: Item missing required properties", item);
-          return false;
-        }
-        
-        // Make sure value and label are not undefined
-        if (item.value === undefined || item.value === null || item.label === undefined || item.label === null) {
-          console.log("CommandSelect: Item has undefined/null value or label", item);
-          return false;
-        }
-        
-        // Ensure values are strings (or convertible to strings)
-        if (typeof item.value !== 'string') {
-          console.log("CommandSelect: Converting non-string value to string:", item.value);
-          item.value = String(item.value);
-        }
-        
-        if (typeof item.label !== 'string') {
-          console.log("CommandSelect: Converting non-string label to string:", item.label);
-          item.label = String(item.label);
-        }
-        
-        return true;
-      });
-      
-      console.log("CommandSelect: Filtered options:", filteredOptions);
-      return filteredOptions;
-    } catch (error) {
-      // Catch any unexpected errors in options processing
-      console.error("CommandSelect: Error processing options:", error);
+    // Always ensure we have an array to work with
+    if (!options) {
+      console.log("CommandSelect: options is null or undefined");
       return [];
     }
+    
+    // Handle non-array options by forcing array conversion
+    if (!Array.isArray(options)) {
+      console.log("CommandSelect: options is not an array, type:", typeof options);
+      return [];
+    }
+    
+    // Filter out invalid items and ensure each item has valid properties
+    const filteredOptions = options.filter(item => {
+      if (!item) {
+        console.log("CommandSelect: Skipping null or undefined item");
+        return false;
+      }
+      
+      if (typeof item !== 'object') {
+        console.log("CommandSelect: Item is not an object", item);
+        return false;
+      }
+      
+      if (!('value' in item) || !('label' in item)) {
+        console.log("CommandSelect: Item missing required properties", item);
+        return false;
+      }
+      
+      // Make sure value and label are not undefined
+      if (item.value === undefined || item.value === null || item.label === undefined || item.label === null) {
+        console.log("CommandSelect: Item has undefined/null value or label", item);
+        return false;
+      }
+      
+      // Ensure values are strings (or convertible to strings)
+      if (typeof item.value !== 'string') {
+        console.log("CommandSelect: Converting non-string value to string:", item.value);
+        item.value = String(item.value);
+      }
+      
+      if (typeof item.label !== 'string') {
+        console.log("CommandSelect: Converting non-string label to string:", item.label);
+        item.label = String(item.label);
+      }
+      
+      return true;
+    });
+    
+    console.log("CommandSelect: Filtered options:", filteredOptions);
+    return filteredOptions;
   }, [options]);
   
   console.log("Command Select processed options:", safeOptions);
@@ -128,8 +122,21 @@ export function CommandSelect({
   // Log the selected option for debugging
   console.log("CommandSelect selected option:", selectedOption);
 
+  // Handle dropdown rendering issues by preventing opening if there's a potential problem
+  const handleOpenChange = (newOpen: boolean) => {
+    if (disabled) return;
+    
+    // Only allow opening if we have valid options to show
+    if (newOpen && (!safeOptions || safeOptions.length === 0)) {
+      console.log("CommandSelect: Preventing dropdown open due to empty options");
+      return;
+    }
+    
+    setOpen(newOpen);
+  };
+
   return (
-    <Popover open={open && !disabled} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -141,7 +148,7 @@ export function CommandSelect({
             !value && "text-muted-foreground",
             className
           )}
-          onClick={() => !open && setOpen(true)}
+          onClick={() => !open && handleOpenChange(true)}
         >
           {selectedOption ? selectedOption.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -153,12 +160,12 @@ export function CommandSelect({
         align="start"
         sideOffset={4}
       >
-        <Command>
-          <CommandInput placeholder={searchInputPlaceholder} />
-          <CommandEmpty>{emptyMessage}</CommandEmpty>
-          <CommandGroup style={{ maxHeight, overflowY: 'auto' }}>
-            {safeOptions && safeOptions.length > 0 ? (
-              safeOptions.map((option) => (
+        {safeOptions && safeOptions.length > 0 ? (
+          <Command>
+            <CommandInput placeholder={searchInputPlaceholder} />
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandGroup style={{ maxHeight, overflowY: 'auto' }}>
+              {safeOptions.map((option) => (
                 <CommandItem
                   key={`option-${option.value || Math.random().toString()}`}
                   value={option.value}
@@ -175,14 +182,14 @@ export function CommandSelect({
                   />
                   {option.label}
                 </CommandItem>
-              ))
-            ) : (
-              <div className="py-6 text-center text-sm text-gray-500">
-                {emptyMessage}
-              </div>
-            )}
-          </CommandGroup>
-        </Command>
+              ))}
+            </CommandGroup>
+          </Command>
+        ) : (
+          <div className="py-6 text-center text-sm text-gray-500">
+            {emptyMessage}
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
