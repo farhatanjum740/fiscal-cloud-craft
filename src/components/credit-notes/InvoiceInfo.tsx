@@ -29,13 +29,16 @@ interface InvoiceInfoProps {
 
 const InvoiceInfo = ({
   invoice,
-  invoiceItems,
-  selectedItems,
+  invoiceItems = [], // Provide a default empty array
+  selectedItems = {}, // Provide a default empty object
   toggleItemSelection,
   addSelectedItems,
   isEditing,
   isLoading = false
 }: InvoiceInfoProps) => {
+  // Ensure invoiceItems is always an array
+  const safeInvoiceItems = Array.isArray(invoiceItems) ? invoiceItems : [];
+  
   return (
     <Card>
       <CardHeader>
@@ -73,7 +76,7 @@ const InvoiceInfo = ({
               </div>
             </div>
             
-            {!isEditing && invoiceItems && invoiceItems.length > 0 && (
+            {!isEditing && safeInvoiceItems.length > 0 && (
               <>
                 <h4 className="font-medium mt-4">Invoice Items</h4>
                 <div className="border rounded-md overflow-hidden">
@@ -90,8 +93,8 @@ const InvoiceInfo = ({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {invoiceItems.map((item) => (
-                        <TableRow key={item.id} className={item.availableQuantity <= 0 ? "opacity-50" : ""}>
+                      {safeInvoiceItems.map((item) => (
+                        <TableRow key={item.id || `item-${Math.random()}`} className={item.availableQuantity <= 0 ? "opacity-50" : ""}>
                           <TableCell>
                             <input 
                               type="checkbox" 
@@ -115,7 +118,7 @@ const InvoiceInfo = ({
                   <Button 
                     onClick={addSelectedItems} 
                     size="sm"
-                    disabled={Object.values(selectedItems).filter(Boolean).length === 0}
+                    disabled={!Object.values(selectedItems || {}).filter(Boolean).length}
                   >
                     Add Selected Items
                   </Button>

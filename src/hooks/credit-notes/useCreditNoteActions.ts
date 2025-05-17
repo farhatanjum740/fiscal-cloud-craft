@@ -21,7 +21,7 @@ export const useCreditNoteActions = (
   const [errorMessage, setErrorMessage] = useState("");
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
 
-  // Modified generate credit note number function to use proper format
+  // Generate credit note number function - will only be called on demand or during save
   const generateCreditNoteNumber = async () => {
     console.log("Generating credit note number with company:", company);
     console.log("Invoice data for credit note number generation:", invoice);
@@ -32,7 +32,7 @@ export const useCreditNoteActions = (
         description: "Company profile is required to generate credit note number",
         variant: "destructive",
       });
-      return;
+      return null;
     }
     
     if (!invoice) {
@@ -42,7 +42,7 @@ export const useCreditNoteActions = (
         description: "Invoice is required to generate credit note number",
         variant: "destructive",
       });
-      return;
+      return null;
     }
 
     if (!creditNote.financialYear) {
@@ -51,7 +51,7 @@ export const useCreditNoteActions = (
         description: "Financial year is required to generate credit note number",
         variant: "destructive",
       });
-      return;
+      return null;
     }
     
     try {
@@ -79,6 +79,8 @@ export const useCreditNoteActions = (
         title: "Success",
         description: "Credit note number generated successfully",
       });
+
+      return data;
     } catch (error: any) {
       console.error("Error generating credit note number:", error);
       toast({
@@ -86,6 +88,7 @@ export const useCreditNoteActions = (
         description: `Failed to generate credit note number: ${error.message}`,
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsGeneratingNumber(false);
     }
@@ -319,21 +322,11 @@ export const useCreditNoteActions = (
       // Generate credit note number at save time if not already set
       if (!creditNote.creditNoteNumber) {
         // Call the database function to generate a unique credit note number
-        const { data: creditNoteNumber, error: generateError } = await supabase.rpc('get_next_credit_note_number', {
-          p_company_id: company.id,
-          p_financial_year: creditNote.financialYear,
-          p_prefix: 'CN'
-        });
+        const creditNoteNumber = await generateCreditNoteNumber();
         
-        if (generateError) {
-          throw generateError;
+        if (!creditNoteNumber) {
+          throw new Error("Failed to generate credit note number");
         }
-        
-        // Update the credit note with the generated number
-        setCreditNote(prev => ({
-          ...prev,
-          creditNoteNumber
-        }));
         
         // Store the generated number for use in the next steps
         creditNote.creditNoteNumber = creditNoteNumber;

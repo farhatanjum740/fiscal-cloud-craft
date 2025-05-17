@@ -13,7 +13,7 @@ interface CreditNoteInvoiceSelectProps {
 
 const CreditNoteInvoiceSelect = ({
   invoiceId,
-  invoiceOptions,
+  invoiceOptions = [], // Provide a default empty array
   isEditing,
   handleInvoiceSelect
 }: CreditNoteInvoiceSelectProps) => {

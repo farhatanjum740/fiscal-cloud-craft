@@ -101,6 +101,11 @@ const CreditNoteEditor = () => {
       await handleInvoiceChange(value);
     } catch (error) {
       console.error("Error in handleInvoiceSelect:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load invoice details. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsInvoiceLoading(false);
     }
@@ -116,7 +121,7 @@ const CreditNoteEditor = () => {
       return;
     }
     
-    if (creditNote.items.length === 0) {
+    if (!Array.isArray(creditNote.items) || creditNote.items.length === 0) {
       toast({
         title: "Missing Items",
         description: "Please add at least one item to the credit note.",
@@ -164,7 +169,7 @@ const CreditNoteEditor = () => {
                   <CreditNoteDetails
                     creditNote={creditNote}
                     setCreditNote={setCreditNote}
-                    invoiceOptions={invoiceOptions || []}
+                    invoiceOptions={Array.isArray(invoiceOptions) ? invoiceOptions : []}
                     isEditing={isEditing}
                     isGeneratingNumber={isGeneratingNumber}
                     handleInvoiceChange={handleInvoiceSelect}
@@ -175,8 +180,8 @@ const CreditNoteEditor = () => {
               
               <InvoiceInfo
                 invoice={invoice}
-                invoiceItems={invoiceItems || []}
-                selectedItems={selectedItems}
+                invoiceItems={Array.isArray(invoiceItems) ? invoiceItems : []}
+                selectedItems={selectedItems || {}}
                 toggleItemSelection={toggleItemSelection}
                 addSelectedItems={addSelectedItems}
                 isEditing={isEditing}
@@ -185,7 +190,7 @@ const CreditNoteEditor = () => {
             </div>
             
             <CreditNoteItems
-              items={creditNote.items || []}
+              items={Array.isArray(creditNote.items) ? creditNote.items : []}
               subtotal={subtotal}
               gstDetails={gstDetails}
               total={total}

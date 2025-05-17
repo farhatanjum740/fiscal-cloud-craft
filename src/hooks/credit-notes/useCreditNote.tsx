@@ -28,6 +28,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   console.log("useCreditNote - Credit Note Data:", creditNote);
   console.log("useCreditNote - Invoice Data:", invoice);
   console.log("useCreditNote - Company Data:", company);
+  console.log("useCreditNote - Invoice Options:", invoiceOptions);
 
   const {
     loading,
@@ -43,7 +44,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     generateCreditNoteNumber,
     handleInvoiceChange: baseHandleInvoiceChange,
     saveCreditNote
-  } = useCreditNoteActions(creditNote, setCreditNote, invoice, invoiceItems, company, user?.id, id);
+  } = useCreditNoteActions(creditNote, setCreditNote, invoice, invoiceItems || [], company, user?.id, id);
 
   const {
     subtotal,
@@ -80,9 +81,6 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         
         // Fetch invoice items
         await fetchInvoiceItems(value);
-        
-        // Removed auto-generation of credit note number here
-        // Let it be generated only when saving the credit note
       } else {
         console.log("No invoice data returned from baseHandleInvoiceChange");
       }
@@ -105,14 +103,14 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     loading,
     loadingData,
     invoice,
-    invoiceItems,
+    invoiceItems: invoiceItems || [],
     company,
     customer,
     selectedItems,
     showQuantityError,
     setShowQuantityError,
     errorMessage,
-    invoiceOptions,
+    invoiceOptions: invoiceOptions || [],
     subtotal,
     gstDetails,
     total,
