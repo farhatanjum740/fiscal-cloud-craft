@@ -57,7 +57,7 @@ export const useCreditNoteActions = (
     try {
       setIsGeneratingNumber(true);
       
-      // Get next credit note number from the database
+      // Call our new database function to get next credit note number
       const { data, error } = await supabase.rpc('get_next_credit_note_number', {
         p_company_id: company.id,
         p_financial_year: creditNote.financialYear,

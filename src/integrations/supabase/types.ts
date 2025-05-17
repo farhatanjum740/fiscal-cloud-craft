@@ -134,6 +134,27 @@ export type Database = {
           },
         ]
       }
+      counters: {
+        Row: {
+          counter: number
+          created_at: string | null
+          key: string
+          updated_at: string | null
+        }
+        Insert: {
+          counter: number
+          created_at?: string | null
+          key: string
+          updated_at?: string | null
+        }
+        Update: {
+          counter?: number
+          created_at?: string | null
+          key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       credit_note_items: {
         Row: {
           created_at: string | null
@@ -556,6 +577,14 @@ export type Database = {
     Functions: {
       get_current_financial_year: {
         Args: { input_date?: string }
+        Returns: string
+      }
+      get_next_credit_note_number: {
+        Args: {
+          p_company_id: string
+          p_financial_year: string
+          p_prefix?: string
+        }
         Returns: string
       }
       get_next_invoice_number: {
