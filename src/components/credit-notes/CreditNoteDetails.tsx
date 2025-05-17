@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ const CreditNoteDetails = ({
       </div>
       
       <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2 col-span-3">
+        <div className="space-y-2 col-span-2">
           <Label htmlFor="creditNoteNumber">Credit Note Number</Label>
           <Input
             id="creditNoteNumber"
@@ -68,6 +69,21 @@ const CreditNoteDetails = ({
           {isGeneratingNumber && (
             <p className="text-xs text-muted-foreground">Generating credit note number...</p>
           )}
+        </div>
+        <div className="space-y-2 col-span-1 flex items-end">
+          <Button 
+            onClick={generateCreditNoteNumber}
+            disabled={isGeneratingNumber || !creditNote.invoiceId || !creditNote.financialYear}
+            className="w-full"
+            variant="outline"
+          >
+            {isGeneratingNumber ? (
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Generate
+          </Button>
         </div>
       </div>
       

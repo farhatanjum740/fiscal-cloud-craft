@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { AlertCircle, Search } from "lucide-react";
 
 interface CreditNoteInvoiceSelectProps {
   invoiceId: string;
@@ -80,8 +81,17 @@ const CreditNoteInvoiceSelect = ({
     }
   }, [invoiceOptions]);
 
+  // Add state for the search filter
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Filter options based on search input
+  const filteredOptions = safeInvoiceOptions.filter(option => 
+    option.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
   console.log("CreditNoteInvoiceSelect - Final processed invoice options:", safeInvoiceOptions);
   console.log("CreditNoteInvoiceSelect - Current invoiceId:", invoiceId);
+  console.log("CreditNoteInvoiceSelect - Filtered options:", filteredOptions);
 
   const handleChange = async (value: string) => {
     try {
@@ -125,14 +135,31 @@ const CreditNoteInvoiceSelect = ({
             <SelectValue placeholder="Select an invoice" />
           </SelectTrigger>
           <SelectContent>
-            {safeInvoiceOptions.map(option => (
-              <SelectItem 
-                key={option.value || `invoice-${Math.random()}`} 
-                value={option.value}
-              >
-                {option.label}
-              </SelectItem>
-            ))}
+            <div className="p-2 sticky top-0 bg-background z-10">
+              <div className="flex items-center border rounded-md focus-within:ring-1 focus-within:ring-ring px-3">
+                <Search className="h-4 w-4 text-muted-foreground mr-2" />
+                <Input 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search invoices..."
+                  className="flex h-9 w-full rounded-md border-0 bg-transparent px-0 py-1 text-sm shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+            </div>
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(option => (
+                <SelectItem 
+                  key={option.value || `invoice-${Math.random()}`} 
+                  value={option.value}
+                >
+                  {option.label}
+                </SelectItem>
+              ))
+            ) : (
+              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                No invoices found
+              </div>
+            )}
           </SelectContent>
         </Select>
       ) : (

@@ -6,6 +6,7 @@ import { useCreditNoteCalculations } from "./useCreditNoteCalculations";
 import { useCreditNoteCustomer } from "./useCreditNoteCustomer";
 import { UseCreditNoteReturn } from "./types";
 import { useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   const { user } = useAuth();
@@ -93,8 +94,29 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         // Make sure to update the invoice state (this is crucial)
         setInvoice(fetchedInvoice);
         
+        // Update financial year from fetched invoice
+        setCreditNote(prev => ({
+          ...prev, 
+          financialYear: fetchedInvoice.financial_year || ""
+        }));
+        
         // Fetch invoice items
         await fetchInvoiceItems(value);
+        
+        // Generate credit note number automatically when invoice is selected
+        if (!creditNote.creditNoteNumber && fetchedInvoice.financial_year) {
+          console.log("Auto-generating credit note number after invoice selection");
+          try {
+            await generateCreditNoteNumber();
+          } catch (error) {
+            console.error("Error auto-generating credit note number:", error);
+            toast({
+              title: "Note",
+              description: "Invoice selected, but couldn't generate credit note number automatically. Please use the Generate button.",
+              variant: "default",
+            });
+          }
+        }
       } else {
         console.log("No invoice data returned from baseHandleInvoiceChange");
       }
