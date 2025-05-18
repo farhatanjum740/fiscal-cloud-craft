@@ -61,6 +61,8 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     try {
       if (!value) return;
       
+      console.log("handleInvoiceChange in useCreditNote with value:", value);
+      
       // First, update the creditNote.invoiceId (this will trigger any UI updates)
       setCreditNote(prev => ({
         ...prev,
@@ -73,6 +75,10 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
       if (fetchedInvoice) {
         // Make sure to update the invoice state (this is crucial)
         setInvoice(fetchedInvoice);
+        
+        // Log the financial year that was set
+        console.log("Financial year after invoice fetch:", fetchedInvoice.financial_year);
+        console.log("Current creditNote state:", creditNote);
         
         // Fetch invoice items
         await fetchInvoiceItems(value);

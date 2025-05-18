@@ -80,7 +80,7 @@ export const useCreditNoteActions = (
               .update({
                 credit_note_counter: 1,
                 current_financial_year: creditNote.financialYear,
-                updated_at: new Date().toISOString() // Fix: Convert Date to ISO string
+                updated_at: new Date().toISOString()
               })
               .eq('company_id', company.id);
             
@@ -108,7 +108,7 @@ export const useCreditNoteActions = (
       }
       
       // Call our database function to get next credit note number for this financial year
-      // Important: We're now explicitly passing the invoice's financial year here
+      console.log("Calling get_next_credit_note_number with financial year:", creditNote.financialYear);
       const { data, error } = await supabase.rpc('get_next_credit_note_number', {
         p_company_id: company.id,
         p_financial_year: creditNote.financialYear,
@@ -185,16 +185,31 @@ export const useCreditNoteActions = (
           invoiceId: value
         }));
         
+        // For debugging, log what's being set
+        console.log("Credit note state after invoice selection:", {
+          financialYear: invoiceFinancialYear,
+          invoiceId: value,
+          hasAttempted: hasAttemptedNumberGeneration,
+          currentNumber: creditNote.creditNoteNumber
+        });
+        
         // Only generate number if we haven't already attempted to do so
         // or if we're changing the financial year
-        if (
-          (!hasAttemptedNumberGeneration || !creditNote.creditNoteNumber) && 
-          invoiceFinancialYear
-        ) {
+        if (invoiceFinancialYear && 
+           (!hasAttemptedNumberGeneration || 
+            !creditNote.creditNoteNumber || 
+            creditNote.financialYear !== invoiceFinancialYear)) {
           try {
-            // Ensure we're passing the correct financial year from the invoice
-            await generateCreditNoteNumber();
-            setHasAttemptedNumberGeneration(true);
+            // Force a reset of the generation attempt state
+            setHasAttemptedNumberGeneration(false);
+            
+            // We need to ensure the financialYear is set before generating the number
+            // so let's wait for the state update to complete
+            setTimeout(async () => {
+              console.log("Generating number with financial year:", invoiceFinancialYear);
+              await generateCreditNoteNumber();
+              setHasAttemptedNumberGeneration(true);
+            }, 100);
           } catch (genError) {
             console.error("Error generating credit note number after invoice selection:", genError);
           }

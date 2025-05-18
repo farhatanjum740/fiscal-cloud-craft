@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,8 +31,18 @@ const CreditNoteDetails = ({
   invoiceOptions,
   isEditing,
   isGeneratingNumber,
-  handleInvoiceChange
+  handleInvoiceChange,
+  generateCreditNoteNumber
 }: CreditNoteDetailsProps) => {
+  // Debug log the current credit note details
+  useEffect(() => {
+    console.log("CreditNoteDetails rendered with:", {
+      invoiceId: creditNote.invoiceId,
+      financialYear: creditNote.financialYear,
+      creditNoteNumber: creditNote.creditNoteNumber
+    });
+  }, [creditNote.invoiceId, creditNote.financialYear, creditNote.creditNoteNumber]);
+
   return (
     <div className="space-y-4">
       <CreditNoteInvoiceSelect

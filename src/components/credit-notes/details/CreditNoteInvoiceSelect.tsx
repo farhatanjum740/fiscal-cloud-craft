@@ -65,7 +65,7 @@ const CreditNoteInvoiceSelect = ({
     try {
       if (!value) return;
       
-      console.log("Selected invoice ID:", value);
+      console.log("Selected invoice ID in CreditNoteInvoiceSelect:", value);
       await handleInvoiceSelect(value);
     } catch (error) {
       console.error("Error changing invoice:", error);
@@ -87,7 +87,7 @@ const CreditNoteInvoiceSelect = ({
           onValueChange={handleChange}
           disabled={isEditing}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" id="invoice">
             <SelectValue placeholder="Select an invoice" />
           </SelectTrigger>
           <SelectContent>
