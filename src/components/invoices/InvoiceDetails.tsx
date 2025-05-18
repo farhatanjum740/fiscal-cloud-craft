@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -63,6 +64,16 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
     generateInvoiceNumber,
     saveInvoice
   } = useInvoice(id);
+  
+  // Filter out products that are already in the invoice
+  const getAvailableProducts = (currentItemId: string) => {
+    return products.filter(product => {
+      // If the product is already used in another item (not the current one), exclude it
+      return !invoice.items.some(item => 
+        item.id !== currentItemId && item.productId === product.id
+      );
+    });
+  };
   
   useEffect(() => {
     if (companySettings) {
@@ -168,6 +179,26 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
                 </SelectContent>
               </Select>
             </div>
+            {/* Add status selection dropdown */}
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select
+                onValueChange={(value) => setInvoice(prev => ({ ...prev, status: value }))}
+                defaultValue={invoice.status || "draft"}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="issued">Issued</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <Separator />
@@ -198,11 +229,20 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
-                          {products.map((product) => (
+                          {/* Filter out products that are already selected in other rows */}
+                          {getAvailableProducts(item.id).map((product) => (
                             <SelectItem key={product.id} value={product.id}>
                               {product.name}
                             </SelectItem>
                           ))}
+                          {/* Show the currently selected product even if it's used elsewhere */}
+                          {item.productId && !getAvailableProducts(item.id).some(p => p.id === item.productId) && 
+                            products.find(p => p.id === item.productId) && (
+                              <SelectItem key={item.productId} value={item.productId}>
+                                {products.find(p => p.id === item.productId)?.name}
+                              </SelectItem>
+                            )
+                          }
                         </SelectContent>
                       </Select>
                     </TableCell>

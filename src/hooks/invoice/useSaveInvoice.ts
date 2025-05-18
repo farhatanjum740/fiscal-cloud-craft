@@ -2,6 +2,7 @@
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const useSaveInvoice = (
   user: any,
@@ -17,6 +18,8 @@ export const useSaveInvoice = (
   generateInvoiceNumber: () => Promise<void>,
   setGeneratedInvoiceNumber: (value: string | null) => void
 ) => {
+  const navigate = useNavigate(); // Add navigation hook
+  
   const saveInvoice = useCallback(async () => {
     if (!user) {
       toast({
@@ -156,6 +159,9 @@ export const useSaveInvoice = (
 
       // Clear generated invoice number after successful save to ensure a new one is generated for the next new invoice
       setGeneratedInvoiceNumber(null);
+      
+      // Add navigation to invoices list after successful save
+      navigate("/app/invoices");
     } catch (error: any) {
       console.error("Error saving invoice:", error);
       toast({
@@ -178,6 +184,7 @@ export const useSaveInvoice = (
     loading,
     setLoading,
     setGeneratedInvoiceNumber,
+    navigate, // Add navigate to dependencies
   ]);
 
   return { saveInvoice };

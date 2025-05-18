@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -62,6 +63,16 @@ const InvoiceEditor = () => {
       }));
     }
   }, [companySettings, setInvoice]);
+  
+  // Filter out products that are already in the invoice
+  const getAvailableProducts = (currentItemId: string) => {
+    return products.filter(product => {
+      // If the product is already used in another item (not the current one), exclude it
+      return !invoice.items.some(item => 
+        item.id !== currentItemId && item.productId === product.id
+      );
+    });
+  };
   
   const handleSave = () => {
     if (!invoice.customerId) {
@@ -175,6 +186,26 @@ const InvoiceEditor = () => {
                     />
                   </div>
                 </div>
+                
+                {/* Add invoice status selection */}
+                <div>
+                  <Label htmlFor="status">Invoice Status</Label>
+                  <Select 
+                    onValueChange={(value) => setInvoice(prev => ({ ...prev, status: value }))} 
+                    value={invoice.status}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="issued">Issued</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
             
@@ -240,11 +271,20 @@ const InvoiceEditor = () => {
                             <SelectValue placeholder="Select a product" />
                           </SelectTrigger>
                           <SelectContent>
-                            {products.map((product) => (
+                            {/* Filter out products that are already selected in other rows */}
+                            {getAvailableProducts(item.id).map((product) => (
                               <SelectItem key={product.id} value={product.id}>
                                 {product.name}
                               </SelectItem>
                             ))}
+                            {/* Show the currently selected product even if it's used elsewhere */}
+                            {item.productId && !getAvailableProducts(item.id).some(p => p.id === item.productId) && 
+                              products.find(p => p.id === item.productId) && (
+                                <SelectItem key={item.productId} value={item.productId}>
+                                  {products.find(p => p.id === item.productId)?.name}
+                                </SelectItem>
+                              )
+                            }
                           </SelectContent>
                         </Select>
                       </TableCell>
