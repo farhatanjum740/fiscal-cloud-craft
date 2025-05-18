@@ -22,7 +22,7 @@ interface CreditNoteDetailsProps {
   isEditing: boolean;
   isGeneratingNumber: boolean;
   handleInvoiceChange: (value: string) => Promise<void>;
-  generateCreditNoteNumber: () => Promise<void>;
+  generateCreditNoteNumber: () => Promise<string | null>;
 }
 
 const CreditNoteDetails = ({
