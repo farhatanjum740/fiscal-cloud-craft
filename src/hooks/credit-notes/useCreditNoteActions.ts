@@ -59,32 +59,56 @@ export const useCreditNoteActions = (
           .from('company_settings')
           .select('*')
           .eq('company_id', company.id)
-          .single();
+          .eq('current_financial_year', creditNote.financialYear)
+          .maybeSingle();
         
-        if (settingsError && settingsError.code !== 'PGRST116') {
-          console.error("Error fetching company settings:", settingsError);
-        }
-        
-        // If the financial year has changed, reset the counter to 1
-        if (settingsData && settingsData.current_financial_year !== creditNote.financialYear) {
-          console.log("Financial year changed, resetting credit note counter");
+        // If no settings found for this financial year or there was an error
+        if (!settingsData || settingsError) {
+          console.log("No settings found for this financial year or error occurred, creating/updating settings");
           
-          const { error: updateError } = await supabase
+          // Check if any settings exist for this company
+          const { data: anySettings } = await supabase
             .from('company_settings')
-            .update({
-              credit_note_counter: 1,
-              current_financial_year: creditNote.financialYear,
-              updated_at: new Date().toISOString() // Fix: Convert Date to ISO string
-            })
-            .eq('company_id', company.id);
+            .select('*')
+            .eq('company_id', company.id)
+            .maybeSingle();
           
-          if (updateError) {
-            console.error("Error resetting credit note counter:", updateError);
+          if (anySettings) {
+            // Update existing settings with new financial year and reset counter
+            const { error: updateError } = await supabase
+              .from('company_settings')
+              .update({
+                credit_note_counter: 1,
+                current_financial_year: creditNote.financialYear,
+                updated_at: new Date().toISOString() // Fix: Convert Date to ISO string
+              })
+              .eq('company_id', company.id);
+            
+            if (updateError) {
+              console.error("Error updating company settings:", updateError);
+            }
+          } else {
+            // Create new settings if none exist
+            const { error: insertError } = await supabase
+              .from('company_settings')
+              .insert({
+                company_id: company.id,
+                user_id: userId,
+                current_financial_year: creditNote.financialYear,
+                credit_note_counter: 1,
+                invoice_counter: 1,
+                invoice_prefix: '',
+              });
+            
+            if (insertError) {
+              console.error("Error creating company settings:", insertError);
+            }
           }
         }
       }
       
       // Call our database function to get next credit note number for this financial year
+      // Important: We're now explicitly passing the invoice's financial year here
       const { data, error } = await supabase.rpc('get_next_credit_note_number', {
         p_company_id: company.id,
         p_financial_year: creditNote.financialYear,
@@ -150,10 +174,14 @@ export const useCreditNoteActions = (
       console.log("Selected invoice data:", data);
       
       if (data) {
+        // We need to ensure we're using the invoice's financial year
+        const invoiceFinancialYear = data.financial_year || "";
+        console.log("Using invoice financial year:", invoiceFinancialYear);
+        
         // Update the invoice ID and financial year in the state
         setCreditNote(prev => ({ 
           ...prev, 
-          financialYear: data.financial_year || "",
+          financialYear: invoiceFinancialYear,
           invoiceId: value
         }));
         
@@ -161,9 +189,10 @@ export const useCreditNoteActions = (
         // or if we're changing the financial year
         if (
           (!hasAttemptedNumberGeneration || !creditNote.creditNoteNumber) && 
-          data.financial_year
+          invoiceFinancialYear
         ) {
           try {
+            // Ensure we're passing the correct financial year from the invoice
             await generateCreditNoteNumber();
             setHasAttemptedNumberGeneration(true);
           } catch (genError) {
