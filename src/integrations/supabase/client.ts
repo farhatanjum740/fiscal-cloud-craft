@@ -31,3 +31,25 @@ export const resetCreditNoteCounter = async (companyId: string, financialYear: s
     return { success: false, error };
   }
 };
+
+// Add a function to directly get the next credit note number for a specific financial year
+export const getNextCreditNoteNumber = async (companyId: string, financialYear: string, prefix: string = 'CN') => {
+  try {
+    console.log(`Getting next credit note number for company ID: ${companyId}, financial year: ${financialYear}, prefix: ${prefix}`);
+    
+    // Call the database function to get the next credit note number
+    const { data, error } = await supabase.rpc('get_next_credit_note_number', {
+      p_company_id: companyId,
+      p_financial_year: financialYear,
+      p_prefix: prefix
+    });
+    
+    if (error) throw error;
+    
+    console.log(`Generated credit note number: ${data} for financial year: ${financialYear}`);
+    return data;
+  } catch (error) {
+    console.error("Error generating credit note number:", error);
+    throw error;
+  }
+};

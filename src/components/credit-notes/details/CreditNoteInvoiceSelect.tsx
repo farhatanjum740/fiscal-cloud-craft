@@ -66,17 +66,24 @@ const CreditNoteInvoiceSelect = ({
     option.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Handle invoice selection with proper error handling
   const handleChange = async (value: string) => {
     try {
-      if (!value) return;
-      
       console.log("Selected invoice ID in CreditNoteInvoiceSelect:", value);
+      
+      if (!value) {
+        console.log("Empty invoice value in CreditNoteInvoiceSelect");
+        return;
+      }
+      
+      // Call the parent handler with the selected value
       await handleInvoiceSelect(value);
+      
     } catch (error) {
-      console.error("Error changing invoice:", error);
+      console.error("Error handling invoice selection:", error);
       toast({
         title: "Error",
-        description: "Failed to change invoice. Please try again.",
+        description: "Failed to select invoice. Please try again.",
         variant: "destructive",
       });
     }

@@ -76,20 +76,37 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         // Make sure to update the invoice state (this is crucial)
         setInvoice(fetchedInvoice);
         
-        // Update the financial year in the credit note state to match the invoice
+        // CRITICAL: Update the financial year in the credit note state to match the invoice
         if (fetchedInvoice.financial_year) {
-          setCreditNote(prev => ({
-            ...prev,
-            financialYear: fetchedInvoice.financial_year
-          }));
+          console.log("Setting financial year from invoice:", fetchedInvoice.financial_year);
+          
+          // Using a callback to ensure we get the latest state
+          setCreditNote(prev => {
+            const newState = {
+              ...prev,
+              financialYear: fetchedInvoice.financial_year
+            };
+            
+            console.log("Updated creditNote state with financial year:", newState);
+            return newState;
+          });
         }
-        
-        // Log the financial year that was set
-        console.log("Financial year after invoice fetch:", fetchedInvoice.financial_year);
-        console.log("Current creditNote state:", creditNote);
         
         // Fetch invoice items
         await fetchInvoiceItems(value);
+        
+        // Generate a new credit note number for the correct financial year
+        // We need to wait a bit to make sure the state is updated
+        setTimeout(async () => {
+          if (fetchedInvoice.financial_year) {
+            console.log("Generating credit note number after invoice selection with financial year:", fetchedInvoice.financial_year);
+            try {
+              await generateCreditNoteNumber();
+            } catch (error) {
+              console.error("Error auto-generating credit note number after invoice selection:", error);
+            }
+          }
+        }, 500);
       }
     } catch (error) {
       console.error("Error in handleInvoiceChange:", error);

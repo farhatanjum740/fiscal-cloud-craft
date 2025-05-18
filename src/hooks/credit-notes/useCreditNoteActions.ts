@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, getNextCreditNoteNumber } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { CreditNoteData } from "./types";
@@ -52,24 +52,19 @@ export const useCreditNoteActions = (
       
       console.log("Using financial year for number generation:", creditNote.financialYear);
       
-      // Call our database function to get next credit note number for this financial year
-      const { data, error } = await supabase.rpc('get_next_credit_note_number', {
-        p_company_id: company.id,
-        p_financial_year: creditNote.financialYear,
-        p_prefix: 'CN'
-      });
+      // Use the dedicated function from client.ts to get next credit note number
+      const creditNoteNumber = await getNextCreditNoteNumber(
+        company.id,
+        creditNote.financialYear,
+        'CN'
+      );
       
-      if (error) {
-        console.error("Database error generating credit note number:", error);
-        throw error;
-      }
-      
-      console.log("Generated credit note number:", data);
+      console.log("Generated credit note number:", creditNoteNumber, "for financial year:", creditNote.financialYear);
       
       // Update the credit note state with the generated number
       setCreditNote(prev => ({
         ...prev,
-        creditNoteNumber: data
+        creditNoteNumber
       }));
       
       // Show success message
@@ -78,7 +73,7 @@ export const useCreditNoteActions = (
         description: "Credit note number generated successfully",
       });
 
-      return data;
+      return creditNoteNumber;
     } catch (error: any) {
       console.error("Error generating credit note number:", error);
       toast({
@@ -118,38 +113,8 @@ export const useCreditNoteActions = (
       console.log("Selected invoice data:", data);
       
       if (data) {
-        // We need to ensure we're using the invoice's financial year
-        const invoiceFinancialYear = data.financial_year || "";
-        console.log("Using invoice financial year:", invoiceFinancialYear);
-        
-        // Update the invoice ID and financial year in the state
-        setCreditNote(prev => ({ 
-          ...prev, 
-          financialYear: invoiceFinancialYear,
-          invoiceId: value
-        }));
-        
-        // Only generate number if we haven't already attempted to do so
-        // or if we're changing the financial year
-        if (invoiceFinancialYear && 
-           (!hasAttemptedNumberGeneration || 
-            !creditNote.creditNoteNumber || 
-            creditNote.financialYear !== invoiceFinancialYear)) {
-          
-          // Wait for the state update to complete
-          setTimeout(async () => {
-            console.log("Generating number with invoice financial year:", invoiceFinancialYear);
-            try {
-              // Generate the credit note number using the invoice's financial year
-              await generateCreditNoteNumber();
-            } catch (genError) {
-              console.error("Error generating credit note number:", genError);
-            }
-            setHasAttemptedNumberGeneration(true);
-          }, 100);
-        }
-        
-        return data; // Return the invoice data for the main hook to use
+        // Return the invoice data - we'll update the state in the parent hook
+        return data;
       } else {
         console.log("Invoice not found");
         toast({
