@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -28,11 +28,15 @@ const CreditNoteInvoiceSelect = ({
   // Enhanced safety check for invoiceOptions with more detailed logging
   const safeInvoiceOptions = React.useMemo(() => {
     try {
+      console.log("Processing invoice options in CreditNoteInvoiceSelect:", invoiceOptions);
+      
       if (!invoiceOptions) {
+        console.log("No invoice options provided");
         return [];
       }
       
       if (!Array.isArray(invoiceOptions)) {
+        console.log("Invoice options is not an array:", typeof invoiceOptions);
         return [];
       }
       
@@ -46,6 +50,7 @@ const CreditNoteInvoiceSelect = ({
         return true;
       });
       
+      console.log("Filtered invoice options:", filtered);
       return filtered;
     } catch (error) {
       console.error("Error processing invoice options:", error);
@@ -105,7 +110,7 @@ const CreditNoteInvoiceSelect = ({
             {filteredOptions.length > 0 ? (
               filteredOptions.map(option => (
                 <SelectItem 
-                  key={option.value || `invoice-${Math.random()}`} 
+                  key={`option-${option.value || Math.random().toString()}`} 
                   value={option.value}
                 >
                   {option.label}

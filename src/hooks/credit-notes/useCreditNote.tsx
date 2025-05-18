@@ -76,6 +76,14 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         // Make sure to update the invoice state (this is crucial)
         setInvoice(fetchedInvoice);
         
+        // Update the financial year in the credit note state to match the invoice
+        if (fetchedInvoice.financial_year) {
+          setCreditNote(prev => ({
+            ...prev,
+            financialYear: fetchedInvoice.financial_year
+          }));
+        }
+        
         // Log the financial year that was set
         console.log("Financial year after invoice fetch:", fetchedInvoice.financial_year);
         console.log("Current creditNote state:", creditNote);
@@ -94,7 +102,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
       setIsInitialized(true);
       
       if (!creditNote.creditNoteNumber) {
-        console.log("Auto-generating credit note number on page load");
+        console.log("Auto-generating credit note number on page load with financial year:", creditNote.financialYear);
         (async () => {
           try {
             await generateCreditNoteNumber();

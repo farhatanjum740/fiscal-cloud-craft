@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -51,64 +50,9 @@ export const useCreditNoteActions = (
     try {
       setIsGeneratingNumber(true);
       
-      // Reset the credit note counter for this company/financial year combination
-      // if we're creating a new credit note (not editing)
-      if (!id) {
-        // Look up the current company settings for this financial year
-        const { data: settingsData, error: settingsError } = await supabase
-          .from('company_settings')
-          .select('*')
-          .eq('company_id', company.id)
-          .eq('current_financial_year', creditNote.financialYear)
-          .maybeSingle();
-        
-        // If no settings found for this financial year or there was an error
-        if (!settingsData || settingsError) {
-          console.log("No settings found for this financial year or error occurred, creating/updating settings");
-          
-          // Check if any settings exist for this company
-          const { data: anySettings } = await supabase
-            .from('company_settings')
-            .select('*')
-            .eq('company_id', company.id)
-            .maybeSingle();
-          
-          if (anySettings) {
-            // Update existing settings with new financial year and reset counter
-            const { error: updateError } = await supabase
-              .from('company_settings')
-              .update({
-                credit_note_counter: 1,
-                current_financial_year: creditNote.financialYear,
-                updated_at: new Date().toISOString()
-              })
-              .eq('company_id', company.id);
-            
-            if (updateError) {
-              console.error("Error updating company settings:", updateError);
-            }
-          } else {
-            // Create new settings if none exist
-            const { error: insertError } = await supabase
-              .from('company_settings')
-              .insert({
-                company_id: company.id,
-                user_id: userId,
-                current_financial_year: creditNote.financialYear,
-                credit_note_counter: 1,
-                invoice_counter: 1,
-                invoice_prefix: '',
-              });
-            
-            if (insertError) {
-              console.error("Error creating company settings:", insertError);
-            }
-          }
-        }
-      }
+      console.log("Using financial year for number generation:", creditNote.financialYear);
       
       // Call our database function to get next credit note number for this financial year
-      console.log("Calling get_next_credit_note_number with financial year:", creditNote.financialYear);
       const { data, error } = await supabase.rpc('get_next_credit_note_number', {
         p_company_id: company.id,
         p_financial_year: creditNote.financialYear,
@@ -185,34 +129,24 @@ export const useCreditNoteActions = (
           invoiceId: value
         }));
         
-        // For debugging, log what's being set
-        console.log("Credit note state after invoice selection:", {
-          financialYear: invoiceFinancialYear,
-          invoiceId: value,
-          hasAttempted: hasAttemptedNumberGeneration,
-          currentNumber: creditNote.creditNoteNumber
-        });
-        
         // Only generate number if we haven't already attempted to do so
         // or if we're changing the financial year
         if (invoiceFinancialYear && 
            (!hasAttemptedNumberGeneration || 
             !creditNote.creditNoteNumber || 
             creditNote.financialYear !== invoiceFinancialYear)) {
-          try {
-            // Force a reset of the generation attempt state
-            setHasAttemptedNumberGeneration(false);
-            
-            // We need to ensure the financialYear is set before generating the number
-            // so let's wait for the state update to complete
-            setTimeout(async () => {
-              console.log("Generating number with financial year:", invoiceFinancialYear);
+          
+          // Wait for the state update to complete
+          setTimeout(async () => {
+            console.log("Generating number with invoice financial year:", invoiceFinancialYear);
+            try {
+              // Generate the credit note number using the invoice's financial year
               await generateCreditNoteNumber();
-              setHasAttemptedNumberGeneration(true);
-            }, 100);
-          } catch (genError) {
-            console.error("Error generating credit note number after invoice selection:", genError);
-          }
+            } catch (genError) {
+              console.error("Error generating credit note number:", genError);
+            }
+            setHasAttemptedNumberGeneration(true);
+          }, 100);
         }
         
         return data; // Return the invoice data for the main hook to use
@@ -410,6 +344,7 @@ export const useCreditNoteActions = (
     try {
       // Generate credit note number if not already set
       if (!creditNote.creditNoteNumber && creditNote.financialYear) {
+        console.log("Generating credit note number for financial year:", creditNote.financialYear);
         const creditNoteNumber = await generateCreditNoteNumber();
         
         if (!creditNoteNumber) {
