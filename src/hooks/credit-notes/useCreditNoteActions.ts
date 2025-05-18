@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -20,6 +19,7 @@ export const useCreditNoteActions = (
   const [showQuantityError, setShowQuantityError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
+  const [hasAttemptedNumberGeneration, setHasAttemptedNumberGeneration] = useState(false);
 
   // Generate credit note number function using the database function
   const generateCreditNoteNumber = async (): Promise<string | null> => {
@@ -87,6 +87,7 @@ export const useCreditNoteActions = (
       return null;
     } finally {
       setIsGeneratingNumber(false);
+      setHasAttemptedNumberGeneration(true);
     }
   };
   
@@ -115,17 +116,22 @@ export const useCreditNoteActions = (
       console.log("Selected invoice data:", data);
       
       if (data) {
-        // First, update the invoice ID and financial year in the state
+        // Update the invoice ID and financial year in the state
         setCreditNote(prev => ({ 
           ...prev, 
           financialYear: data.financial_year || "",
           invoiceId: value
         }));
         
-        // After financial year is set, generate the credit note number
-        if (data.financial_year) {
+        // Only generate number if we haven't already attempted to do so
+        // or if we're changing the financial year
+        if (
+          (!hasAttemptedNumberGeneration || !creditNote.creditNoteNumber) && 
+          data.financial_year
+        ) {
           try {
             await generateCreditNoteNumber();
+            setHasAttemptedNumberGeneration(true);
           } catch (genError) {
             console.error("Error generating credit note number after invoice selection:", genError);
           }
@@ -183,12 +189,12 @@ export const useCreditNoteActions = (
           id: `temp-${Date.now()}-${item.id}`,
           invoiceItemId: item.id,
           productId: item.product_id || "",
-          productName: item.product_name || item.productName || "Unknown Product", // Use the correct field or fallback
-          hsnCode: item.hsn_code || item.hsnCode || "", // Use the correct field or fallback
-          quantity: item.availableQuantity || 0, // Default to max available
+          productName: item.product_name || item.productName || "Unknown Product", 
+          hsnCode: item.hsn_code || item.hsnCode || "", 
+          quantity: item.availableQuantity || 0, 
           price: item.price || 0,
           unit: item.unit || "",
-          gstRate: item.gst_rate || item.gstRate || 0, // Use the correct field or fallback
+          gstRate: item.gst_rate || item.gstRate || 0,
           maxQuantity: item.availableQuantity || 0
         }));
         

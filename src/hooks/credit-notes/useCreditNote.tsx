@@ -5,12 +5,13 @@ import { useCreditNoteActions } from "./useCreditNoteActions";
 import { useCreditNoteCalculations } from "./useCreditNoteCalculations";
 import { useCreditNoteCustomer } from "./useCreditNoteCustomer";
 import { UseCreditNoteReturn } from "./types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   const { user } = useAuth();
   const isEditing = !!id;
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Get data from separate hooks
   const {
@@ -25,25 +26,10 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     setInvoice
   } = useFetchCreditNoteData(user?.id, id, isEditing);
 
-  // DEBUG: Add more specific and detailed logging about each piece of data
-  console.log("useCreditNote.tsx - loadingData:", loadingData);
-  console.log("useCreditNote.tsx - user ID:", user?.id);
-  console.log("useCreditNote.tsx - company:", company ? "loaded" : "null");
-  console.log("useCreditNote.tsx - invoiceOptions type:", typeof invoiceOptions);
-  console.log("useCreditNote.tsx - invoiceOptions isArray:", Array.isArray(invoiceOptions));
-  console.log("useCreditNote.tsx - invoiceOptions raw:", invoiceOptions);
-
   // Ensure invoiceOptions is always an array, even if the data is malformed
   const safeInvoiceOptions = Array.isArray(invoiceOptions) 
     ? invoiceOptions.filter(option => option && typeof option === 'object' && 'value' in option && 'label' in option)
     : [];
-
-  // Log fetched data for debugging
-  console.log("useCreditNote - Credit Note Data:", creditNote);
-  console.log("useCreditNote - Invoice Data:", invoice);
-  console.log("useCreditNote - Company Data:", company);
-  console.log("useCreditNote - Invoice Options (raw):", invoiceOptions);
-  console.log("useCreditNote - Invoice Options (safe):", safeInvoiceOptions);
 
   const {
     loading,
@@ -69,16 +55,11 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
 
   // Get customer data
   const customer = useCreditNoteCustomer(invoice);
-  console.log("useCreditNote - Customer Data:", customer);
 
   // Create a wrapper for handleInvoiceChange to update the invoice state
   const handleInvoiceChange = async (value: string): Promise<void> => {
-    console.log("handleInvoiceChange called with value:", value);
     try {
-      if (!value) {
-        console.log("Empty invoice ID provided");
-        return;
-      }
+      if (!value) return;
       
       // First, update the creditNote.invoiceId (this will trigger any UI updates)
       setCreditNote(prev => ({
@@ -88,7 +69,6 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
       
       // Then fetch the invoice data
       const fetchedInvoice = await baseHandleInvoiceChange(value);
-      console.log("Fetched invoice:", fetchedInvoice);
       
       if (fetchedInvoice) {
         // Make sure to update the invoice state (this is crucial)
@@ -96,27 +76,29 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         
         // Fetch invoice items
         await fetchInvoiceItems(value);
-      } else {
-        console.log("No invoice data returned from baseHandleInvoiceChange");
       }
     } catch (error) {
       console.error("Error in handleInvoiceChange:", error);
     }
   };
 
-  // This effect runs once when the page loads and we have the required data
+  // This effect runs once when the page loads with required data
   useEffect(() => {
-    if (!isEditing && !loadingData && company && creditNote.financialYear && !creditNote.creditNoteNumber) {
-      console.log("Auto-generating credit note number on page load");
-      (async () => {
-        try {
-          await generateCreditNoteNumber();
-        } catch (error) {
-          console.error("Error auto-generating credit note number:", error);
-        }
-      })();
+    if (!isInitialized && !isEditing && !loadingData && company && creditNote.financialYear) {
+      setIsInitialized(true);
+      
+      if (!creditNote.creditNoteNumber) {
+        console.log("Auto-generating credit note number on page load");
+        (async () => {
+          try {
+            await generateCreditNoteNumber();
+          } catch (error) {
+            console.error("Error auto-generating credit note number:", error);
+          }
+        })();
+      }
     }
-  }, [isEditing, company, creditNote.financialYear, creditNote.creditNoteNumber, loadingData]);
+  }, [isEditing, company, creditNote.financialYear, creditNote.creditNoteNumber, loadingData, isInitialized]);
 
   // If there's an initial invoiceId from a query parameter, load it
   useEffect(() => {
@@ -139,7 +121,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     showQuantityError,
     setShowQuantityError,
     errorMessage,
-    invoiceOptions: safeInvoiceOptions,  // Always return a safe array
+    invoiceOptions: safeInvoiceOptions,
     subtotal,
     gstDetails,
     total,

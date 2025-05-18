@@ -21,59 +21,31 @@ interface CreditNoteInvoiceSelectProps {
 
 const CreditNoteInvoiceSelect = ({
   invoiceId,
-  invoiceOptions = [], // Provide a default empty array
+  invoiceOptions = [],
   isEditing,
   handleInvoiceSelect
 }: CreditNoteInvoiceSelectProps) => {
   // Enhanced safety check for invoiceOptions with more detailed logging
   const safeInvoiceOptions = React.useMemo(() => {
-    // Log for debugging
-    console.log("CreditNoteInvoiceSelect - Original invoiceOptions:", invoiceOptions);
-    
     try {
-      // Immediately check if it's an array and handle appropriately
       if (!invoiceOptions) {
-        console.log("CreditNoteInvoiceSelect: invoiceOptions is undefined or null");
         return [];
       }
       
       if (!Array.isArray(invoiceOptions)) {
-        console.log("CreditNoteInvoiceSelect: invoiceOptions is not an array:", invoiceOptions);
-        // Try to convert to array if possible
-        return typeof invoiceOptions === 'object' ? [invoiceOptions] : [];
+        return [];
       }
       
       // Filter out invalid options and ensure each has required properties
       const filtered = invoiceOptions.filter(option => {
-        // Skip null/undefined items
-        if (!option) {
-          console.log("CreditNoteInvoiceSelect: Skipping null/undefined option");
-          return false;
-        }
-        
-        // Check if it's an object
-        if (typeof option !== 'object') {
-          console.log("CreditNoteInvoiceSelect: Invalid option item (not an object):", option);
-          return false;
-        }
-        
-        // Check for required properties
-        if (!('value' in option) || !('label' in option)) {
-          console.log("CreditNoteInvoiceSelect: Option missing required properties:", option);
-          return false;
-        }
-        
-        // Ensure values are not undefined/null
+        if (!option) return false;
+        if (typeof option !== 'object') return false;
+        if (!('value' in option) || !('label' in option)) return false;
         if (option.value === undefined || option.value === null || 
-            option.label === undefined || option.label === null) {
-          console.log("CreditNoteInvoiceSelect: Option has undefined/null value or label:", option);
-          return false;
-        }
-        
+            option.label === undefined || option.label === null) return false;
         return true;
       });
       
-      console.log("CreditNoteInvoiceSelect - Filtered invoice options:", filtered);
       return filtered;
     } catch (error) {
       console.error("Error processing invoice options:", error);
@@ -88,17 +60,10 @@ const CreditNoteInvoiceSelect = ({
   const filteredOptions = safeInvoiceOptions.filter(option => 
     option.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
-  console.log("CreditNoteInvoiceSelect - Final processed invoice options:", safeInvoiceOptions);
-  console.log("CreditNoteInvoiceSelect - Current invoiceId:", invoiceId);
-  console.log("CreditNoteInvoiceSelect - Filtered options:", filteredOptions);
 
   const handleChange = async (value: string) => {
     try {
-      if (!value) {
-        console.log("No invoice selected");
-        return;
-      }
+      if (!value) return;
       
       console.log("Selected invoice ID:", value);
       await handleInvoiceSelect(value);
@@ -111,15 +76,6 @@ const CreditNoteInvoiceSelect = ({
       });
     }
   };
-  
-  // Log any time the component renders to trace potential issues
-  useEffect(() => {
-    console.log("CreditNoteInvoiceSelect rendered with", {
-      invoiceId,
-      optionsCount: safeInvoiceOptions.length,
-      isEditing
-    });
-  }, [invoiceId, safeInvoiceOptions, isEditing]);
 
   return (
     <div className="space-y-2">
