@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ export const useCreditNoteActions = (
     console.log("Financial year for credit note number generation:", creditNote.financialYear);
     
     if (!company) {
+      console.error("No company data available for credit note number generation");
       toast({
         title: "Error",
         description: "Company profile is required to generate credit note number",
@@ -35,23 +37,15 @@ export const useCreditNoteActions = (
       return null;
     }
     
-    // We can generate based on financial year even without an invoice
-    // But we still need a financial year
+    // Financial year is required
     if (!creditNote.financialYear) {
-      // If we have an invoice, get the financial year from it
-      if (invoice && invoice.financial_year) {
-        setCreditNote(prev => ({
-          ...prev,
-          financialYear: invoice.financial_year
-        }));
-      } else {
-        toast({
-          title: "Error",
-          description: "Financial year is required to generate credit note number",
-          variant: "destructive",
-        });
-        return null;
-      }
+      console.error("No financial year available for credit note number generation");
+      toast({
+        title: "Error",
+        description: "Financial year is required to generate credit note number",
+        variant: "destructive",
+      });
+      return null;
     }
     
     try {
@@ -60,21 +54,24 @@ export const useCreditNoteActions = (
       // Call our database function to get next credit note number for this financial year
       const { data, error } = await supabase.rpc('get_next_credit_note_number', {
         p_company_id: company.id,
-        p_financial_year: creditNote.financialYear || invoice?.financial_year,
+        p_financial_year: creditNote.financialYear,
         p_prefix: 'CN'
       });
       
       if (error) {
+        console.error("Database error generating credit note number:", error);
         throw error;
       }
       
       console.log("Generated credit note number:", data);
       
+      // Update the credit note state with the generated number
       setCreditNote(prev => ({
         ...prev,
         creditNoteNumber: data
       }));
       
+      // Show success message
       toast({
         title: "Success",
         description: "Credit note number generated successfully",
@@ -119,12 +116,21 @@ export const useCreditNoteActions = (
       console.log("Selected invoice data:", data);
       
       if (data) {
-        // Update financial year to match invoice
+        // First, update the invoice ID and financial year in the state
         setCreditNote(prev => ({ 
           ...prev, 
           financialYear: data.financial_year || "",
           invoiceId: value
         }));
+        
+        // After financial year is set, generate the credit note number
+        if (data.financial_year) {
+          try {
+            await generateCreditNoteNumber();
+          } catch (genError) {
+            console.error("Error generating credit note number after invoice selection:", genError);
+          }
+        }
         
         return data; // Return the invoice data for the main hook to use
       } else {
@@ -319,9 +325,8 @@ export const useCreditNoteActions = (
     setLoading(true);
     
     try {
-      // Generate credit note number at save time if not already set
-      if (!creditNote.creditNoteNumber) {
-        // Call the database function to generate a unique credit note number
+      // Generate credit note number if not already set
+      if (!creditNote.creditNoteNumber && creditNote.financialYear) {
         const creditNoteNumber = await generateCreditNoteNumber();
         
         if (!creditNoteNumber) {

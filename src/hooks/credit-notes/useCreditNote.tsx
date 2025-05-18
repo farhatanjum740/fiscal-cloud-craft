@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useFetchCreditNoteData } from "./useFetchCreditNoteData";
 import { useCreditNoteActions } from "./useCreditNoteActions";
@@ -93,29 +94,8 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         // Make sure to update the invoice state (this is crucial)
         setInvoice(fetchedInvoice);
         
-        // Update financial year from fetched invoice
-        setCreditNote(prev => ({
-          ...prev, 
-          financialYear: fetchedInvoice.financial_year || ""
-        }));
-        
         // Fetch invoice items
         await fetchInvoiceItems(value);
-        
-        // Generate credit note number automatically when invoice is selected
-        if (!creditNote.creditNoteNumber && fetchedInvoice.financial_year) {
-          console.log("Auto-generating credit note number after invoice selection");
-          try {
-            await generateCreditNoteNumber();
-          } catch (error) {
-            console.error("Error auto-generating credit note number:", error);
-            toast({
-              title: "Note",
-              description: "Invoice selected, but couldn't generate credit note number automatically. Please try again.",
-              variant: "default",
-            });
-          }
-        }
       } else {
         console.log("No invoice data returned from baseHandleInvoiceChange");
       }
@@ -124,29 +104,19 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     }
   };
 
-  // Auto-generate credit note number when page loads if we're not editing and have the required data
-  const autoGenerateCreditNoteNumber = async () => {
-    // Only auto-generate if we're creating a new credit note (not editing), have a company, and no existing credit note number
-    if (!isEditing && company && !creditNote.creditNoteNumber && creditNote.financialYear) {
-      console.log("Auto-generating credit note number on page load");
-      try {
-        const generatedNumber = await generateCreditNoteNumber();
-        console.log("Generated credit note number:", generatedNumber);
-        return generatedNumber;
-      } catch (error) {
-        console.error("Error auto-generating credit note number on page load:", error);
-        return null;
-      }
-    }
-    return null;
-  };
-  
-  // Run auto-generation once page has loaded and we have the required data
+  // This effect runs once when the page loads and we have the required data
   useEffect(() => {
-    if (!loadingData) {
-      autoGenerateCreditNoteNumber();
+    if (!isEditing && !loadingData && company && creditNote.financialYear && !creditNote.creditNoteNumber) {
+      console.log("Auto-generating credit note number on page load");
+      (async () => {
+        try {
+          await generateCreditNoteNumber();
+        } catch (error) {
+          console.error("Error auto-generating credit note number:", error);
+        }
+      })();
     }
-  }, [isEditing, company, creditNote.creditNoteNumber, creditNote.financialYear, loadingData, generateCreditNoteNumber]);
+  }, [isEditing, company, creditNote.financialYear, creditNote.creditNoteNumber, loadingData]);
 
   // If there's an initial invoiceId from a query parameter, load it
   useEffect(() => {
