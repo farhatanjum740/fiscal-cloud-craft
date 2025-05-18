@@ -18,7 +18,7 @@ export const resetCreditNoteCounter = async (companyId: string, financialYear: s
       .from('company_settings')
       .update({
         credit_note_counter: 1,
-        updated_at: new Date()
+        updated_at: new Date().toISOString() // Fix: Convert Date to ISO string
       })
       .eq('company_id', companyId)
       .eq('current_financial_year', financialYear);

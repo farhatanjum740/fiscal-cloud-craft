@@ -74,7 +74,7 @@ export const useCreditNoteActions = (
             .update({
               credit_note_counter: 1,
               current_financial_year: creditNote.financialYear,
-              updated_at: new Date()
+              updated_at: new Date().toISOString() // Fix: Convert Date to ISO string
             })
             .eq('company_id', company.id);
           
