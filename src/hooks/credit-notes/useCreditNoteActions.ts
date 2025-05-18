@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -49,6 +50,39 @@ export const useCreditNoteActions = (
     
     try {
       setIsGeneratingNumber(true);
+      
+      // Reset the credit note counter for this company/financial year combination
+      // if we're creating a new credit note (not editing)
+      if (!id) {
+        // Look up the current company settings for this financial year
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('company_settings')
+          .select('*')
+          .eq('company_id', company.id)
+          .single();
+        
+        if (settingsError && settingsError.code !== 'PGRST116') {
+          console.error("Error fetching company settings:", settingsError);
+        }
+        
+        // If the financial year has changed, reset the counter to 1
+        if (settingsData && settingsData.current_financial_year !== creditNote.financialYear) {
+          console.log("Financial year changed, resetting credit note counter");
+          
+          const { error: updateError } = await supabase
+            .from('company_settings')
+            .update({
+              credit_note_counter: 1,
+              current_financial_year: creditNote.financialYear,
+              updated_at: new Date()
+            })
+            .eq('company_id', company.id);
+          
+          if (updateError) {
+            console.error("Error resetting credit note counter:", updateError);
+          }
+        }
+      }
       
       // Call our database function to get next credit note number for this financial year
       const { data, error } = await supabase.rpc('get_next_credit_note_number', {
