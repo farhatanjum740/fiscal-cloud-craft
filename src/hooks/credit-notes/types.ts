@@ -1,3 +1,4 @@
+
 import React from "react";
 
 export interface CreditNoteData {
@@ -9,6 +10,12 @@ export interface CreditNoteData {
   reason: string;
   status: string;
   items: CreditNoteItem[];
+  // Add these properties to fix TypeScript errors
+  subtotal?: number;
+  cgst?: number;
+  sgst?: number;
+  igst?: number;
+  total_amount?: number;
 }
 
 export interface CreditNoteItem {
@@ -24,6 +31,17 @@ export interface CreditNoteItem {
   maxQuantity?: number;
 }
 
+export interface CreditNoteGSTDetails {
+  cgst: number;
+  sgst: number;
+  igst: number;
+}
+
+export interface InvoiceOption {
+  value: string;
+  label: string;
+}
+
 export interface UseCreditNoteReturn {
   creditNote: CreditNoteData;
   setCreditNote: (value: React.SetStateAction<CreditNoteData>) => void;
@@ -37,16 +55,9 @@ export interface UseCreditNoteReturn {
   showQuantityError: boolean;
   setShowQuantityError: (value: boolean) => void;
   errorMessage: string;
-  invoiceOptions: { value: string; label: string }[];
+  invoiceOptions: InvoiceOption[];
   subtotal: number;
-  gstDetails: {
-    cgstRate: number;
-    sgstRate: number;
-    igstRate: number;
-    cgstAmount: number;
-    sgstAmount: number;
-    igstAmount: number;
-  };
+  gstDetails: CreditNoteGSTDetails;
   total: number;
   isGeneratingNumber: boolean;
   handleInvoiceChange: (value: string) => Promise<void>;

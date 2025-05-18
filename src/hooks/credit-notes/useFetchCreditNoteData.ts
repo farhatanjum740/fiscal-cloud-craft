@@ -129,6 +129,7 @@ export const useFetchCreditNoteData = (
                 reason: creditNoteData.reason || "",
                 items: transformedItems,
                 status: creditNoteData.status || "draft",
+                // Add these properties to match the extended CreditNoteData interface
                 subtotal: creditNoteData.subtotal || 0,
                 cgst: creditNoteData.cgst || 0,
                 sgst: creditNoteData.sgst || 0,
