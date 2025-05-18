@@ -79,6 +79,7 @@ const CreditNoteDetails = ({
       <CreditNoteDatePicker
         date={creditNote.creditNoteDate}
         onDateChange={(date) => setCreditNote(prev => ({ ...prev, creditNoteDate: date }))}
+        financialYear={creditNote.financialYear}
       />
       
       <div className="space-y-2">

@@ -97,6 +97,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string | null
+          credit_note_counter: number | null
           current_financial_year: string
           id: string
           invoice_counter: number | null
@@ -107,6 +108,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string | null
+          credit_note_counter?: number | null
           current_financial_year?: string
           id?: string
           invoice_counter?: number | null
@@ -117,6 +119,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string | null
+          credit_note_counter?: number | null
           current_financial_year?: string
           id?: string
           invoice_counter?: number | null

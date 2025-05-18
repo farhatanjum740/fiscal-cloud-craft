@@ -18,6 +18,8 @@ export interface DatePickerProps {
   disabled?: boolean;
   placeholder?: string;
   disableFutureDates?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 export function DatePicker({
@@ -27,7 +29,29 @@ export function DatePicker({
   disabled,
   placeholder = "Select date",
   disableFutureDates = true,
+  minDate,
+  maxDate,
 }: DatePickerProps) {
+  // Function to determine if a date should be disabled
+  const isDateDisabled = (date: Date) => {
+    // Check if date is in the future when disableFutureDates is true
+    if (disableFutureDates && date > new Date()) {
+      return true;
+    }
+    
+    // Check if date is before minDate
+    if (minDate && date < minDate) {
+      return true;
+    }
+    
+    // Check if date is after maxDate
+    if (maxDate && date > maxDate) {
+      return true;
+    }
+    
+    return false;
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -49,7 +73,7 @@ export function DatePicker({
           mode="single"
           selected={selected}
           onSelect={onSelect}
-          disabled={disableFutureDates ? (date) => date > new Date() : undefined}
+          disabled={isDateDisabled}
           initialFocus
           className="pointer-events-auto"
         />
