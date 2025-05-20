@@ -25,7 +25,7 @@ const CreditNoteInvoiceSelect = ({
   isEditing,
   handleInvoiceSelect
 }: CreditNoteInvoiceSelectProps) => {
-  // Enhanced safety check for invoiceOptions with more detailed logging
+  // Enhanced safety check for invoiceOptions with detailed logging
   const safeInvoiceOptions = React.useMemo(() => {
     try {
       console.log("Processing invoice options in CreditNoteInvoiceSelect:", invoiceOptions);
@@ -102,7 +102,7 @@ const CreditNoteInvoiceSelect = ({
           <SelectTrigger className="w-full" id="invoice">
             <SelectValue placeholder="Select an invoice" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <div className="p-2 sticky top-0 bg-background z-10">
               <div className="flex items-center border rounded-md focus-within:ring-1 focus-within:ring-ring px-3">
                 <Search className="h-4 w-4 text-muted-foreground mr-2" />

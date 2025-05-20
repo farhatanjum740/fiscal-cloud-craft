@@ -35,6 +35,16 @@ export const resetCreditNoteCounter = async (companyId: string, financialYear: s
 // Add a function to directly get the next credit note number for a specific financial year
 export const getNextCreditNoteNumber = async (companyId: string, financialYear: string, prefix: string = 'CN') => {
   try {
+    if (!financialYear) {
+      console.error("ERROR: No financial year provided to getNextCreditNoteNumber function");
+      throw new Error("Financial year is required to generate credit note number");
+    }
+    
+    if (!companyId) {
+      console.error("ERROR: No company ID provided to getNextCreditNoteNumber function");
+      throw new Error("Company ID is required to generate credit note number");
+    }
+    
     console.log(`Getting next credit note number for company ID: ${companyId}, financial year: ${financialYear}, prefix: ${prefix}`);
     
     // Call the database function to get the next credit note number
@@ -44,7 +54,15 @@ export const getNextCreditNoteNumber = async (companyId: string, financialYear: 
       p_prefix: prefix
     });
     
-    if (error) throw error;
+    if (error) {
+      console.error("Database RPC error:", error);
+      throw error;
+    }
+    
+    if (!data) {
+      console.error("No credit note number returned from database function");
+      throw new Error("Failed to generate credit note number");
+    }
     
     console.log(`Generated credit note number: ${data} for financial year: ${financialYear}`);
     return data;

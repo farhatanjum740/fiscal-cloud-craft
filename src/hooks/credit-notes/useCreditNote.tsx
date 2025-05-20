@@ -59,7 +59,10 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   // Create a wrapper for handleInvoiceChange to update the invoice state
   const handleInvoiceChange = async (value: string): Promise<void> => {
     try {
-      if (!value) return;
+      if (!value) {
+        console.log("Empty invoice ID in handleInvoiceChange");
+        return;
+      }
       
       console.log("handleInvoiceChange in useCreditNote with value:", value);
       
@@ -73,43 +76,50 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
       const fetchedInvoice = await baseHandleInvoiceChange(value);
       
       if (fetchedInvoice) {
-        // Make sure to update the invoice state (this is crucial)
+        // Make sure to update the invoice state
         setInvoice(fetchedInvoice);
         
-        // CRITICAL: Update the financial year in the credit note state to match the invoice
+        // Get the financial year from the invoice and update the credit note state
         if (fetchedInvoice.financial_year) {
           console.log("Setting financial year from invoice:", fetchedInvoice.financial_year);
           
-          // Using a callback to ensure we get the latest state
-          setCreditNote(prev => {
-            const newState = {
-              ...prev,
-              financialYear: fetchedInvoice.financial_year
-            };
-            
-            console.log("Updated creditNote state with financial year:", newState);
-            return newState;
-          });
-        }
-        
-        // Fetch invoice items
-        await fetchInvoiceItems(value);
-        
-        // Generate a new credit note number for the correct financial year
-        // We need to wait a bit to make sure the state is updated
-        setTimeout(async () => {
-          if (fetchedInvoice.financial_year) {
-            console.log("Generating credit note number after invoice selection with financial year:", fetchedInvoice.financial_year);
+          // Update the credit note with the invoice's financial year
+          setCreditNote(prev => ({
+            ...prev,
+            financialYear: fetchedInvoice.financial_year
+          }));
+          
+          // Fetch invoice items
+          await fetchInvoiceItems(value);
+          
+          // Generate a new credit note number for the correct financial year
+          // Wait a moment to ensure state is updated
+          setTimeout(async () => {
             try {
+              console.log("Generating credit note number with financial year:", fetchedInvoice.financial_year);
               await generateCreditNoteNumber();
             } catch (error) {
               console.error("Error auto-generating credit note number after invoice selection:", error);
+              toast({
+                title: "Error",
+                description: "Failed to generate credit note number. Please try again.",
+                variant: "destructive",
+              });
             }
-          }
-        }, 500);
+          }, 500);
+        } else {
+          console.error("No financial year in the fetched invoice");
+        }
+      } else {
+        console.error("No invoice fetched in handleInvoiceChange");
       }
     } catch (error) {
       console.error("Error in handleInvoiceChange:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load invoice data. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -129,7 +139,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
         })();
       }
     }
-  }, [isEditing, company, creditNote.financialYear, creditNote.creditNoteNumber, loadingData, isInitialized]);
+  }, [isEditing, company, creditNote.financialYear, creditNote.creditNoteNumber, loadingData, isInitialized, generateCreditNoteNumber]);
 
   // If there's an initial invoiceId from a query parameter, load it
   useEffect(() => {

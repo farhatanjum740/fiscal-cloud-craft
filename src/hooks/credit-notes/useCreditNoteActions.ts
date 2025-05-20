@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase, getNextCreditNoteNumber } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -113,6 +114,13 @@ export const useCreditNoteActions = (
       console.log("Selected invoice data:", data);
       
       if (data) {
+        // Clear any existing credit note number since we're changing the invoice
+        // This ensures a new number will be generated for the correct financial year
+        setCreditNote(prev => ({
+          ...prev,
+          creditNoteNumber: ""
+        }));
+        
         // Return the invoice data - we'll update the state in the parent hook
         return data;
       } else {
