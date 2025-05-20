@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase, getNextCreditNoteNumber } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";

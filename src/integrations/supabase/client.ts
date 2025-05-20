@@ -11,27 +11,6 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// Add a helper function to reset credit note counter for a specific financial year
-export const resetCreditNoteCounter = async (companyId: string, financialYear: string) => {
-  try {
-    console.log(`Resetting credit note counter for company ID: ${companyId} and financial year: ${financialYear}`);
-    const { data, error } = await supabase
-      .from('company_settings')
-      .update({
-        credit_note_counter: 1,
-        updated_at: new Date().toISOString() // Convert Date to ISO string
-      })
-      .eq('company_id', companyId)
-      .eq('current_financial_year', financialYear);
-    
-    if (error) throw error;
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error resetting credit note counter:", error);
-    return { success: false, error };
-  }
-};
-
 // Add a function to directly get the next credit note number for a specific financial year
 export const getNextCreditNoteNumber = async (companyId: string, financialYear: string, prefix: string = 'CN') => {
   try {
