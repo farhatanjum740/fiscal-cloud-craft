@@ -26,6 +26,16 @@ export const useCreditNoteActions = (
     console.log("Generating credit note number with company:", company);
     console.log("Financial year for credit note number generation:", creditNote.financialYear);
     
+    // If we already have a credit note number, don't generate a new one
+    if (creditNote.creditNoteNumber) {
+      console.log("Credit note number already exists:", creditNote.creditNoteNumber);
+      toast({
+        title: "Info",
+        description: "Credit note number already generated",
+      });
+      return creditNote.creditNoteNumber;
+    }
+    
     if (!company) {
       console.error("No company data available for credit note number generation");
       toast({
