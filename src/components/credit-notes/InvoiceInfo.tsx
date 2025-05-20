@@ -25,6 +25,7 @@ interface InvoiceInfoProps {
   addSelectedItems: () => void;
   isEditing: boolean;
   isLoading?: boolean;
+  creditNoteItems?: any[]; // Added to track items already in credit note
 }
 
 const InvoiceInfo = ({
@@ -34,10 +35,18 @@ const InvoiceInfo = ({
   toggleItemSelection,
   addSelectedItems,
   isEditing,
-  isLoading = false
+  isLoading = false,
+  creditNoteItems = [] // Default to empty array
 }: InvoiceInfoProps) => {
   // Ensure invoiceItems is always an array
   const safeInvoiceItems = Array.isArray(invoiceItems) ? invoiceItems : [];
+  
+  // Create a set of invoice item IDs that are already in the credit note
+  const addedItemIds = new Set(
+    (Array.isArray(creditNoteItems) ? creditNoteItems : [])
+      .map(item => item.invoiceItemId)
+      .filter(id => id) // Filter out any undefined/null IDs
+  );
   
   return (
     <Card>
@@ -93,23 +102,37 @@ const InvoiceInfo = ({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {safeInvoiceItems.map((item) => (
-                        <TableRow key={item.id || `item-${Math.random()}`} className={item.availableQuantity <= 0 ? "opacity-50" : ""}>
-                          <TableCell>
-                            <input 
-                              type="checkbox" 
-                              checked={!!selectedItems[item.id]} 
-                              onChange={() => toggleItemSelection(item.id)}
-                              disabled={item.availableQuantity <= 0}
-                              className="h-4 w-4"
-                            />
-                          </TableCell>
-                          <TableCell>{item.product_name}</TableCell>
-                          <TableCell>{item.availableQuantity} {item.unit}</TableCell>
-                          <TableCell>₹{item.price}</TableCell>
-                          <TableCell>{item.gst_rate}%</TableCell>
-                        </TableRow>
-                      ))}
+                      {safeInvoiceItems.map((item) => {
+                        // Check if item is already added to credit note or has no available quantity
+                        const isAlreadyAdded = addedItemIds.has(item.id);
+                        const isDisabled = isAlreadyAdded || (item.availableQuantity <= 0);
+                        
+                        return (
+                          <TableRow 
+                            key={item.id || `item-${Math.random()}`} 
+                            className={isDisabled ? "opacity-50" : ""}
+                          >
+                            <TableCell>
+                              <input 
+                                type="checkbox" 
+                                checked={!!selectedItems[item.id]} 
+                                onChange={() => toggleItemSelection(item.id)}
+                                disabled={isDisabled}
+                                className="h-4 w-4"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {item.product_name}
+                              {isAlreadyAdded && (
+                                <span className="ml-2 text-xs text-blue-600">(Already added)</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{item.availableQuantity} {item.unit}</TableCell>
+                            <TableCell>₹{item.price}</TableCell>
+                            <TableCell>{item.gst_rate}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>

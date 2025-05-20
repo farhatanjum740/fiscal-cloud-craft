@@ -37,8 +37,16 @@ export const useItemManagement = (
         return;
       }
       
+      // Create a set of invoice item IDs that are already in the credit note
+      const existingItemIds = new Set(
+        (Array.isArray(creditNote.items) ? creditNote.items : [])
+          .map(item => item.invoiceItemId)
+          .filter(id => id)
+      );
+      
+      // Only add items that are not already in the credit note
       const itemsToAdd = invoiceItems
-        .filter(item => selectedItems[item.id])
+        .filter(item => selectedItems[item.id] && !existingItemIds.has(item.id))
         .map(item => ({
           id: `temp-${Date.now()}-${item.id}`,
           invoiceItemId: item.id,
@@ -53,7 +61,20 @@ export const useItemManagement = (
         }));
         
       if (itemsToAdd.length === 0) {
-        console.log("No items selected to add");
+        // If no new items to add, check if we tried to add duplicate items
+        const duplicateItems = invoiceItems.filter(
+          item => selectedItems[item.id] && existingItemIds.has(item.id)
+        );
+        
+        if (duplicateItems.length > 0) {
+          toast({
+            title: "Items Already Added",
+            description: "The selected items are already in the credit note.",
+            variant: "warning",
+          });
+        }
+        
+        console.log("No new items to add");
         return;
       }
       
@@ -64,6 +85,12 @@ export const useItemManagement = (
       
       // Clear selections
       setSelectedItems({});
+      
+      toast({
+        title: "Items Added",
+        description: `Added ${itemsToAdd.length} item(s) to the credit note.`,
+        variant: "default",
+      });
     } catch (error) {
       console.error("Error adding selected items:", error);
       toast({

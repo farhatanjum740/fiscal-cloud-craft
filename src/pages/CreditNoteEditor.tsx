@@ -130,6 +130,8 @@ const CreditNoteEditor = () => {
   };
   
   const handleSave = () => {
+    console.log("Save button clicked");
+    
     if (!creditNote.invoiceId) {
       toast({
         title: "Missing Invoice",
@@ -209,6 +211,7 @@ const CreditNoteEditor = () => {
             setShowQuantityError={setShowQuantityError}
             errorMessage={errorMessage}
             isInvoiceLoading={isInvoiceLoading}
+            handleSave={handleSave} // Pass handleSave to CreditNoteContent
           />
         )}
       </div>

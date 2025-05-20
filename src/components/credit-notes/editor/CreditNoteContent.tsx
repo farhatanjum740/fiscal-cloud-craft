@@ -30,6 +30,7 @@ interface CreditNoteContentProps {
   setShowQuantityError: (value: boolean) => void;
   errorMessage: string;
   isInvoiceLoading: boolean;
+  handleSave: () => void; // Added handleSave prop
 }
 
 const CreditNoteContent = ({
@@ -54,7 +55,8 @@ const CreditNoteContent = ({
   showQuantityError,
   setShowQuantityError,
   errorMessage,
-  isInvoiceLoading
+  isInvoiceLoading,
+  handleSave // Added handleSave
 }: CreditNoteContentProps) => {
   return (
     <>
@@ -89,6 +91,7 @@ const CreditNoteContent = ({
           addSelectedItems={addSelectedItems}
           isEditing={isEditing}
           isLoading={isInvoiceLoading}
+          creditNoteItems={creditNote.items} // Pass credit note items to track what's already added
         />
       </div>
       
@@ -113,7 +116,7 @@ const CreditNoteContent = ({
           Cancel
         </Button>
         <Button 
-          onClick={() => {}} // Will be set in parent component
+          onClick={handleSave} // Use the handleSave function passed from parent
           disabled={false}
         >
           Save Credit Note
