@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import CreditNoteInvoiceSelect from "./details/CreditNoteInvoiceSelect";
 import CreditNoteDatePicker from "./details/CreditNoteDatePicker";
@@ -43,6 +44,19 @@ const CreditNoteDetails = ({
     });
   }, [creditNote.invoiceId, creditNote.financialYear, creditNote.creditNoteNumber]);
 
+  const handleGenerateNumber = async () => {
+    if (!creditNote.financialYear) {
+      console.error("No financial year available - please select an invoice first");
+      return;
+    }
+    
+    try {
+      await generateCreditNoteNumber();
+    } catch (error) {
+      console.error("Error generating credit note number:", error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <CreditNoteInvoiceSelect
@@ -67,12 +81,29 @@ const CreditNoteDetails = ({
       
       <div className="space-y-2">
         <Label htmlFor="creditNoteNumber">Credit Note Number</Label>
-        <Input
-          id="creditNoteNumber"
-          value={creditNote.creditNoteNumber || ""}
-          readOnly
-          className="bg-gray-50"
-        />
+        <div className="flex space-x-2">
+          <Input
+            id="creditNoteNumber"
+            value={creditNote.creditNoteNumber || ""}
+            readOnly
+            className="bg-gray-50 flex-1"
+          />
+          <Button 
+            type="button" 
+            onClick={handleGenerateNumber}
+            disabled={isGeneratingNumber || !creditNote.financialYear}
+            size="sm"
+          >
+            {isGeneratingNumber ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              "Generate"
+            )}
+          </Button>
+        </div>
         {isGeneratingNumber && (
           <p className="text-xs text-muted-foreground flex items-center">
             <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -81,7 +112,7 @@ const CreditNoteDetails = ({
         )}
         {!creditNote.creditNoteNumber && !isGeneratingNumber && (
           <p className="text-xs text-muted-foreground">
-            Credit note number will be generated automatically when you select an invoice
+            Click "Generate" to create a credit note number for the selected financial year
           </p>
         )}
       </div>

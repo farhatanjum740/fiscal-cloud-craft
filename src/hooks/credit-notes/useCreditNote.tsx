@@ -92,21 +92,8 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
           // Fetch invoice items
           await fetchInvoiceItems(value);
           
-          // Generate a new credit note number for the correct financial year
-          // Wait a moment to ensure state is updated
-          setTimeout(async () => {
-            try {
-              console.log("Generating credit note number with financial year:", fetchedInvoice.financial_year);
-              await generateCreditNoteNumber();
-            } catch (error) {
-              console.error("Error auto-generating credit note number after invoice selection:", error);
-              toast({
-                title: "Error",
-                description: "Failed to generate credit note number. Please try again.",
-                variant: "destructive",
-              });
-            }
-          }, 500);
+          // NOTE: We no longer auto-generate credit note number here
+          // The user will click the Generate button explicitly
         } else {
           console.error("No financial year in the fetched invoice");
         }
@@ -124,22 +111,13 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
   };
 
   // This effect runs once when the page loads with required data
+  // We no longer auto-generate credit note numbers on page load
   useEffect(() => {
-    if (!isInitialized && !isEditing && !loadingData && company && creditNote.financialYear) {
+    if (!isInitialized && !isEditing && !loadingData && company) {
       setIsInitialized(true);
-      
-      if (!creditNote.creditNoteNumber) {
-        console.log("Auto-generating credit note number on page load with financial year:", creditNote.financialYear);
-        (async () => {
-          try {
-            await generateCreditNoteNumber();
-          } catch (error) {
-            console.error("Error auto-generating credit note number:", error);
-          }
-        })();
-      }
+      console.log("Credit note editor initialized with financial year:", creditNote.financialYear);
     }
-  }, [isEditing, company, creditNote.financialYear, creditNote.creditNoteNumber, loadingData, isInitialized, generateCreditNoteNumber]);
+  }, [isEditing, company, creditNote.financialYear, loadingData, isInitialized]);
 
   // If there's an initial invoiceId from a query parameter, load it
   useEffect(() => {
