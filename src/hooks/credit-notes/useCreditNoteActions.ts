@@ -20,8 +20,10 @@ export const useCreditNoteActions = (
   const [errorMessage, setErrorMessage] = useState("");
   const [isGeneratingNumber, setIsGeneratingNumber] = useState(false);
   const [hasAttemptedNumberGeneration, setHasAttemptedNumberGeneration] = useState(false);
+  // Store the previewed number so we can use it when saving
+  const [previewedCreditNoteNumber, setPreviewedCreditNoteNumber] = useState<string | null>(null);
 
-  // Generate credit note number function using the database function
+  // Generate credit note number function using the database function in preview mode
   const generateCreditNoteNumber = async (): Promise<string | null> => {
     console.log("Generating credit note number with company:", company);
     console.log("Financial year for credit note number generation:", creditNote.financialYear);
@@ -62,14 +64,18 @@ export const useCreditNoteActions = (
       
       console.log("Using financial year for number generation:", creditNote.financialYear);
       
-      // Use the dedicated function from client.ts to get next credit note number
+      // Use preview mode to avoid incrementing the counter
       const creditNoteNumber = await getNextCreditNoteNumber(
         company.id,
         creditNote.financialYear,
-        'CN'
+        'CN',
+        true // preview mode - no increment
       );
       
-      console.log("Generated credit note number:", creditNoteNumber, "for financial year:", creditNote.financialYear);
+      console.log("Generated preview credit note number:", creditNoteNumber);
+      
+      // Store the previewed number for later use
+      setPreviewedCreditNoteNumber(creditNoteNumber);
       
       // Update the credit note state with the generated number
       setCreditNote(prev => ({
@@ -129,6 +135,9 @@ export const useCreditNoteActions = (
           ...prev,
           creditNoteNumber: ""
         }));
+        
+        // Also reset the previewed number when invoice changes
+        setPreviewedCreditNoteNumber(null);
         
         // Return the invoice data - we'll update the state in the parent hook
         return data;
@@ -274,7 +283,7 @@ export const useCreditNoteActions = (
     }
   };
 
-  // Save credit note with improved error handling and generating credit note number at save time
+  // Save credit note with improved error handling and getting a real credit note number at save time
   const saveCreditNote = async (navigate: (path: string) => void) => {
     if (!userId) {
       toast({
@@ -324,17 +333,35 @@ export const useCreditNoteActions = (
     setLoading(true);
     
     try {
-      // Generate credit note number if not already set
-      if (!creditNote.creditNoteNumber && creditNote.financialYear) {
-        console.log("Generating credit note number for financial year:", creditNote.financialYear);
-        const creditNoteNumber = await generateCreditNoteNumber();
+      // Now we need to get a real credit note number that increments the counter
+      // We'll use the previewed number if it exists, or generate a new one
+      let finalCreditNoteNumber: string;
+      
+      if (previewedCreditNoteNumber) {
+        console.log("Using previewed credit note number:", previewedCreditNoteNumber);
         
-        if (!creditNoteNumber) {
-          throw new Error("Failed to generate credit note number");
-        }
+        // Get an actual incremented number from the database
+        const creditNoteNumber = await getNextCreditNoteNumber(
+          company.id,
+          creditNote.financialYear,
+          'CN',
+          false // not in preview mode - increment the counter
+        );
         
-        // Store the generated number for use in the next steps
-        creditNote.creditNoteNumber = creditNoteNumber;
+        finalCreditNoteNumber = creditNoteNumber;
+      } else if (creditNote.creditNoteNumber) {
+        // If we already have a number (for editing), use it
+        finalCreditNoteNumber = creditNote.creditNoteNumber;
+      } else {
+        // If no number has been generated yet, generate one now
+        const creditNoteNumber = await getNextCreditNoteNumber(
+          company.id,
+          creditNote.financialYear,
+          'CN',
+          false // not in preview mode - increment the counter
+        );
+        
+        finalCreditNoteNumber = creditNoteNumber;
       }
       
       // Format date for SQL
@@ -345,7 +372,7 @@ export const useCreditNoteActions = (
         user_id: userId,
         company_id: company.id,
         invoice_id: creditNote.invoiceId,
-        credit_note_number: creditNote.creditNoteNumber,
+        credit_note_number: finalCreditNoteNumber,
         credit_note_date: creditNoteDateFormatted,
         financial_year: creditNote.financialYear,
         reason: creditNote.reason || "",
