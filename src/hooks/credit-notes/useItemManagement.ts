@@ -70,7 +70,7 @@ export const useItemManagement = (
           toast({
             title: "Items Already Added",
             description: "The selected items are already in the credit note.",
-            variant: "warning",
+            variant: "default", // Changed from "warning" to "default"
           });
         }
         
