@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCreditNote } from "@/hooks/credit-notes";
+import { Button } from "@/components/ui/button";
 import CreditNoteHeader from "@/components/credit-notes/editor/CreditNoteHeader";
 import CreditNoteContent from "@/components/credit-notes/editor/CreditNoteContent";
 

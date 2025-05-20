@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import CreditNoteDetails from "@/components/credit-notes/CreditNoteDetails";
 import InvoiceInfo from "@/components/credit-notes/InvoiceInfo";
 import CreditNoteItems from "@/components/credit-notes/CreditNoteItems";
