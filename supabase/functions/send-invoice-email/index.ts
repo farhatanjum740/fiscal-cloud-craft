@@ -1,5 +1,6 @@
+
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { Resend } from 'npm:resend';
 import { InvoiceEmail } from '../../emails/invoice';
 
 interface EmailInvoiceRequest {
