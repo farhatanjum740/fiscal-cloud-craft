@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,3 +10,4 @@ const AppSidebar = () => {
 };
 
 export default AppSidebar;
+

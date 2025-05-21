@@ -34,7 +34,7 @@ const AppLayout = () => {
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar />
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 ml-64">
         <AppHeader />
         <div className="flex-1 overflow-auto p-4 md:p-6 bg-background">
           <Outlet />
@@ -45,3 +45,4 @@ const AppLayout = () => {
 };
 
 export default AppLayout;
+

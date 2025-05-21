@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { Home, Plus, Settings, Users, Package, CreditCard, FileText } from "lucide-react";
+import { Home, Plus, Settings, Users, Package, CreditCard, FileText, BarChart } from "lucide-react";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -63,9 +63,9 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
             <div className="mt-6 pt-4 border-t border-[#1a3b7a]">
               <div className="px-4 text-sm font-medium text-gray-400 mb-2">Settings</div>
               <NavLink
-                to="/app/profile"
+                to="/app/settings/company"
                 className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${
-                  isActive("/app/profile") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
+                  isActive("/app/settings/company") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
                 }`}
               >
                 <Settings className="h-5 w-5" />
@@ -77,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <div className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 border-r border-[#1a3b7a] bg-[#0d2252] relative`}>
+      <div className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 border-r border-[#1a3b7a] bg-[#0d2252] fixed h-full z-10`}>
         {/* Collapse/Expand button */}
         <Button 
           variant="ghost" 
@@ -149,11 +149,6 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
           </div>
         )}
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-4">
-        {/* children prop is not being used here, since AppLayout uses this component differently */}
-      </div>
     </div>
   );
 };
@@ -167,14 +162,14 @@ export const sidebarItems = [
     icon: <Home className="h-5 w-5" />,
   },
   {
-    title: "Invoices",
+    title: "Invoices & Credit Notes",
     path: "/app/invoices",
     icon: <FileText className="h-5 w-5" />,
   },
   {
-    title: "Credit Notes",
-    path: "/app/credit-notes",
-    icon: <CreditCard className="h-5 w-5" />,
+    title: "Reports",
+    path: "/app/reports",
+    icon: <BarChart className="h-5 w-5" />,
   },
   {
     title: "Customers",
@@ -187,3 +182,4 @@ export const sidebarItems = [
     icon: <Package className="h-5 w-5" />,
   },
 ];
+
