@@ -1,96 +1,69 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCompany } from "@/hooks/useCompany";
+import { useNavigate } from "react-router-dom";
 
-import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Settings, LogOut } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+const AppHeader = () => {
+  const { user, logout } = useAuth();
+  const { company, loading } = useCompany(user?.id);
+  const navigate = useNavigate();
 
-export function AppHeader() {
-  const { user, profile, signOut } = useAuth();
-  const [company, setCompany] = useState<any>(null);
-  
-  const userInitials = profile?.full_name
-    ? profile.full_name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-    : user?.email?.charAt(0).toUpperCase() || 'U';
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  // Fetch company data
-  useEffect(() => {
-    const fetchCompanyData = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('companies')
-        .select('name, logo')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single();
-        
-      if (!error && data) {
-        setCompany(data);
-      }
-    };
-    
-    fetchCompanyData();
-  }, [user]);
+  if (!company) {
+    return <div>No company found.</div>;
+  }
 
   return (
-    <header className="border-b flex items-center h-14 px-4 gap-4 bg-background">
-      <SidebarTrigger />
-      
-      <div className="flex-1" />
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
-          {company?.logo && (
+    <div className="border-b bg-background sticky top-0 z-50">
+      <div className="flex h-16 items-center px-4">
+        <div className="flex items-center gap-2">
+          {company.logo && (
             <img 
-              src={company.logo}
-              alt={company.name}
-              className="h-8 w-8 rounded object-contain mr-2"
+              src={company.logo} 
+              alt={`${company.name} logo`} 
+              className="h-8 w-8 rounded-full"
             />
           )}
-          <Avatar className="h-8 w-8">
-            {profile?.avatar_url ? (
-              <AvatarImage src={profile.avatar_url} alt={profile.full_name || ""} />
-            ) : (
-              <AvatarFallback>{userInitials}</AvatarFallback>
-            )}
-          </Avatar>
-          <span className="font-medium hidden sm:inline-block">
-            {profile?.full_name || user?.email}
-          </span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sign out</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </header>
+          <span className="font-medium">{company.name}</span>
+          {/* Removed the company acronym that was here */}
+        </div>
+        <div className="ml-auto flex items-center space-x-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.image} alt={user?.name || "Avatar"} />
+                  <AvatarFallback>{user?.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" alignOffset={8} forceMount>
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default AppHeader;

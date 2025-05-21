@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -91,46 +92,7 @@ const CreditNoteViewPage = () => {
     }
   }, [location.search, loadingData, navigate, location.pathname]);
   
-  const handleDeleteCreditNote = async () => {
-    if (!id) return;
-    
-    try {
-      toast({
-        title: "Deleting...",
-        description: "Deleting credit note"
-      });
-      
-      // Delete credit note items first
-      const { error: itemsError } = await supabase
-        .from('credit_note_items')
-        .delete()
-        .eq('credit_note_id', id);
-        
-      if (itemsError) throw itemsError;
-      
-      // Then delete the credit note
-      const { error } = await supabase
-        .from('credit_notes')
-        .delete()
-        .eq('id', id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Credit note has been deleted successfully"
-      });
-      
-      navigate("/app/invoices");
-    } catch (error: any) {
-      console.error("Error deleting credit note:", error);
-      toast({
-        title: "Error",
-        description: `Failed to delete credit note: ${error.message}`,
-        variant: "destructive"
-      });
-    }
-  };
+  // Fixed the delete functionality by using CreditNoteDeleteDialog instead of inline deletion
   
   return (
     <div className="space-y-6">
@@ -151,13 +113,7 @@ const CreditNoteViewPage = () => {
             Edit
           </Button>
           
-          <Button
-            variant="destructive"
-            onClick={handleDeleteCreditNote}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
+          <CreditNoteDeleteDialog id={id} navigate={navigate} />
         </div>
       </div>
 

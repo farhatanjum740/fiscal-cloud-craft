@@ -25,30 +25,45 @@ const CreditNoteDeleteDialog: React.FC<CreditNoteDeleteDialogProps> = ({ id, nav
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id) {
+      console.error("No credit note ID provided for deletion");
+      toast({
+        title: "Error",
+        description: "No credit note ID found",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsDeleting(true);
+      console.log("Deleting credit note with ID:", id);
 
       // First delete credit note items (due to foreign key constraints)
-      const { error: itemsError } = await supabase
+      const { data: itemsData, error: itemsError } = await supabase
         .from("credit_note_items")
         .delete()
         .eq("credit_note_id", id);
 
       if (itemsError) {
+        console.error("Error deleting credit note items:", itemsError);
         throw itemsError;
       }
 
+      console.log("Successfully deleted credit note items");
+
       // Then delete the credit note
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("credit_notes")
         .delete()
         .eq("id", id);
 
       if (error) {
+        console.error("Error deleting credit note:", error);
         throw error;
       }
+
+      console.log("Successfully deleted credit note");
 
       toast({
         title: "Credit Note Deleted",
