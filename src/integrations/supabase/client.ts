@@ -45,6 +45,7 @@ export const getNextCreditNoteNumber = async (companyId: string, financialYear: 
       }
       
       // If no counter exists yet, we'll start at 1
+      // Fix: Changed from counterData.counter + 1 to start at 1 if no counter exists yet
       const nextCounter = counterData ? counterData.counter + 1 : 1;
       
       // Format the preview number

@@ -7,7 +7,7 @@ import { useInvoiceCalculations } from "./invoice/useInvoiceCalculations";
 import { useInvoiceNumber } from "./invoice/useInvoiceNumber";
 import { useFetchInvoiceData } from "./invoice/useFetchInvoiceData";
 import { useSaveInvoice } from "./invoice/useSaveInvoice";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export const useInvoice = (id?: string) => {
   console.log("useInvoice hook initialized with id:", id);
@@ -44,6 +44,19 @@ export const useInvoice = (id?: string) => {
     total,
     setTotal
   } = useInvoiceState();
+  
+  // Search state for customer and product dropdowns
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  
+  // Filtered customers and products based on search
+  const filteredCustomers = customers.filter(customer =>
+    customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase())
+  );
+  
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(productSearchQuery.toLowerCase())
+  );
   
   // Financial year management
   const { 
@@ -144,7 +157,9 @@ export const useInvoice = (id?: string) => {
     loading,
     loadingData,
     customers,
+    filteredCustomers,
     products,
+    filteredProducts,
     company,
     companySettings,
     financialYears,
@@ -152,6 +167,10 @@ export const useInvoice = (id?: string) => {
     gstDetails,
     total,
     isGeneratingInvoiceNumber,
+    customerSearchQuery,
+    setCustomerSearchQuery,
+    productSearchQuery,
+    setProductSearchQuery,
     addItem,
     removeItem,
     updateItem: baseUpdateItem,
