@@ -17,7 +17,7 @@ interface InvoiceViewProps {
 }
 
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, customer, isDownloadable = true }) => {
-  const printRef = useRef();
+  const printRef = useRef<HTMLDivElement>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   
   // Log data to console for debugging
@@ -379,12 +379,14 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
       </div>
 
-      <EmailInvoiceDialog 
-        open={emailDialogOpen}
-        onOpenChange={setEmailDialogOpen}
-        invoice={invoice}
-        company={company}
-      />
+      {isDownloadable && (
+        <EmailInvoiceDialog 
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+          invoice={invoice}
+          company={company}
+        />
+      )}
     </div>
   );
 };

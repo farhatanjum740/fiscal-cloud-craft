@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import html2pdf from 'html2pdf.js';
+import InvoiceViewComponent from "@/components/invoices/InvoiceView";
 
 interface EmailInvoiceDialogProps {
   open: boolean;
@@ -29,6 +31,9 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchingCustomer, setFetchingCustomer] = useState(false);
+  const [customer, setCustomer] = useState<any>(null);
+  const [includePdf, setIncludePdf] = useState(true);
+  const invoicePdfRef = useRef<HTMLDivElement>(null);
   
   // Set default values when invoice data changes
   useEffect(() => {
@@ -43,15 +48,16 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       if (invoice.customer?.email) {
         setRecipientEmail(invoice.customer.email);
         setAvailableEmails([invoice.customer.email]);
+        setCustomer(invoice.customer);
       } else if (invoice.customerId || invoice.customer_id) {
         // If invoice has customerId but no customer object, fetch customer data
-        fetchCustomerEmail(invoice.customerId || invoice.customer_id);
+        fetchCustomerData(invoice.customerId || invoice.customer_id);
       }
     }
   }, [invoice, company]);
   
-  // Fetch customer email if not available in the invoice object
-  const fetchCustomerEmail = async (customerId: string) => {
+  // Fetch customer data if not available in the invoice object
+  const fetchCustomerData = async (customerId: string) => {
     if (!customerId) return;
     
     try {
@@ -60,24 +66,29 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       
       const { data, error } = await supabase
         .from('customers')
-        .select('email, name')
+        .select('*')
         .eq('id', customerId)
-        .maybeSingle();
+        .single();
       
       if (error) {
         console.error("Error fetching customer:", error);
         return;
       }
       
-      if (data && data.email) {
-        console.log("Found customer email:", data.email);
-        setRecipientEmail(data.email);
-        setAvailableEmails([data.email]);
+      if (data) {
+        console.log("Found customer data:", data);
+        setCustomer(data);
+        
+        if (data.email) {
+          console.log("Found customer email:", data.email);
+          setRecipientEmail(data.email);
+          setAvailableEmails([data.email]);
+        }
       } else {
-        console.log("No email found for customer:", customerId);
+        console.log("No customer found for ID:", customerId);
       }
     } catch (err) {
-      console.error("Error in fetchCustomerEmail:", err);
+      console.error("Error in fetchCustomerData:", err);
     } finally {
       setFetchingCustomer(false);
     }
@@ -92,6 +103,49 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       console.log("Invoice customer_id:", invoice?.customerId || invoice?.customer_id);
     }
   }, [invoice, open]);
+
+  // Generate a PDF of the invoice
+  const generatePDF = async (): Promise<string | null> => {
+    if (!invoicePdfRef.current) return null;
+
+    try {
+      // Create a clone of the invoice view for PDF generation
+      const pdfContainer = document.createElement('div');
+      pdfContainer.innerHTML = invoicePdfRef.current.innerHTML;
+      document.body.appendChild(pdfContainer);
+      
+      // Configure html2pdf options
+      const options = {
+        margin: 10,
+        filename: `Invoice-${invoice.invoiceNumber || invoice.invoice_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Generate PDF using html2pdf
+      const pdfBlob = await html2pdf()
+        .from(pdfContainer)
+        .set(options)
+        .outputPdf('blob');
+      
+      // Convert blob to base64
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          // Extract just the base64 data part (remove data:application/pdf;base64, prefix)
+          const base64Content = base64data.split(',')[1];
+          resolve(base64Content);
+        };
+        reader.readAsDataURL(pdfBlob);
+      });
+      
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      return null;
+    }
+  };
 
   const handleSendEmail = async () => {
     if (!recipientEmail) {
@@ -115,11 +169,36 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
     setError(null);
 
     try {
+      let pdfBase64 = null;
+      
+      // Only generate PDF if includePdf is true
+      if (includePdf) {
+        toast({
+          title: "Generating PDF",
+          description: "Preparing PDF attachment...",
+        });
+        
+        pdfBase64 = await generatePDF();
+        if (!pdfBase64) {
+          console.warn("Failed to generate PDF attachment");
+          toast({
+            title: "Warning",
+            description: "Could not generate PDF attachment. Email will be sent without it.",
+          });
+        }
+      }
+      
+      toast({
+        title: "Sending email",
+        description: "Please wait while we send your invoice...",
+      });
+
       console.log("Sending invoice email with data:", {
         invoiceId: invoice.id,
         recipientEmail,
         subject,
-        message
+        message,
+        hasPdf: !!pdfBase64
       });
 
       const { data, error } = await supabase.functions.invoke("send-invoice-email", {
@@ -128,6 +207,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
           recipientEmail,
           subject,
           message,
+          pdfBase64: pdfBase64
         },
       });
 
@@ -223,6 +303,19 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
               rows={3}
             />
           </div>
+          
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="include-pdf"
+              checked={includePdf}
+              onChange={(e) => setIncludePdf(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <Label htmlFor="include-pdf" className="text-sm font-normal">
+              Include invoice as PDF attachment
+            </Label>
+          </div>
 
           {error && (
             <div className="text-sm font-medium text-destructive">
@@ -247,6 +340,20 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+      
+      {/* Hidden invoice component for PDF generation */}
+      <div className="hidden">
+        <div ref={invoicePdfRef}>
+          {customer && invoice && company && (
+            <InvoiceViewComponent 
+              invoice={invoice} 
+              company={company} 
+              customer={customer}
+              isDownloadable={false}
+            />
+          )}
+        </div>
+      </div>
     </Dialog>
   );
 };

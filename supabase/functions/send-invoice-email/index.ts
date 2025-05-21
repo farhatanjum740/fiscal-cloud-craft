@@ -2,7 +2,6 @@
 import { createClient } from 'npm:@supabase/supabase-js';
 import { Resend } from 'npm:resend';
 import * as React from 'npm:react';
-import html2pdf from 'npm:html2pdf.js';
 
 interface InvoiceEmailProps {
   logoURL: string;
@@ -64,6 +63,7 @@ interface EmailInvoiceRequest {
   recipientEmail?: string;
   subject: string;
   message: string;
+  pdfBase64?: string;
 }
 
 Deno.serve(async (req) => {
@@ -83,9 +83,9 @@ Deno.serve(async (req) => {
     
     console.log("Received request data:", requestData);
     
-    const { invoiceId, creditNoteId, recipientEmail, subject, message } = requestData as EmailInvoiceRequest;
+    const { invoiceId, creditNoteId, recipientEmail, subject, message, pdfBase64 } = requestData as EmailInvoiceRequest;
     
-    console.log("Parsed request data:", { invoiceId, creditNoteId, recipientEmail, subject, message });
+    console.log("Parsed request data:", { invoiceId, creditNoteId, recipientEmail, subject, message, hasPdf: !!pdfBase64 });
     
     if ((!invoiceId && !creditNoteId)) {
       console.error("Missing required fields:", { invoiceId, creditNoteId });
@@ -209,32 +209,54 @@ Deno.serve(async (req) => {
     // Initialize Resend client
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Use the verified domain email for all companies
+    // Use the verified domain email for sender
     const fromEmail = "support@invoiceninja.in";
     
     console.log(`Sending email from ${fromEmail} to ${customerEmail}`);
 
-    // Generate invoice PDF attachment (Note: This won't actually generate PDF directly in the edge function)
-    // Instead, we'll need to include the attachment information in the email
+    // Prepare attachment if PDF data is provided
     const documentType = isInvoice ? "Invoice" : "Credit Note";
     const documentNumber = isInvoice ? document.invoice_number : document.credit_note_number;
     const attachmentName = `${documentType}-${documentNumber}.pdf`;
     
-    // Send the email with our inline React component
-    const emailResult = await resend.emails.send({
-      from: `${company.name} <${fromEmail}>`,
+    // Prepare email options
+    const emailOptions: any = {
+      from: fromEmail, // Simple format without company name to avoid format issues
       to: [customerEmail],
       subject: subject,
       react: InvoiceEmail({
         logoURL: logoURL,
         company: company,
-        message: message + `\n\nNote: Please find the ${documentType} attached. If you don't see an attachment, please visit your account dashboard to download a copy.`,
+        message: message,
         document: document,
         isInvoice: isInvoice
-      }),
-      // Note: We can't actually generate and attach PDFs in edge functions due to limitations
-      // Indicating that there should be an attachment helps users understand
-    });
+      })
+    };
+    
+    // Add attachment if PDF data was provided
+    if (pdfBase64) {
+      console.log("Adding PDF attachment to email");
+      emailOptions.attachments = [
+        {
+          filename: attachmentName,
+          content: pdfBase64,
+          encoding: 'base64'
+        }
+      ];
+    } else {
+      console.log("No PDF attachment provided");
+      // Add a note to the message that there's no attachment
+      emailOptions.react = InvoiceEmail({
+        logoURL: logoURL,
+        company: company,
+        message: message + `\n\nNote: Please visit your account dashboard to download a copy of this ${documentType.toLowerCase()}.`,
+        document: document,
+        isInvoice: isInvoice
+      });
+    }
+    
+    // Send the email
+    const emailResult = await resend.emails.send(emailOptions);
 
     if (emailResult.error) {
       console.error("Error sending email:", emailResult.error);
