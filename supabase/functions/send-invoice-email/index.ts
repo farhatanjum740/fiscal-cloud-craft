@@ -1,7 +1,61 @@
 
 import { createClient } from 'npm:@supabase/supabase-js';
 import { Resend } from 'npm:resend';
-import { InvoiceEmail } from '../../emails/invoice';
+import * as React from 'npm:react';
+
+interface InvoiceEmailProps {
+  logoURL: string;
+  company: any;
+  message: string;
+  document: any;
+  isInvoice: boolean;
+}
+
+// Simple React email template component
+function InvoiceEmail({ logoURL, company, message, document, isInvoice }: InvoiceEmailProps) {
+  const documentType = isInvoice ? 'Invoice' : 'Credit Note';
+  const documentNumber = isInvoice ? document.invoice_number : document.credit_note_number;
+  
+  return React.createElement(
+    'html', 
+    null,
+    React.createElement(
+      'body', 
+      { style: { fontFamily: 'Arial, sans-serif', margin: '0', padding: '0' } },
+      React.createElement(
+        'div', 
+        { style: { maxWidth: '600px', margin: '0 auto', padding: '20px' } },
+        React.createElement(
+          'div', 
+          { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' } },
+          React.createElement(
+            'div', 
+            null,
+            React.createElement('h1', null, documentType),
+            React.createElement('p', null, `# ${documentNumber}`)
+          ),
+          logoURL && React.createElement('img', { src: logoURL, alt: `${company.name} logo`, style: { maxHeight: '60px' } })
+        ),
+        React.createElement('hr', { style: { border: '1px solid #eee', margin: '20px 0' } }),
+        React.createElement('div', { style: { marginBottom: '20px', whiteSpace: 'pre-wrap' } }, message),
+        React.createElement('hr', { style: { border: '1px solid #eee', margin: '20px 0' } }),
+        React.createElement(
+          'div', 
+          null,
+          React.createElement('p', null, `Best Regards,`),
+          React.createElement('p', null, company.name),
+          React.createElement('p', null, company.email_id),
+          company.contact_number && React.createElement('p', null, `Phone: ${company.contact_number}`)
+        ),
+        React.createElement(
+          'div', 
+          { style: { marginTop: '40px', fontSize: '12px', color: '#888', textAlign: 'center' } },
+          React.createElement('p', null, `This is an automated email sent on behalf of ${company.name}.`)
+        )
+      )
+    )
+  );
+}
 
 interface EmailInvoiceRequest {
   invoiceId?: string;
@@ -135,9 +189,9 @@ Deno.serve(async (req) => {
     // Initialize Resend client
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Send the email
+    // Send the email with our inline React component
     const emailResult = await resend.emails.send({
-      from: `${company.name} <${company.email}>`,
+      from: `${company.name} <${company.email || 'onboarding@resend.dev'}>`,
       to: [recipientEmail],
       subject: subject,
       react: InvoiceEmail({
