@@ -33,6 +33,11 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       return;
     }
 
+    if (!invoice?.id) {
+      setError("Invoice ID is missing");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

@@ -32,6 +32,11 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       setError("Recipient email is required");
       return;
     }
+    
+    if (!creditNote?.id) {
+      setError("Credit note ID is missing");
+      return;
+    }
 
     setLoading(true);
     setError(null);
