@@ -27,6 +27,9 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Log the invoice data for debugging
+  console.log("EmailInvoiceDialog - Invoice data:", invoice);
+
   const handleSendEmail = async () => {
     if (!recipientEmail) {
       setError("Recipient email is required");
@@ -35,6 +38,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
 
     if (!invoice?.id) {
       setError("Invoice ID is missing");
+      console.error("Invoice ID is missing in EmailInvoiceDialog:", invoice);
       return;
     }
 

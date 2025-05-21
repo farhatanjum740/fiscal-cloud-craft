@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
 
   const handleEmail = () => {
+    console.log("Opening email dialog with credit note:", creditNote);
     setEmailDialogOpen(true);
   };
 

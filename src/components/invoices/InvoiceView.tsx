@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
 import { Printer, Download, Mail, Phone } from 'lucide-react';
@@ -17,8 +17,31 @@ interface InvoiceViewProps {
 }
 
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, customer, isDownloadable = true }) => {
-  const printRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef();
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  
+  // Log data to console for debugging
+  useEffect(() => {
+    console.log("Invoice View - Data received:", {
+      invoice,
+      company,
+      customer
+    });
+    
+    if (invoice) {
+      // Log specific invoice properties including ID
+      console.log("Invoice View - Invoice Details:", {
+        id: invoice.id,
+        number: invoice.invoiceNumber,
+        date: invoice.invoiceDate,
+        subtotal: invoice.subtotal,
+        cgst: invoice.cgst,
+        sgst: invoice.sgst,
+        igst: invoice.igst,
+        totalAmount: invoice.total_amount
+      });
+    }
+  }, [invoice, company, customer]);
   
   if (!invoice || !company || !customer) {
     return (
@@ -59,6 +82,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
   };
   
   const handleEmail = () => {
+    console.log("Opening email dialog with invoice:", invoice);
     setEmailDialogOpen(true);
   };
   

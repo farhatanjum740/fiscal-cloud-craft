@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailCreditNoteDialogProps {
@@ -27,14 +27,18 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Log the credit note data for debugging
+  console.log("EmailCreditNoteDialog - Credit Note data:", creditNote);
+
   const handleSendEmail = async () => {
     if (!recipientEmail) {
       setError("Recipient email is required");
       return;
     }
-    
+
     if (!creditNote?.id) {
-      setError("Credit note ID is missing");
+      setError("Credit Note ID is missing");
+      console.error("Credit Note ID is missing in EmailCreditNoteDialog:", creditNote);
       return;
     }
 
