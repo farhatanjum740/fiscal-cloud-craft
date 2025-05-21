@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,33 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
   company,
 }) => {
   const [recipientEmail, setRecipientEmail] = useState("");
-  const [subject, setSubject] = useState(`Invoice ${invoice?.invoiceNumber} from ${company?.name}`);
-  const [message, setMessage] = useState(`Please find attached invoice ${invoice?.invoiceNumber}.`);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Log the invoice data for debugging
-  console.log("EmailInvoiceDialog - Invoice data:", invoice);
+  // Set default values when invoice data changes
+  useEffect(() => {
+    if (invoice) {
+      // Extract invoice number from the invoice object
+      const invoiceNumber = invoice.invoiceNumber || invoice.invoice_number;
+      
+      setSubject(`Invoice ${invoiceNumber} from ${company?.name || 'our company'}`);
+      setMessage(`Please find attached invoice ${invoiceNumber}.`);
+      
+      // If invoice has a customer with an email, use it
+      if (invoice.customer?.email) {
+        setRecipientEmail(invoice.customer.email);
+      }
+    }
+  }, [invoice, company]);
+
+  // Log debug information about the invoice object
+  useEffect(() => {
+    console.log("EmailInvoiceDialog - Invoice data:", invoice);
+    console.log("Invoice ID:", invoice?.id);
+    console.log("Invoice structure:", JSON.stringify(invoice, null, 2));
+  }, [invoice]);
 
   const handleSendEmail = async () => {
     if (!recipientEmail) {
@@ -36,9 +56,15 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       return;
     }
 
+    // Check if invoice has an ID
     if (!invoice?.id) {
-      setError("Invoice ID is missing");
       console.error("Invoice ID is missing in EmailInvoiceDialog:", invoice);
+      setError("Invoice ID is missing. Please check the invoice data.");
+      toast({
+        title: "Missing invoice data",
+        description: "The invoice information is incomplete. Please try again with a valid invoice.",
+        variant: "destructive",
+      });
       return;
     }
 

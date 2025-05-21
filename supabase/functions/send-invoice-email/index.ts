@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
 
     // Send the email with our inline React component
     const emailResult = await resend.emails.send({
-      from: `${company.name} <${company.email || 'onboarding@resend.dev'}>`,
+      from: `${company.name} <${company.email_id || 'onboarding@resend.dev'}>`,
       to: [recipientEmail],
       subject: subject,
       react: InvoiceEmail({
