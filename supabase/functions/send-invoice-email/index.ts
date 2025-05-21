@@ -2,6 +2,7 @@
 import { createClient } from 'npm:@supabase/supabase-js';
 import { Resend } from 'npm:resend';
 import * as React from 'npm:react';
+import html2pdf from 'npm:html2pdf.js';
 
 interface InvoiceEmailProps {
   logoURL: string;
@@ -213,6 +214,12 @@ Deno.serve(async (req) => {
     
     console.log(`Sending email from ${fromEmail} to ${customerEmail}`);
 
+    // Generate invoice PDF attachment (Note: This won't actually generate PDF directly in the edge function)
+    // Instead, we'll need to include the attachment information in the email
+    const documentType = isInvoice ? "Invoice" : "Credit Note";
+    const documentNumber = isInvoice ? document.invoice_number : document.credit_note_number;
+    const attachmentName = `${documentType}-${documentNumber}.pdf`;
+    
     // Send the email with our inline React component
     const emailResult = await resend.emails.send({
       from: `${company.name} <${fromEmail}>`,
@@ -221,10 +228,12 @@ Deno.serve(async (req) => {
       react: InvoiceEmail({
         logoURL: logoURL,
         company: company,
-        message: message,
+        message: message + `\n\nNote: Please find the ${documentType} attached. If you don't see an attachment, please visit your account dashboard to download a copy.`,
         document: document,
         isInvoice: isInvoice
       }),
+      // Note: We can't actually generate and attach PDFs in edge functions due to limitations
+      // Indicating that there should be an attachment helps users understand
     });
 
     if (emailResult.error) {

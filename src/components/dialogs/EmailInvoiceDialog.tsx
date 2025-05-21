@@ -86,7 +86,6 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       console.log("Invoice ID:", invoice?.id);
       console.log("Invoice number:", invoice?.invoiceNumber || invoice?.invoice_number);
       console.log("Invoice customer_id:", invoice?.customerId || invoice?.customer_id);
-      console.log("Invoice structure:", JSON.stringify(invoice, null, 2));
     }
   }, [invoice, open]);
 
