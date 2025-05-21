@@ -1,8 +1,8 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Printer, Download } from 'lucide-react';
+import { Printer, Download, Mail } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import CreditNoteHeader from './CreditNoteHeader';
 import CreditNoteCustomerInfo from './CreditNoteCustomerInfo';
@@ -10,6 +10,7 @@ import CreditNoteDetails from './CreditNoteDetails';
 import CreditNoteItemsTable from './CreditNoteItemsTable';
 import CreditNoteSummary from './CreditNoteSummary';
 import CreditNoteFooter from './CreditNoteFooter';
+import EmailCreditNoteDialog from '@/components/dialogs/EmailCreditNoteDialog';
 
 interface CreditNoteViewProps {
   creditNote: any;
@@ -27,6 +28,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   isDownloadable = true 
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   
   // Log data to console for debugging
   useEffect(() => {
@@ -89,6 +91,10 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     }
   };
 
+  const handleEmail = () => {
+    setEmailDialogOpen(true);
+  };
+
   // Ensure items is an array and log for debugging
   let safeItems = [];
   if (creditNote.items) {
@@ -146,6 +152,10 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
+          <Button variant="secondary" size="sm" onClick={handleEmail} title="Email Credit Note">
+            <Mail className="h-4 w-4 mr-2" />
+            Email
+          </Button>
         </div>
       )}
       
@@ -180,6 +190,13 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         
         <CreditNoteFooter company={company} />
       </div>
+
+      <EmailCreditNoteDialog 
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+        creditNote={creditNote}
+        company={company}
+      />
     </div>
   );
 };

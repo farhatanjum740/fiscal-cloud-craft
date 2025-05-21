@@ -1,12 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
-import { Printer, Download, Phone, Mail } from 'lucide-react';
+import { Printer, Download, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
 import { formatCurrency, formatAmount, amountToWords } from '@/lib/utils';
+import EmailInvoiceDialog from '@/components/dialogs/EmailInvoiceDialog';
 
 interface InvoiceViewProps {
   invoice: any;
@@ -17,6 +18,7 @@ interface InvoiceViewProps {
 
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, customer, isDownloadable = true }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   
   if (!invoice || !company || !customer) {
     return (
@@ -54,6 +56,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         variant: "destructive" 
       });
     }
+  };
+  
+  const handleEmail = () => {
+    setEmailDialogOpen(true);
   };
   
   // Determine if we should show IGST or CGST/SGST based on states
@@ -111,6 +117,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
           <Button variant="default" size="sm" onClick={handleDownload} title="Download Invoice">
             <Download className="h-4 w-4 mr-2" />
             Download PDF
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleEmail} title="Email Invoice">
+            <Mail className="h-4 w-4 mr-2" />
+            Email
           </Button>
         </div>
       )}
@@ -344,6 +354,13 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
           <p>This is a computer generated invoice.</p>
         </div>
       </div>
+
+      <EmailInvoiceDialog 
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+        invoice={invoice}
+        company={company}
+      />
     </div>
   );
 };
