@@ -40,6 +40,7 @@ const CreditNoteDeleteDialog: React.FC<CreditNoteDeleteDialogProps> = ({ id, nav
       console.log("Deleting credit note with ID:", id);
 
       // First delete credit note items (due to foreign key constraints)
+      console.log("Attempting to delete credit note items");
       const { error: itemsError } = await supabase
         .from("credit_note_items")
         .delete()
@@ -47,12 +48,13 @@ const CreditNoteDeleteDialog: React.FC<CreditNoteDeleteDialogProps> = ({ id, nav
 
       if (itemsError) {
         console.error("Error deleting credit note items:", itemsError);
-        throw itemsError;
+        throw new Error(`Failed to delete credit note items: ${itemsError.message}`);
       }
 
       console.log("Successfully deleted credit note items");
 
-      // Then delete the credit note
+      // Then delete the credit note itself
+      console.log("Attempting to delete credit note");
       const { error } = await supabase
         .from("credit_notes")
         .delete()
@@ -60,7 +62,7 @@ const CreditNoteDeleteDialog: React.FC<CreditNoteDeleteDialogProps> = ({ id, nav
 
       if (error) {
         console.error("Error deleting credit note:", error);
-        throw error;
+        throw new Error(`Failed to delete credit note: ${error.message}`);
       }
 
       console.log("Successfully deleted credit note");
@@ -70,18 +72,18 @@ const CreditNoteDeleteDialog: React.FC<CreditNoteDeleteDialogProps> = ({ id, nav
         description: "The credit note has been successfully deleted.",
       });
 
-      // Navigate back to the invoices page after deletion
+      // Close the dialog and navigate away
+      setIsOpen(false);
       navigate("/app/invoices");
     } catch (error: any) {
-      console.error("Error deleting credit note:", error);
+      console.error("Error in deletion process:", error);
       toast({
         title: "Deletion Failed",
-        description: `Failed to delete credit note: ${error.message}`,
+        description: error.message || "Failed to delete credit note. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsDeleting(false);
-      setIsOpen(false);
     }
   };
 

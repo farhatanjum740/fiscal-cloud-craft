@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
 
       {/* Desktop Sidebar */}
       <div className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 border-r border-[#1a3b7a] bg-[#0d2252] fixed h-full z-10`}>
-        {/* Collapse/Expand button - Restoring original style */}
+        {/* Original style collapse/expand button */}
         <Button 
           variant="ghost" 
           size="icon"
