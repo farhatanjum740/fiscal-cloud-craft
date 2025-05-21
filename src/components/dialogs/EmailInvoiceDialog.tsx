@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import html2pdf from 'html2pdf.js';
 import InvoiceViewComponent from "@/components/invoices/InvoiceView";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface EmailInvoiceDialogProps {
   open: boolean;
@@ -305,14 +305,12 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
           </div>
           
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+            <Checkbox
               id="include-pdf"
               checked={includePdf}
-              onChange={(e) => setIncludePdf(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              onCheckedChange={(checked) => setIncludePdf(checked as boolean)}
             />
-            <Label htmlFor="include-pdf" className="text-sm font-normal">
+            <Label htmlFor="include-pdf" className="text-sm font-normal cursor-pointer">
               Include invoice as PDF attachment
             </Label>
           </div>
