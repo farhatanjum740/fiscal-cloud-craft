@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { 
   FileText, Users, Package, TrendingUp, ChartBar,
-  Calendar, CalendarIcon, Download
+  Calendar, ChevronDown, Download
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,8 +27,7 @@ import {
   subYears,
   startOfWeek,
   endOfWeek,
-  eachMonthOfInterval,
-  parse
+  eachMonthOfInterval
 } from "date-fns";
 
 // Define financial year utility functions

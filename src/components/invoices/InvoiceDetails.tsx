@@ -180,13 +180,13 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
                 </div>
                 <Select
                   onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))}
-                  defaultValue={invoice.customerId}
+                  value={invoice.customerId}
                   disabled={loading}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto">
                     {filteredCustomers.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id}>
                         {customer.name}
@@ -201,7 +201,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
               <Label htmlFor="status">Status</Label>
               <Select
                 onValueChange={(value) => setInvoice(prev => ({ ...prev, status: value }))}
-                defaultValue={invoice.status || "draft"}
+                value={invoice.status || "draft"}
                 disabled={loading}
               >
                 <SelectTrigger className="w-full">
@@ -250,12 +250,12 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
                         </div>
                         <Select
                           onValueChange={(productId) => handleProductSelect(item.id, productId)}
-                          defaultValue={item.productId}
+                          value={item.productId || ""}
                         >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select product" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="max-h-60 overflow-y-auto">
                             {/* Filter out products that are already selected in other rows */}
                             {getAvailableProducts(item.id).map((product) => (
                               <SelectItem key={product.id} value={product.id}>
