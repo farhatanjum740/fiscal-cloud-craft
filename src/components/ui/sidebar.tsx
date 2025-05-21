@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
         <Button 
           variant="ghost" 
           size="icon"
-          className="absolute -right-3 top-8 h-6 w-6 rounded-full border border-[#1a3b7a] bg-[#0d2252] text-white shadow-md"
+          className="absolute -right-3 top-8 h-6 w-6 rounded-full border border-[#1a3b7a] bg-[#0d2252] text-white shadow-md z-20"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -126,9 +126,9 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
           <div className={`mt-6 pt-4 border-t border-[#1a3b7a] ${collapsed ? 'mx-2' : 'mx-0'}`}>
             {!collapsed && <div className="px-4 text-sm font-medium text-gray-400 mb-2">Settings</div>}
             <NavLink
-              to="/app/profile"
+              to="/app/settings/company"
               className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-2'} py-2 px-4 rounded-md hover:bg-[#14325e] ${
-                isActive("/app/profile") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
+                isActive("/app/settings/company") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
               }`}
             >
               <Settings className="h-5 w-5" />

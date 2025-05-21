@@ -133,32 +133,32 @@ const InvoiceEditor = () => {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="customer">Customer</Label>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Input
-                        placeholder="Search customers..."
-                        value={customerSearchQuery}
-                        onChange={(e) => setCustomerSearchQuery(e.target.value)}
-                        className="pr-8"
-                      />
-                      <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    </div>
-                    <Select 
-                      onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))} 
-                      value={invoice.customerId || ""}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a customer" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 overflow-y-auto">
-                        {filteredCustomers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select 
+                    onValueChange={(value) => setInvoice(prev => ({ ...prev, customerId: value }))} 
+                    value={invoice.customerId || ""}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 overflow-y-auto">
+                      <div className="p-2 sticky top-0 bg-background z-10">
+                        <div className="flex items-center border rounded-md focus-within:ring-1 focus-within:ring-ring px-3">
+                          <Search className="h-4 w-4 text-muted-foreground mr-2" />
+                          <Input 
+                            value={customerSearchQuery}
+                            onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                            placeholder="Search customers..."
+                            className="flex h-9 w-full rounded-md border-0 bg-transparent px-0 py-1 text-sm shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </div>
+                      </div>
+                      {filteredCustomers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -286,41 +286,41 @@ const InvoiceEditor = () => {
                   {invoice.items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <div className="space-y-2">
-                          <div className="relative">
-                            <Input
-                              placeholder="Search products..."
-                              value={productSearchQuery}
-                              onChange={(e) => setProductSearchQuery(e.target.value)}
-                              className="pr-8 mb-2"
-                            />
-                            <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          </div>
-                          <Select 
-                            onValueChange={(value) => handleProductSelect(item.id, value)} 
-                            value={item.productId || ""}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select a product" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60 overflow-y-auto">
-                              {/* Filter out products that are already selected in other rows */}
-                              {getAvailableProducts(item.id).map((product) => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  {product.name}
+                        <Select 
+                          onValueChange={(value) => handleProductSelect(item.id, value)} 
+                          value={item.productId || ""}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a product" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60 overflow-y-auto">
+                            <div className="p-2 sticky top-0 bg-background z-10">
+                              <div className="flex items-center border rounded-md focus-within:ring-1 focus-within:ring-ring px-3">
+                                <Search className="h-4 w-4 text-muted-foreground mr-2" />
+                                <Input 
+                                  value={productSearchQuery}
+                                  onChange={(e) => setProductSearchQuery(e.target.value)}
+                                  placeholder="Search products..."
+                                  className="flex h-9 w-full rounded-md border-0 bg-transparent px-0 py-1 text-sm shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                />
+                              </div>
+                            </div>
+                            {/* Filter out products that are already selected in other rows */}
+                            {getAvailableProducts(item.id).map((product) => (
+                              <SelectItem key={product.id} value={product.id}>
+                                {product.name}
+                              </SelectItem>
+                            ))}
+                            {/* Show the currently selected product even if it's used elsewhere */}
+                            {item.productId && !getAvailableProducts(item.id).some(p => p.id === item.productId) && 
+                              products.find(p => p.id === item.productId) && (
+                                <SelectItem key={item.productId} value={item.productId}>
+                                  {products.find(p => p.id === item.productId)?.name}
                                 </SelectItem>
-                              ))}
-                              {/* Show the currently selected product even if it's used elsewhere */}
-                              {item.productId && !getAvailableProducts(item.id).some(p => p.id === item.productId) && 
-                                products.find(p => p.id === item.productId) && (
-                                  <SelectItem key={item.productId} value={item.productId}>
-                                    {products.find(p => p.id === item.productId)?.name}
-                                  </SelectItem>
-                                )
-                              }
-                            </SelectContent>
-                          </Select>
-                        </div>
+                              )
+                            }
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Input
