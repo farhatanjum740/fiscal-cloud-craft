@@ -2,13 +2,12 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit } from "lucide-react";
 import { useCreditNote } from "@/hooks/credit-notes";
 import CreditNoteViewComponent from "@/components/credit-notes/view";
 import CreditNoteDeleteDialog from "./CreditNoteDeleteDialog";
 import CreditNoteLoading from "./CreditNoteLoading";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const CreditNoteViewPage = () => {
   const { id } = useParams();
@@ -91,8 +90,6 @@ const CreditNoteViewPage = () => {
       navigate(location.pathname, { replace: true });
     }
   }, [location.search, loadingData, navigate, location.pathname]);
-  
-  // Fixed the delete functionality by using CreditNoteDeleteDialog instead of inline deletion
   
   return (
     <div className="space-y-6">

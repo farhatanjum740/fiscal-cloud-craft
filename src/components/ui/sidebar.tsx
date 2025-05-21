@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
 
       {/* Desktop Sidebar */}
       <div className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 border-r border-[#1a3b7a] bg-[#0d2252] fixed h-full z-10`}>
-        {/* Collapse/Expand button */}
+        {/* Collapse/Expand button - Restoring original style */}
         <Button 
           variant="ghost" 
           size="icon"
@@ -182,4 +182,3 @@ export const sidebarItems = [
     icon: <Package className="h-5 w-5" />,
   },
 ];
-
