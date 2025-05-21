@@ -18,7 +18,8 @@ const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface EmailInvoiceRequest {
-  invoiceId: string;
+  invoiceId?: string;
+  creditNoteId?: string;
   recipientEmail: string;
   subject?: string;
   message?: string;
@@ -31,11 +32,18 @@ serve(async (req) => {
   }
 
   try {
-    const { invoiceId, recipientEmail, subject, message } = await req.json() as EmailInvoiceRequest;
+    // Log request for debugging
+    console.log("Request received:", req.method);
     
-    if (!invoiceId || !recipientEmail) {
+    const requestData = await req.json();
+    console.log("Request data:", JSON.stringify(requestData));
+    
+    const { invoiceId, creditNoteId, recipientEmail, subject, message } = requestData as EmailInvoiceRequest;
+    
+    if ((!invoiceId && !creditNoteId) || !recipientEmail) {
+      console.error("Missing required fields:", { invoiceId, creditNoteId, recipientEmail });
       return new Response(
-        JSON.stringify({ error: "Invoice ID and recipient email are required" }),
+        JSON.stringify({ error: "Invoice/Credit Note ID and recipient email are required" }),
         { 
           status: 400, 
           headers: { "Content-Type": "application/json", ...corsHeaders } 
@@ -43,17 +51,37 @@ serve(async (req) => {
       );
     }
 
-    // Get invoice data
-    const { data: invoice, error: invoiceError } = await supabase
-      .from("invoices")
-      .select("*")
-      .eq("id", invoiceId)
-      .single();
+    // Set document type and ID based on what we're sending
+    const isInvoice = !!invoiceId;
+    const documentId = invoiceId || creditNoteId;
+    const documentType = isInvoice ? 'invoice' : 'credit_note';
+    
+    console.log(`Processing ${documentType} with ID: ${documentId}`);
 
-    if (invoiceError || !invoice) {
-      console.error("Error fetching invoice:", invoiceError);
+    // Get document data
+    let document, documentError;
+    if (isInvoice) {
+      const result = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("id", documentId)
+        .single();
+      document = result.data;
+      documentError = result.error;
+    } else {
+      const result = await supabase
+        .from("credit_notes")
+        .select("*")
+        .eq("id", documentId)
+        .single();
+      document = result.data;
+      documentError = result.error;
+    }
+
+    if (documentError || !document) {
+      console.error(`Error fetching ${documentType}:`, documentError);
       return new Response(
-        JSON.stringify({ error: "Invoice not found" }),
+        JSON.stringify({ error: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} not found` }),
         { 
           status: 404, 
           headers: { "Content-Type": "application/json", ...corsHeaders } 
@@ -62,10 +90,11 @@ serve(async (req) => {
     }
 
     // Get company data
+    const companyId = isInvoice ? document.company_id : document.company_id;
     const { data: company, error: companyError } = await supabase
       .from("companies")
       .select("*")
-      .eq("id", invoice.company_id)
+      .eq("id", companyId)
       .single();
 
     if (companyError || !company) {
@@ -80,10 +109,11 @@ serve(async (req) => {
     }
 
     // Get customer data
+    const customerId = isInvoice ? document.customer_id : document.customer_id;
     const { data: customer, error: customerError } = await supabase
       .from("customers")
       .select("*")
-      .eq("id", invoice.customer_id)
+      .eq("id", customerId)
       .single();
 
     if (customerError || !customer) {
@@ -97,16 +127,28 @@ serve(async (req) => {
       );
     }
 
-    // Get invoice items
-    const { data: invoiceItems, error: itemsError } = await supabase
-      .from("invoice_items")
-      .select("*")
-      .eq("invoice_id", invoiceId);
+    // Get document items
+    let documentItems, itemsError;
+    if (isInvoice) {
+      const result = await supabase
+        .from("invoice_items")
+        .select("*")
+        .eq("invoice_id", documentId);
+      documentItems = result.data;
+      itemsError = result.error;
+    } else {
+      const result = await supabase
+        .from("credit_note_items")
+        .select("*")
+        .eq("credit_note_id", documentId);
+      documentItems = result.data;
+      itemsError = result.error;
+    }
 
     if (itemsError) {
-      console.error("Error fetching invoice items:", itemsError);
+      console.error(`Error fetching ${documentType} items:`, itemsError);
       return new Response(
-        JSON.stringify({ error: "Could not fetch invoice items" }),
+        JSON.stringify({ error: `Could not fetch ${documentType} items` }),
         { 
           status: 500, 
           headers: { "Content-Type": "application/json", ...corsHeaders } 
@@ -114,8 +156,15 @@ serve(async (req) => {
       );
     }
 
+    // Prepare document information
+    const documentNumber = isInvoice ? document.invoice_number : document.credit_note_number;
+    const documentDate = isInvoice ? document.invoice_date : document.credit_note_date;
+    const totalAmount = document.total_amount || 0;
+    
     // Build email content
-    const emailSubject = subject || `Invoice ${invoice.invoice_number} from ${company.name}`;
+    const emailSubject = subject || `${isInvoice ? 'Invoice' : 'Credit Note'} ${documentNumber} from ${company.name}`;
+    const emailMessage = message || `Please find attached the ${isInvoice ? 'invoice' : 'credit note'} ${documentNumber} from ${company.name}.`;
+    
     const emailHtml = `
       <html>
         <head>
@@ -124,27 +173,26 @@ serve(async (req) => {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { text-align: center; margin-bottom: 30px; }
             .message { margin-bottom: 20px; }
-            .invoice-details { margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 5px; }
+            .document-details { margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 5px; }
             .company-info { margin-bottom: 20px; }
             .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }
-            .button { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h2>Invoice ${invoice.invoice_number}</h2>
+              <h2>${isInvoice ? 'Invoice' : 'Credit Note'} ${documentNumber}</h2>
             </div>
             
             <div class="message">
-              <p>${message || `Please find attached the invoice ${invoice.invoice_number} from ${company.name}.`}</p>
+              <p>${emailMessage}</p>
             </div>
             
-            <div class="invoice-details">
-              <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
-              <p><strong>Date:</strong> ${new Date(invoice.invoice_date).toLocaleDateString()}</p>
-              <p><strong>Due Date:</strong> ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}</p>
-              <p><strong>Amount:</strong> ₹${invoice.total_amount.toFixed(2)}</p>
+            <div class="document-details">
+              <p><strong>${isInvoice ? 'Invoice' : 'Credit Note'} Number:</strong> ${documentNumber}</p>
+              <p><strong>Date:</strong> ${new Date(documentDate).toLocaleDateString()}</p>
+              ${isInvoice && document.due_date ? `<p><strong>Due Date:</strong> ${new Date(document.due_date).toLocaleDateString()}</p>` : ''}
+              <p><strong>Amount:</strong> ₹${Number(totalAmount).toFixed(2)}</p>
             </div>
             
             <div class="company-info">
@@ -155,7 +203,7 @@ serve(async (req) => {
               <p>GSTIN: ${company.gstin}</p>
             </div>
             
-            <p>Please see the attached PDF for complete invoice details.</p>
+            <p>Please see the attached PDF for complete details.</p>
             
             <div class="footer">
               <p>This is an automated email. Please do not reply to this message.</p>
@@ -165,28 +213,30 @@ serve(async (req) => {
       </html>
     `;
 
-    // We can't generate a PDF here because html2pdf.js requires a browser environment
-    // Instead, we'll send the invoice id and generate a download URL
-    // In a real application, you would use a server-side PDF generation library
-    const baseUrl = new URL(req.url).origin;
-    const viewUrl = `${baseUrl}/app/invoices/view/${invoiceId}?download=true`;
+    // Generate a download URL
+    // In a production environment, you would generate a proper PDF attachment here
+    const baseUrl = req.headers.get('origin') || 'http://localhost:3000';
+    const viewUrl = `${baseUrl}/app/${isInvoice ? 'invoices' : 'credit-notes'}/view/${documentId}?download=true`;
+    
+    console.log("Sending email to:", recipientEmail);
+    console.log("Email subject:", emailSubject);
+    console.log("View URL:", viewUrl);
 
-    // Send email with PDF attachment
+    // Send email with "attachment" link pointing to view URL
+    // Note: In a real production environment, we'd generate an actual PDF attachment here
     const emailResponse = await resend.emails.send({
       from: `${company.name} <onboarding@resend.dev>`,
       to: [recipientEmail],
       subject: emailSubject,
       html: emailHtml,
-      text: `Invoice ${invoice.invoice_number} from ${company.name}. Please view the attached PDF for details.`,
-      attachments: [
-        {
-          filename: `Invoice-${invoice.invoice_number}.pdf`,
-          content: viewUrl,  // Link to download the invoice
-        },
-      ],
+      text: `${isInvoice ? 'Invoice' : 'Credit Note'} ${documentNumber} from ${company.name}. View online at: ${viewUrl}`,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Email send response:", JSON.stringify(emailResponse));
+
+    if (emailResponse.error) {
+      throw new Error(emailResponse.error.message || "Failed to send email");
+    }
 
     return new Response(
       JSON.stringify({ success: true, messageId: emailResponse.id }),
@@ -196,7 +246,7 @@ serve(async (req) => {
       }
     );
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in send-invoice-email function:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Failed to send email" }),

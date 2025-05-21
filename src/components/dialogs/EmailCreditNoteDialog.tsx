@@ -37,8 +37,13 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
     setError(null);
 
     try {
-      // For now, we'll use the same function for invoices
-      // In a future update, we could create a specific credit note email function
+      console.log("Sending credit note email with data:", {
+        creditNoteId: creditNote.id,
+        recipientEmail,
+        subject,
+        message
+      });
+
       const { data, error } = await supabase.functions.invoke("send-invoice-email", {
         body: {
           creditNoteId: creditNote.id,
@@ -48,7 +53,17 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
         },
       });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("Function invoke error:", error);
+        throw new Error(error.message || "Failed to send email");
+      }
+      
+      if (!data || data.error) {
+        console.error("Function returned error:", data?.error);
+        throw new Error(data?.error || "Failed to send email");
+      }
+      
+      console.log("Email sent successfully:", data);
       
       toast({
         title: "Email sent successfully",

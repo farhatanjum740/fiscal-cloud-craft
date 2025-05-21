@@ -37,6 +37,13 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
     setError(null);
 
     try {
+      console.log("Sending invoice email with data:", {
+        invoiceId: invoice.id,
+        recipientEmail,
+        subject,
+        message
+      });
+
       const { data, error } = await supabase.functions.invoke("send-invoice-email", {
         body: {
           invoiceId: invoice.id,
@@ -46,7 +53,17 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
         },
       });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("Function invoke error:", error);
+        throw new Error(error.message || "Failed to send email");
+      }
+      
+      if (!data || data.error) {
+        console.error("Function returned error:", data?.error);
+        throw new Error(data?.error || "Failed to send email");
+      }
+      
+      console.log("Email sent successfully:", data);
       
       toast({
         title: "Email sent successfully",
