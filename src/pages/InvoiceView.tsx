@@ -52,7 +52,7 @@ const InvoiceView = () => {
   
   // Debug the invoice data structure
   useEffect(() => {
-    if (invoice && id) {
+    if (invoice && id && customer) {
       console.log("InvoiceView - Full invoice data:", invoice);
       console.log("Invoice ID from params:", id);
       console.log("Customer data:", customer);

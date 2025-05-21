@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,6 +23,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
   company,
 }) => {
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [availableEmails, setAvailableEmails] = useState<string[]>([]);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       // If invoice has a customer with an email, use it
       if (invoice.customer?.email) {
         setRecipientEmail(invoice.customer.email);
+        setAvailableEmails([invoice.customer.email]);
       } else if (invoice.customerId || invoice.customer_id) {
         // If invoice has customerId but no customer object, fetch customer data
         fetchCustomerEmail(invoice.customerId || invoice.customer_id);
@@ -57,7 +60,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       
       const { data, error } = await supabase
         .from('customers')
-        .select('email')
+        .select('email, name')
         .eq('id', customerId)
         .maybeSingle();
       
@@ -69,6 +72,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       if (data && data.email) {
         console.log("Found customer email:", data.email);
         setRecipientEmail(data.email);
+        setAvailableEmails([data.email]);
       } else {
         console.log("No email found for customer:", customerId);
       }
@@ -171,15 +175,34 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="recipient-email">Recipient Email *</Label>
-            <Input
-              id="recipient-email"
-              type="email"
-              value={recipientEmail}
-              onChange={(e) => setRecipientEmail(e.target.value)}
-              placeholder={fetchingCustomer ? "Loading customer email..." : "customer@example.com"}
-              required
-              disabled={fetchingCustomer}
-            />
+            {availableEmails.length > 0 ? (
+              <Select 
+                defaultValue={recipientEmail} 
+                onValueChange={setRecipientEmail}
+                disabled={fetchingCustomer}
+              >
+                <SelectTrigger id="recipient-email">
+                  <SelectValue placeholder={fetchingCustomer ? "Loading customer email..." : "Select customer email"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableEmails.map((email) => (
+                    <SelectItem key={email} value={email}>
+                      {email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="recipient-email"
+                type="email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                placeholder={fetchingCustomer ? "Loading customer email..." : "customer@example.com"}
+                required
+                disabled={fetchingCustomer}
+              />
+            )}
           </div>
 
           <div className="grid gap-2">

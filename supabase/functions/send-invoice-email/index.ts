@@ -45,7 +45,7 @@ function InvoiceEmail({ logoURL, company, message, document, isInvoice }: Invoic
           null,
           React.createElement('p', null, `Best Regards,`),
           React.createElement('p', null, company.name),
-          React.createElement('p', null, company.email_id),
+          React.createElement('p', null, company.email_id || 'support@invoiceninja.in'),
           company.contact_number && React.createElement('p', null, `Phone: ${company.contact_number}`)
         ),
         React.createElement(
@@ -209,8 +209,8 @@ Deno.serve(async (req) => {
     // Initialize Resend client
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Always use onboarding@resend.dev as the sender regardless of company email
-    const fromEmail = "onboarding@resend.dev";
+    // Use the verified domain email for all companies
+    const fromEmail = "support@invoiceninja.in";
     
     console.log(`Sending email from ${fromEmail} to ${customerEmail}`);
 
