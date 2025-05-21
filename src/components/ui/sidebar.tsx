@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Sheet,
@@ -17,12 +18,12 @@ import { useNavigate } from "react-router-dom";
 import { Home, Plus, Settings, Users, Package, CreditCard } from "lucide-react";
 
 interface SidebarProps {
-  children: React.ReactNode;
+  signOut: () => Promise<void>;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ children }) => {
+const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const isActive = (path: string) => {
@@ -79,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
                 Profile
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={signOut}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -99,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children }) => {
 
       {/* Main Content */}
       <div className="flex-1 p-4">
-        {children}
+        {/* children prop is not being used here, since AppLayout uses this component differently */}
       </div>
     </div>
   );
