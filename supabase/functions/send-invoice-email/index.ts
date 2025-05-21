@@ -40,6 +40,8 @@ serve(async (req) => {
     
     const { invoiceId, creditNoteId, recipientEmail, subject, message } = requestData as EmailInvoiceRequest;
     
+    console.log("Parsed request data:", { invoiceId, creditNoteId, recipientEmail, subject, message });
+    
     if ((!invoiceId && !creditNoteId) || !recipientEmail) {
       console.error("Missing required fields:", { invoiceId, creditNoteId, recipientEmail });
       return new Response(
@@ -68,6 +70,7 @@ serve(async (req) => {
         .single();
       document = result.data;
       documentError = result.error;
+      console.log("Invoice query result:", { data: document, error: documentError });
     } else {
       const result = await supabase
         .from("credit_notes")
@@ -76,6 +79,7 @@ serve(async (req) => {
         .single();
       document = result.data;
       documentError = result.error;
+      console.log("Credit note query result:", { data: document, error: documentError });
     }
 
     if (documentError || !document) {
@@ -214,7 +218,6 @@ serve(async (req) => {
     `;
 
     // Generate a download URL
-    // In a production environment, you would generate a proper PDF attachment here
     const baseUrl = req.headers.get('origin') || 'http://localhost:3000';
     const viewUrl = `${baseUrl}/app/${isInvoice ? 'invoices' : 'credit-notes'}/view/${documentId}?download=true`;
     
@@ -223,7 +226,6 @@ serve(async (req) => {
     console.log("View URL:", viewUrl);
 
     // Send email with "attachment" link pointing to view URL
-    // Note: In a real production environment, we'd generate an actual PDF attachment here
     const emailResponse = await resend.emails.send({
       from: `${company.name} <onboarding@resend.dev>`,
       to: [recipientEmail],

@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -48,7 +47,8 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         cgst: creditNote.cgst,
         sgst: creditNote.sgst,
         igst: creditNote.igst,
-        totalAmount: creditNote.total_amount
+        totalAmount: creditNote.total_amount,
+        id: creditNote.id
       });
     }
   }, [creditNote, company, invoice, customer]);
