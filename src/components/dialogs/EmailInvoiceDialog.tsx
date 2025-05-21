@@ -26,7 +26,8 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [fetchingCustomer, setFetchingCustomer] = useState(false);
+  
   // Set default values when invoice data changes
   useEffect(() => {
     if (invoice) {
@@ -39,16 +40,55 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       // If invoice has a customer with an email, use it
       if (invoice.customer?.email) {
         setRecipientEmail(invoice.customer.email);
+      } else if (invoice.customerId || invoice.customer_id) {
+        // If invoice has customerId but no customer object, fetch customer data
+        fetchCustomerEmail(invoice.customerId || invoice.customer_id);
       }
     }
   }, [invoice, company]);
+  
+  // Fetch customer email if not available in the invoice object
+  const fetchCustomerEmail = async (customerId: string) => {
+    if (!customerId) return;
+    
+    try {
+      setFetchingCustomer(true);
+      console.log("Fetching customer data for ID:", customerId);
+      
+      const { data, error } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('id', customerId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error fetching customer:", error);
+        return;
+      }
+      
+      if (data && data.email) {
+        console.log("Found customer email:", data.email);
+        setRecipientEmail(data.email);
+      } else {
+        console.log("No email found for customer:", customerId);
+      }
+    } catch (err) {
+      console.error("Error in fetchCustomerEmail:", err);
+    } finally {
+      setFetchingCustomer(false);
+    }
+  };
 
   // Log debug information about the invoice object
   useEffect(() => {
-    console.log("EmailInvoiceDialog - Invoice data:", invoice);
-    console.log("Invoice ID:", invoice?.id);
-    console.log("Invoice structure:", JSON.stringify(invoice, null, 2));
-  }, [invoice]);
+    if (invoice && open) {
+      console.log("EmailInvoiceDialog - Invoice data:", invoice);
+      console.log("Invoice ID:", invoice?.id);
+      console.log("Invoice number:", invoice?.invoiceNumber || invoice?.invoice_number);
+      console.log("Invoice customer_id:", invoice?.customerId || invoice?.customer_id);
+      console.log("Invoice structure:", JSON.stringify(invoice, null, 2));
+    }
+  }, [invoice, open]);
 
   const handleSendEmail = async () => {
     if (!recipientEmail) {
@@ -137,8 +177,9 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
               type="email"
               value={recipientEmail}
               onChange={(e) => setRecipientEmail(e.target.value)}
-              placeholder="customer@example.com"
+              placeholder={fetchingCustomer ? "Loading customer email..." : "customer@example.com"}
               required
+              disabled={fetchingCustomer}
             />
           </div>
 

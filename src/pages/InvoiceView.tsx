@@ -42,13 +42,23 @@ const InvoiceView = () => {
   // Find the customer for this invoice
   const customer = customers.find(cust => cust.id === invoice.customerId);
   
+  // Prepare full invoice data with all needed properties
+  const fullInvoiceData = {
+    ...invoice,
+    id: id,
+    customer_id: invoice.customerId,
+    customer: customer
+  };
+  
   // Debug the invoice data structure
   useEffect(() => {
     if (invoice && id) {
       console.log("InvoiceView - Full invoice data:", invoice);
       console.log("Invoice ID from params:", id);
+      console.log("Customer data:", customer);
+      console.log("Prepared full invoice data:", fullInvoiceData);
     }
-  }, [invoice, id]);
+  }, [invoice, id, customer, fullInvoiceData]);
   
   const handleDeleteInvoice = async () => {
     if (!id) return;
@@ -103,7 +113,8 @@ const InvoiceView = () => {
   const handleEmailInvoice = () => {
     console.log("Opening email dialog with invoice data:", {
       id: id,
-      invoice: invoice
+      invoice: fullInvoiceData,
+      customer: customer
     });
     setEmailDialogOpen(true);
   };
@@ -163,7 +174,7 @@ const InvoiceView = () => {
       ) : (
         <>
           <InvoiceViewComponent 
-            invoice={{...invoice, id: id}} 
+            invoice={fullInvoiceData} 
             company={company} 
             customer={customer}
           />
@@ -171,7 +182,7 @@ const InvoiceView = () => {
           <EmailInvoiceDialog
             open={emailDialogOpen}
             onOpenChange={setEmailDialogOpen}
-            invoice={{...invoice, id: id}}
+            invoice={fullInvoiceData}
             company={company}
           />
         </>

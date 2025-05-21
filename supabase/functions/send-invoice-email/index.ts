@@ -60,7 +60,7 @@ function InvoiceEmail({ logoURL, company, message, document, isInvoice }: Invoic
 interface EmailInvoiceRequest {
   invoiceId?: string;
   creditNoteId?: string;
-  recipientEmail: string;
+  recipientEmail?: string;
   subject: string;
   message: string;
 }
@@ -86,11 +86,11 @@ Deno.serve(async (req) => {
     
     console.log("Parsed request data:", { invoiceId, creditNoteId, recipientEmail, subject, message });
     
-    if ((!invoiceId && !creditNoteId) || !recipientEmail) {
-      console.error("Missing required fields:", { invoiceId, creditNoteId, recipientEmail });
+    if ((!invoiceId && !creditNoteId)) {
+      console.error("Missing required fields:", { invoiceId, creditNoteId });
       return new Response(
         JSON.stringify({ 
-          error: "Missing required fields. Must provide either invoiceId or creditNoteId, and recipientEmail."
+          error: "Missing required fields. Must provide either invoiceId or creditNoteId."
         }),
         { 
           status: 400, 
@@ -155,6 +155,7 @@ Deno.serve(async (req) => {
     }
     
     const companyId = document.company_id;
+    const customerId = document.customer_id;
 
     // Fetch company details
     const { data: company, error: companyError } = await supabase
@@ -171,11 +172,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!company) {
-      console.error("Company not found:", companyId);
+    // Fetch customer details if recipientEmail is not provided
+    let customerEmail = recipientEmail;
+    if (!customerEmail && customerId) {
+      console.log("Fetching customer email for ID:", customerId);
+      const { data: customer, error: customerError } = await supabase
+        .from("customers")
+        .select("email")
+        .eq("id", customerId)
+        .single();
+      
+      if (customerError) {
+        console.error("Error fetching customer:", customerError);
+      } else if (customer && customer.email) {
+        customerEmail = customer.email;
+        console.log("Using customer email from database:", customerEmail);
+      }
+    }
+    
+    if (!customerEmail) {
+      console.error("No recipient email provided and couldn't find customer email");
       return new Response(
-        JSON.stringify({ error: "Company not found." }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "No recipient email provided and couldn't find customer email" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -189,10 +208,15 @@ Deno.serve(async (req) => {
     // Initialize Resend client
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
+    // Always use onboarding@resend.dev as the sender regardless of company email
+    const fromEmail = "onboarding@resend.dev";
+    
+    console.log(`Sending email from ${fromEmail} to ${customerEmail}`);
+
     // Send the email with our inline React component
     const emailResult = await resend.emails.send({
-      from: `${company.name} <${company.email_id || 'onboarding@resend.dev'}>`,
-      to: [recipientEmail],
+      from: `${company.name} <${fromEmail}>`,
+      to: [customerEmail],
       subject: subject,
       react: InvoiceEmail({
         logoURL: logoURL,
@@ -210,6 +234,8 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log("Email sent successfully to:", customerEmail);
 
     // Respond with success
     return new Response(
