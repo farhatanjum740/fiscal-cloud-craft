@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,10 +21,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Reports from '@/pages/Reports';
-import Pricing from './pages/Pricing';
-import Payment from './pages/Payment';
 import { AuthProvider } from "./contexts/AuthContext";
-import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import React from "react";
 
 // Create a query client with enhanced error handling - updated for React Query v5
@@ -93,66 +89,60 @@ class AppErrorBoundary extends React.Component<
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppErrorBoundary>
-            <AuthProvider>
-              <SubscriptionProvider>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/pricing" element={<Pricing />} />
-                  <Route path="/payment" element={<Payment />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  
-                  <Route path="/app" element={<AppLayout />}>
-                    <Route index element={<Dashboard />} />
-                    
-                    <Route path="invoices">
-                      <Route index element={<Invoices />} />
-                      <Route path="new" element={<InvoiceEditor />} />
-                      <Route path="edit/:id" element={<InvoiceEditor />} />
-                      <Route path="view/:id" element={<InvoiceView />} />
-                    </Route>
-                    
-                    <Route path="credit-notes">
-                      <Route path="new" element={<CreditNoteEditor />} />
-                      <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
-                      <Route path="edit/:id" element={<CreditNoteEditor />} />
-                      <Route path="view/:id" element={<CreditNoteView />} />
-                    </Route>
-                    
-                    <Route path="customers">
-                      <Route index element={<Customers />} />
-                      <Route path="new" element={<CustomerEditor />} />
-                      <Route path="edit/:id" element={<CustomerEditor />} />
-                    </Route>
-                    
-                    <Route path="products">
-                      <Route index element={<Products />} />
-                      <Route path="new" element={<ProductEditor />} />
-                      <Route path="edit/:id" element={<ProductEditor />} />
-                    </Route>
+    <BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppErrorBoundary>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              
+              <Route path="/app" element={<AppLayout />}>
+                <Route index element={<Dashboard />} />
+                
+                <Route path="invoices">
+                  <Route index element={<Invoices />} />
+                  <Route path="new" element={<InvoiceEditor />} />
+                  <Route path="edit/:id" element={<InvoiceEditor />} />
+                  <Route path="view/:id" element={<InvoiceView />} />
+                </Route>
+                
+                <Route path="credit-notes">
+                  <Route path="new" element={<CreditNoteEditor />} />
+                  <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
+                  <Route path="edit/:id" element={<CreditNoteEditor />} />
+                  <Route path="view/:id" element={<CreditNoteView />} />
+                </Route>
+                
+                <Route path="customers">
+                  <Route index element={<Customers />} />
+                  <Route path="new" element={<CustomerEditor />} />
+                  <Route path="edit/:id" element={<CustomerEditor />} />
+                </Route>
+                
+                <Route path="products">
+                  <Route index element={<Products />} />
+                  <Route path="new" element={<ProductEditor />} />
+                  <Route path="edit/:id" element={<ProductEditor />} />
+                </Route>
 
-                    <Route path="reports" element={<Reports />} />
-                    
-                    <Route path="settings">
-                      <Route path="company" element={<CompanyProfile />} />
-                    </Route>
-                  </Route>
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </SubscriptionProvider>
-            </AuthProvider>
-          </AppErrorBoundary>
-        </TooltipProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+                <Route path="reports" element={<Reports />} />
+                
+                <Route path="settings">
+                  <Route path="company" element={<CompanyProfile />} />
+                </Route>
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </AppErrorBoundary>
+      </TooltipProvider>
+    </BrowserRouter>
   );
 }
 
