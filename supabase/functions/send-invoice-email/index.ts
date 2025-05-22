@@ -149,7 +149,8 @@ Deno.serve(async (req) => {
         .from("credit_notes")
         .select("*, company_id, invoice_id")
         .eq("id", creditNoteId)
-        .single();
+        .maybeSingle();
+      
       document = creditNoteResult.data;
       documentError = creditNoteResult.error;
       console.log("Credit note query result:", { data: document, error: documentError });
@@ -162,7 +163,7 @@ Deno.serve(async (req) => {
           .from("invoices")
           .select("customer_id")
           .eq("id", document.invoice_id)
-          .single();
+          .maybeSingle();
           
         if (invoiceResult.data) {
           customerId = invoiceResult.data.customer_id;

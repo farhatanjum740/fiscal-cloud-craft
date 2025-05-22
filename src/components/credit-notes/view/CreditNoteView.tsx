@@ -108,10 +108,26 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
 
   const handleEmail = () => {
+    // First, create a normalized credit note object with consistent property names
+    // Ensuring the ID is properly extracted from the original object
+    const id = creditNote?.id;
+    
+    console.log("Original credit note object:", creditNote);
+    console.log("Credit note ID from original object:", id);
+    
+    if (!id) {
+      toast({
+        title: "Missing Credit Note ID",
+        description: "Could not find credit note ID. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Ensure credit note data has consistent property names and explicitly include the ID
     const normalizedCreditNote = {
       ...creditNote,
-      id: creditNote.id, // Explicitly set ID to ensure it's available
+      id: id, // Explicitly set ID to ensure it's available
       creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
       creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
       invoiceId: creditNote.invoiceId || creditNote.invoice_id,
@@ -122,15 +138,6 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     // Log credit note data for debugging before opening dialog
     console.log("Opening email dialog with credit note:", normalizedCreditNote);
     console.log("Credit note ID (explicit):", normalizedCreditNote.id);
-    
-    if (!normalizedCreditNote.id) {
-      toast({
-        title: "Missing Information",
-        description: "Credit note ID is missing. Please try again with a valid credit note.",
-        variant: "destructive"
-      });
-      return;
-    }
     
     setEmailDialogOpen(true);
   };

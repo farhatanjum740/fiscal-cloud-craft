@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,13 +44,13 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       console.log("Credit Note Number:", creditNote?.creditNoteNumber || creditNote?.credit_note_number);
       console.log("Credit Note Invoice ID:", creditNote?.invoiceId || creditNote?.invoice_id);
       
-      // Ensure we create a normalized version with consistent property names
-      const normalizedCreditNote = {
-        ...creditNote,
-        id: creditNote.id,
-        creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
-        invoiceId: creditNote.invoiceId || creditNote.invoice_id,
-      };
+      // Deep clone the credit note to avoid reference issues
+      const normalizedCreditNote = JSON.parse(JSON.stringify(creditNote));
+      
+      // Extra safeguard for ID
+      if (!normalizedCreditNote.id && creditNote.id) {
+        normalizedCreditNote.id = creditNote.id;
+      }
       
       console.log("Normalized credit note:", normalizedCreditNote);
       
@@ -58,8 +59,9 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       setMessage(`Please find attached credit note ${normalizedCreditNote.creditNoteNumber}.`);
       
       // Get invoice to fetch customer data
-      if (normalizedCreditNote.invoiceId) {
-        fetchInvoiceAndCustomer(normalizedCreditNote.invoiceId);
+      const invoiceId = normalizedCreditNote.invoiceId || normalizedCreditNote.invoice_id;
+      if (invoiceId) {
+        fetchInvoiceAndCustomer(invoiceId);
       }
     }
   }, [creditNote, company, open]);
@@ -132,7 +134,7 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       // Configure html2pdf options for better text rendering and content fitting
       const options = {
         filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number}.pdf`,
-        margin: [5, 5, 5, 5], // Reduced margins to 5mm as requested (top, right, bottom, left)
+        margin: [5, 5, 5, 5], // 5mm margins as requested
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2, 
@@ -185,8 +187,12 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       return;
     }
 
-    // Double check the credit note ID is present and use a consistent property access approach
+    // Double check the credit note ID is present
     const creditNoteId = creditNote?.id;
+    
+    console.log("About to send email for credit note:", creditNote);
+    console.log("Credit note ID being used:", creditNoteId);
+    
     if (!creditNoteId) {
       console.error("Credit Note ID is missing in EmailCreditNoteDialog:", creditNote);
       console.log("Entire credit note object:", JSON.stringify(creditNote, null, 2));
@@ -194,7 +200,7 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       toast({
         title: "Missing credit note data",
         description: "The credit note information is incomplete. Please try again with a valid credit note.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
