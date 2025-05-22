@@ -120,7 +120,7 @@
   
   /* Paper settings */
   @page {
-    size: A4;
+    size: A4 portrait;
     margin: 0;
   }
   
@@ -145,18 +145,18 @@
     box-sizing: border-box !important;
     page-break-after: always !important;
     background-color: white !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     float: none !important;
-    font-size: 11pt !important;
+    font-size: 10pt !important;
   }
   
   /* Improved table rendering */
   table {
     width: 100% !important;
+    table-layout: fixed !important;
     border-collapse: collapse !important;
     page-break-inside: auto !important;
-    font-size: 10pt !important;
-    table-layout: fixed !important;
+    font-size: 9pt !important;
   }
   
   tr {
@@ -164,10 +164,14 @@
     page-break-after: auto !important;
   }
   
-  td, th {
+  th, td {
+    padding: 1mm !important;
+    font-size: 8pt !important;
     page-break-inside: avoid !important;
     overflow-wrap: break-word !important;
     word-wrap: break-word !important;
+    max-width: 100% !important;
+    white-space: normal !important;
   }
   
   /* Ensure page breaks happen at appropriate places */
@@ -186,13 +190,8 @@
   
   /* Fix overflow issues */
   .overflow-x-auto, .w-full {
-    overflow-x: visible !important;
+    overflow: visible !important;
     width: 100% !important;
-  }
-  
-  /* Better table cells */
-  th, td {
-    padding: 2mm !important;
-    font-size: 9pt !important;
+    max-width: 200mm !important;
   }
 }

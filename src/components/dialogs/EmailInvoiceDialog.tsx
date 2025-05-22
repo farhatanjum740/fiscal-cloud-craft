@@ -19,6 +19,34 @@ interface EmailInvoiceDialogProps {
   company: any;
 }
 
+// Define a reusable PDF configuration to ensure consistency
+const getPdfOptions = (filename: string) => ({
+  filename: filename,
+  margin: [5, 5, 5, 5], // Consistent 5mm margins
+  image: { type: 'jpeg', quality: 0.98 },
+  html2canvas: { 
+    scale: 2, 
+    useCORS: true,
+    letterRendering: true,
+    allowTaint: true,
+    logging: false,
+    removeContainer: true,
+    // Force text rendering
+    textRendering: true
+  },
+  jsPDF: { 
+    unit: 'mm', 
+    format: 'a4', 
+    orientation: 'portrait',
+    compress: false, // Disable compression for better text rendering
+    precision: 16,
+    putOnlyUsedFonts: true,
+    floatPrecision: "smart"
+  },
+  enableLinks: true,
+  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+});
+
 const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
   open,
   onOpenChange,
@@ -111,56 +139,65 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
 
     try {
       // Clone the node to work with
-      const pdfContainer = invoicePdfRef.current.cloneNode(true) as HTMLElement;
+      const clonedNode = invoicePdfRef.current.cloneNode(true) as HTMLDivElement;
       
-      // Adjust the styling for better PDF generation
-      pdfContainer.style.width = '210mm';
-      pdfContainer.style.padding = '10mm';
-      pdfContainer.style.backgroundColor = 'white';
+      // Add to document body but hide it
+      document.body.appendChild(clonedNode);
+      clonedNode.style.display = 'block';
+      clonedNode.style.position = 'absolute';
+      clonedNode.style.left = '-9999px';
+      clonedNode.style.width = '210mm';
+      clonedNode.style.padding = '5mm';
+      clonedNode.style.backgroundColor = 'white';
       
-      // Configure html2pdf options for better text rendering
-      const options = {
-        filename: `Invoice-${invoice.invoiceNumber || invoice.invoice_number}.pdf`,
-        margin: [5, 5, 5, 5], // 5mm margins as requested
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true,
-          letterRendering: true,
-          allowTaint: true,
-          logging: false,
-          removeContainer: true
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: false, // Disable compression for better text rendering
-          precision: 16,
-          putOnlyUsedFonts: true,
-          floatPrecision: "smart"
-        },
-        enableLinks: true,
-        pagebreak: { mode: 'avoid-all' }
-      };
-
-      // Generate PDF with improved settings
-      const pdfBlob = await html2pdf()
-        .from(pdfContainer)
-        .set(options)
-        .outputPdf('blob');
-      
-      // Convert blob to base64
-      return await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64data = reader.result as string;
-          // Extract just the base64 data part
-          const base64Content = base64data.split(',')[1];
-          resolve(base64Content);
-        };
-        reader.readAsDataURL(pdfBlob);
+      // Optimize tables for PDF output
+      const tableElements = clonedNode.querySelectorAll('table');
+      tableElements.forEach((table) => {
+        table.style.width = '100%';
+        table.style.tableLayout = 'fixed';
+        table.style.maxWidth = '200mm';
+        
+        const cells = table.querySelectorAll('th, td');
+        cells.forEach((cell) => {
+          (cell as HTMLElement).style.padding = '1mm';
+          (cell as HTMLElement).style.fontSize = '8pt';
+          (cell as HTMLElement).style.wordBreak = 'break-word';
+        });
       });
+      
+      // Configure options for PDF generation
+      const options = getPdfOptions(`Invoice-${invoice.invoiceNumber || invoice.invoice_number}.pdf`);
+      
+      try {
+        // Generate the PDF
+        const pdfBlob = await html2pdf()
+          .set(options)
+          .from(clonedNode)
+          .outputPdf('blob');
+        
+        // Clean up
+        document.body.removeChild(clonedNode);
+        
+        // Convert blob to base64
+        return await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result as string;
+            // Extract just the base64 data part
+            const base64Content = base64data.split(',')[1];
+            resolve(base64Content);
+          };
+          reader.readAsDataURL(pdfBlob);
+        });
+        
+      } catch (err) {
+        console.error('Error in PDF generation:', err);
+        // Clean up on error
+        if (document.body.contains(clonedNode)) {
+          document.body.removeChild(clonedNode);
+        }
+        throw err;
+      }
       
     } catch (err) {
       console.error('Error generating PDF:', err);

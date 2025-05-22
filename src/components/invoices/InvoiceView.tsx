@@ -17,6 +17,34 @@ interface InvoiceViewProps {
   isDownloadable?: boolean;
 }
 
+// Define a reusable PDF configuration to ensure consistency
+const getPdfOptions = (filename: string) => ({
+  filename: filename,
+  margin: [5, 5, 5, 5], // Consistent 5mm margins
+  image: { type: 'jpeg', quality: 0.98 },
+  html2canvas: { 
+    scale: 2, 
+    useCORS: true,
+    letterRendering: true,
+    allowTaint: true,
+    logging: false,
+    removeContainer: true,
+    // Force text rendering
+    textRendering: true,
+  },
+  jsPDF: { 
+    unit: 'mm', 
+    format: 'a4', 
+    orientation: 'portrait',
+    compress: false, // Disable compression for better text rendering
+    precision: 16,
+    putOnlyUsedFonts: true,
+    floatPrecision: "smart"
+  },
+  enableLinks: true,
+  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+});
+
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, customer, isDownloadable = true }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -62,35 +90,42 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your invoice..." });
       
-      // Improved PDF configuration for better rendering and to prevent content overflow
-      const options = {
-        filename: `Invoice-${invoice.invoiceNumber}.pdf`,
-        margin: [5, 5, 5, 5], // 5mm margins on all sides
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true,
-          letterRendering: true,
-          allowTaint: true,
-          logging: false,
-          removeContainer: true
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: false, // Disable compression for better text rendering
-          precision: 16,
-          putOnlyUsedFonts: true,
-          floatPrecision: "smart"
-        },
-        enableLinks: true,
-        pagebreak: { mode: 'avoid-all' }
-      };
+      const options = getPdfOptions(`Invoice-${invoice.invoiceNumber}.pdf`);
       
-      await html2pdf().set(options).from(printRef.current).save();
+      // Clone node to avoid modifying the visible DOM
+      const clonedNode = printRef.current.cloneNode(true) as HTMLDivElement;
+      document.body.appendChild(clonedNode);
+      clonedNode.style.display = 'block';
+      clonedNode.style.position = 'absolute';
+      clonedNode.style.left = '-9999px';
+      clonedNode.style.width = '210mm';
+      clonedNode.style.padding = '5mm';
       
-      toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
+      // Process specifically for better PDF output
+      const tableElements = clonedNode.querySelectorAll('table');
+      tableElements.forEach((table) => {
+        table.style.width = '100%';
+        table.style.tableLayout = 'fixed';
+        table.style.maxWidth = '200mm';
+        
+        const cells = table.querySelectorAll('th, td');
+        cells.forEach((cell) => {
+          (cell as HTMLElement).style.padding = '1mm';
+          (cell as HTMLElement).style.fontSize = '8pt';
+          (cell as HTMLElement).style.wordBreak = 'break-word';
+        });
+      });
+      
+      try {
+        await html2pdf().set(options).from(clonedNode).save();
+        document.body.removeChild(clonedNode);
+        toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
+      } catch (err) {
+        console.error('Error in PDF generation:', err);
+        document.body.removeChild(clonedNode);
+        throw err;
+      }
+      
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
       toast({ 
@@ -246,32 +281,32 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Invoice Items - Using fixed table layout and controlling column widths */}
-        <div className="w-full overflow-visible print:overflow-visible">
-          <table className="w-full text-left border-collapse mb-3 text-xs table-fixed">
+        <div className="w-full overflow-hidden">
+          <table className="w-full border-collapse mb-3 text-xs" style={{ tableLayout: 'fixed', maxWidth: '200mm' }}>
             <thead>
               <tr className="bg-gray-100">
-                <th className="py-1 px-1 border font-semibold w-[5%]">S.No</th>
-                <th className="py-1 px-1 border font-semibold w-[25%]">Item</th>
-                <th className="py-1 px-1 border font-semibold w-[10%]">HSN/SAC</th>
-                <th className="py-1 px-1 border font-semibold w-[7%]">Qty</th>
-                <th className="py-1 px-1 border font-semibold w-[7%]">Unit</th>
-                <th className="py-1 px-1 border font-semibold w-[10%]">Rate</th>
-                <th className="py-1 px-1 border font-semibold w-[10%]">Amount</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>No</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '25%' }}>Item</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>HSN/SAC</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '7%' }}>Qty</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '8%' }}>Unit</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>Rate</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>Amount</th>
                 
                 {useIGST ? (
                   <>
-                    <th className="py-1 px-1 border font-semibold w-[7%]">IGST %</th>
-                    <th className="py-1 px-1 border font-semibold w-[9%]">IGST</th>
+                    <th className="py-1 px-1 border font-semibold" style={{ width: '7%' }}>IGST %</th>
+                    <th className="py-1 px-1 border font-semibold" style={{ width: '8%' }}>IGST</th>
                   </>
                 ) : (
                   <>
-                    <th className="py-1 px-1 border font-semibold w-[5%]">CGST %</th>
-                    <th className="py-1 px-1 border font-semibold w-[7%]">CGST</th>
-                    <th className="py-1 px-1 border font-semibold w-[5%]">SGST %</th>
-                    <th className="py-1 px-1 border font-semibold w-[7%]">SGST</th>
+                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>CGST %</th>
+                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>CGST</th>
+                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>SGST %</th>
+                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>SGST</th>
                   </>
                 )}
-                <th className="py-1 px-1 border font-semibold text-right w-[10%]">Total</th>
+                <th className="py-1 px-1 border font-semibold text-right" style={{ width: '10%' }}>Total</th>
               </tr>
             </thead>
             <tbody>

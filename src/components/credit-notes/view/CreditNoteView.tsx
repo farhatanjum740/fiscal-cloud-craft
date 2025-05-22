@@ -20,6 +20,34 @@ interface CreditNoteViewProps {
   isDownloadable?: boolean;
 }
 
+// Define a reusable PDF configuration to ensure consistency
+const getPdfOptions = (filename: string) => ({
+  filename: filename,
+  margin: [5, 5, 5, 5], // Consistent 5mm margins
+  image: { type: 'jpeg', quality: 0.98 },
+  html2canvas: { 
+    scale: 2, 
+    useCORS: true,
+    letterRendering: true,
+    allowTaint: true,
+    logging: false,
+    removeContainer: true,
+    // Force text rendering
+    textRendering: true
+  },
+  jsPDF: { 
+    unit: 'mm', 
+    format: 'a4', 
+    orientation: 'portrait',
+    compress: false, // Disable compression for better text rendering
+    precision: 16,
+    putOnlyUsedFonts: true,
+    floatPrecision: "smart"
+  },
+  enableLinks: true,
+  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+});
+
 const CreditNoteView: React.FC<CreditNoteViewProps> = ({ 
   creditNote, 
   company, 
@@ -72,35 +100,52 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
-      // Improved PDF configuration for better rendering
-      const options = {
-        filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number || 'draft'}.pdf`,
-        margin: [5, 5, 5, 5], // 5mm margins as requested
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true,
-          letterRendering: true,
-          allowTaint: true,
-          logging: false,
-          removeContainer: true
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: false, // Disable compression for better text rendering
-          precision: 16,
-          putOnlyUsedFonts: true,
-          floatPrecision: "smart"
-        },
-        enableLinks: true,
-        pagebreak: { mode: 'avoid-all' }
-      };
+      // Clone node to avoid modifying the visible DOM
+      const clonedNode = printRef.current.cloneNode(true) as HTMLDivElement;
+      document.body.appendChild(clonedNode);
+      clonedNode.style.display = 'block';
+      clonedNode.style.position = 'absolute';
+      clonedNode.style.left = '-9999px';
+      clonedNode.style.width = '210mm';
+      clonedNode.style.padding = '5mm';
+      clonedNode.style.backgroundColor = 'white';
       
-      await html2pdf().set(options).from(printRef.current).save();
+      // Optimize tables for PDF output
+      const tableElements = clonedNode.querySelectorAll('table');
+      tableElements.forEach((table) => {
+        table.style.width = '100%';
+        table.style.tableLayout = 'fixed';
+        table.style.maxWidth = '200mm';
+        
+        const cells = table.querySelectorAll('th, td');
+        cells.forEach((cell) => {
+          (cell as HTMLElement).style.padding = '1mm';
+          (cell as HTMLElement).style.fontSize = '8pt';
+          (cell as HTMLElement).style.wordBreak = 'break-word';
+        });
+      });
       
-      toast({ title: "Download complete", description: "Credit note has been downloaded as PDF." });
+      // Configure options for PDF generation
+      const options = getPdfOptions(`Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number || 'draft'}.pdf`);
+      
+      try {
+        // Generate the PDF
+        await html2pdf().set(options).from(clonedNode).save();
+        
+        // Clean up
+        document.body.removeChild(clonedNode);
+        
+        toast({ title: "Download complete", description: "Credit note has been downloaded as PDF." });
+      } catch (err) {
+        console.error('Error in PDF generation:', err);
+        
+        // Clean up on error
+        if (document.body.contains(clonedNode)) {
+          document.body.removeChild(clonedNode);
+        }
+        
+        throw err;
+      }
     } catch (error) {
       console.error('Error generating credit note PDF:', error);
       toast({ 
@@ -225,7 +270,9 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         
         <CreditNoteDetails creditNote={normalizedCreditNote} invoice={invoice} customer={customer} />
         
-        <CreditNoteItemsTable items={safeItems} useIGST={useIGST} />
+        <div className="overflow-hidden" style={{ maxWidth: '200mm' }}>
+          <CreditNoteItemsTable items={safeItems} useIGST={useIGST} />
+        </div>
         
         <CreditNoteSummary 
           subtotal={safeSubtotal} 

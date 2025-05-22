@@ -11,31 +11,31 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
   console.log("Credit Note Items Table Props:", { items, useIGST });
   
   return (
-    <div className="w-full overflow-visible print:overflow-visible">
-      <table className="w-full text-left border-collapse mb-5 text-xs">
+    <div className="w-full overflow-hidden print:overflow-hidden">
+      <table className="w-full border-collapse mb-5 text-xs" style={{ tableLayout: 'fixed', maxWidth: '200mm' }}>
         <thead>
           <tr className="bg-gray-100">
-            <th className="py-1 px-1 border font-semibold">S.No</th>
-            <th className="py-1 px-1 border font-semibold">Item</th>
-            <th className="py-1 px-1 border font-semibold">HSN/SAC</th>
-            <th className="py-1 px-1 border font-semibold">Qty</th>
-            <th className="py-1 px-1 border font-semibold">Unit</th>
-            <th className="py-1 px-1 border font-semibold">Rate</th>
-            <th className="py-1 px-1 border font-semibold">Amount</th>
+            <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>No</th>
+            <th className="py-1 px-1 border font-semibold" style={{ width: '25%' }}>Item</th>
+            <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>HSN/SAC</th>
+            <th className="py-1 px-1 border font-semibold" style={{ width: '7%' }}>Qty</th>
+            <th className="py-1 px-1 border font-semibold" style={{ width: '8%' }}>Unit</th>
+            <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>Rate</th>
+            <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>Amount</th>
             {useIGST ? (
               <>
-                <th className="py-1 px-1 border font-semibold">IGST %</th>
-                <th className="py-1 px-1 border font-semibold">IGST</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '7%' }}>IGST %</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '8%' }}>IGST</th>
               </>
             ) : (
               <>
-                <th className="py-1 px-1 border font-semibold">CGST %</th>
-                <th className="py-1 px-1 border font-semibold">CGST</th>
-                <th className="py-1 px-1 border font-semibold">SGST %</th>
-                <th className="py-1 px-1 border font-semibold">SGST</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>CGST %</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>CGST</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>SGST %</th>
+                <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>SGST</th>
               </>
             )}
-            <th className="py-1 px-1 border font-semibold text-right">Total</th>
+            <th className="py-1 px-1 border font-semibold text-right" style={{ width: '10%' }}>Total</th>
           </tr>
         </thead>
         <tbody>
