@@ -109,7 +109,6 @@ Deno.serve(async (req) => {
     }
     
     // Initialize the Supabase client with the service role key
-    // This is necessary to bypass RLS and access all required data
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -140,7 +139,7 @@ Deno.serve(async (req) => {
         companyId = document.company_id;
         customerId = document.customer_id;
       }
-    } else {
+    } else if (creditNoteId) {
       console.log("Fetching credit note with ID:", creditNoteId);
       documentId = creditNoteId as string;
       isInvoice = false;
@@ -169,6 +168,12 @@ Deno.serve(async (req) => {
           customerId = invoiceResult.data.customer_id;
         }
       }
+    } else {
+      console.error("No valid document ID provided"); 
+      return new Response(
+        JSON.stringify({ error: "No valid document ID provided" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (documentError) {
@@ -236,49 +241,92 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch the logo URL from storage
+    // Improved logo fetching with multiple fallback options
     let logoURL = '';
     try {
+      // First try path: company ID in logos bucket
+      const companyPath = `${companyId}/logo.png`;
+      console.log("Trying company logo path:", companyPath);
+      
       const { data: logoData } = await supabase.storage
         .from('logos')
-        .getPublicUrl(`${companyId}/logo.png`);
+        .getPublicUrl(companyPath);
       
-      // First try with company ID as path
       logoURL = logoData.publicUrl;
-      console.log("Trying logo URL with company ID:", logoURL);
       
-      // Verify if the logo URL is accessible by sending a HEAD request
+      // Validate the logo URL with a HEAD request
       try {
+        console.log("Validating logo URL:", logoURL);
         const logoResponse = await fetch(logoURL, { method: 'HEAD' });
         if (!logoResponse.ok) {
-          console.warn(`Logo not found at primary path: ${logoURL}. Status: ${logoResponse.status}`);
+          console.log(`Logo at company path not found or accessible. Status: ${logoResponse.status}`);
           logoURL = ''; // Reset if not accessible
+        } else {
+          console.log("Logo found at company path!");
         }
       } catch (headError) {
-        console.warn("Error checking logo URL:", headError);
+        console.error("Error checking company logo URL:", headError);
         logoURL = '';
       }
       
-      // If logo wasn't found with company ID, try with user ID
+      // Second try path: user ID in logos bucket
       if (!logoURL && company.user_id) {
+        const userPath = `${company.user_id}/logo.png`;
+        console.log("Trying user logo path:", userPath);
+        
         const { data: userLogoData } = await supabase.storage
           .from('logos')
-          .getPublicUrl(`${company.user_id}/logo.png`);
+          .getPublicUrl(userPath);
         
         logoURL = userLogoData.publicUrl;
-        console.log("Trying alternative logo URL with user ID:", logoURL);
         
-        // Verify the alternative logo URL
+        // Validate the alternative logo URL
         try {
+          console.log("Validating user logo URL:", logoURL);
           const altLogoResponse = await fetch(logoURL, { method: 'HEAD' });
           if (!altLogoResponse.ok) {
-            console.warn(`Logo also not found at alternative path: ${logoURL}`);
+            console.log(`Logo at user path not found or accessible. Status: ${altLogoResponse.status}`);
             logoURL = ''; // Reset if not accessible
+          } else {
+            console.log("Logo found at user path!");
           }
         } catch (altHeadError) {
-          console.warn("Error checking alternative logo URL:", altHeadError);
+          console.error("Error checking user logo URL:", altHeadError);
           logoURL = '';
         }
+      }
+      
+      // Third try path: Try generic company logo in public bucket
+      if (!logoURL) {
+        const publicPath = `companies/${companyId}.png`;
+        console.log("Trying public logo path:", publicPath);
+        
+        const { data: publicLogoData } = await supabase.storage
+          .from('public')
+          .getPublicUrl(publicPath);
+        
+        logoURL = publicLogoData.publicUrl;
+        
+        // Validate public logo URL
+        try {
+          console.log("Validating public logo URL:", logoURL);
+          const publicLogoResponse = await fetch(logoURL, { method: 'HEAD' });
+          if (!publicLogoResponse.ok) {
+            console.log(`Logo at public path not found or accessible. Status: ${publicLogoResponse.status}`);
+            logoURL = ''; // Reset if not accessible
+          } else {
+            console.log("Logo found at public path!");
+          }
+        } catch (publicHeadError) {
+          console.error("Error checking public logo URL:", publicHeadError);
+          logoURL = '';
+        }
+      }
+      
+      if (logoURL) {
+        console.log("Final logo URL to use:", logoURL);
+      } else {
+        console.log("No valid logo found after trying all paths");
       }
     } catch (error) {
       console.warn("Error getting logo URL:", error);

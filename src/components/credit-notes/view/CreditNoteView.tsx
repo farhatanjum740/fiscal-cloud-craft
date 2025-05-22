@@ -75,7 +75,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       // Improved PDF configuration for better rendering
       const options = {
         filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number || 'draft'}.pdf`,
-        margin: [15, 15, 15, 15], // Increased margins (top, right, bottom, left) in mm
+        margin: [5, 5, 5, 5], // Reduced margins to 5mm as requested (top, right, bottom, left)
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2, 
@@ -87,9 +87,11 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
-          compress: true,
+          compress: false, // Disable compression for better text rendering
           precision: 16
-        }
+        },
+        enableLinks: true,
+        pagebreak: { mode: 'avoid-all' }
       };
       
       await html2pdf().set(options).from(printRef.current).save();
@@ -106,10 +108,10 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
 
   const handleEmail = () => {
-    // Ensure credit note data has consistent property names
+    // Ensure credit note data has consistent property names and explicitly include the ID
     const normalizedCreditNote = {
       ...creditNote,
-      id: creditNote.id,
+      id: creditNote.id, // Explicitly set ID to ensure it's available
       creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
       creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
       invoiceId: creditNote.invoiceId || creditNote.invoice_id,
@@ -117,7 +119,19 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       invoices: invoice, // For compatibility
     };
     
-    console.log("Opening email dialog with normalized credit note:", normalizedCreditNote);
+    // Log credit note data for debugging before opening dialog
+    console.log("Opening email dialog with credit note:", normalizedCreditNote);
+    console.log("Credit note ID (explicit):", normalizedCreditNote.id);
+    
+    if (!normalizedCreditNote.id) {
+      toast({
+        title: "Missing Information",
+        description: "Credit note ID is missing. Please try again with a valid credit note.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setEmailDialogOpen(true);
   };
 

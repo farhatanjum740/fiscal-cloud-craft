@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -117,7 +116,7 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
     }
   };
 
-  // Generate a PDF of the credit note with improved settings
+  // Generate a PDF of the credit note with improved settings for better text rendering
   const generatePDF = async (): Promise<string | null> => {
     if (!creditNotePdfRef.current) return null;
 
@@ -127,27 +126,33 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       
       // Adjust the styling for better PDF generation
       pdfContainer.style.width = '210mm';
-      pdfContainer.style.padding = '15mm';
+      pdfContainer.style.padding = '10mm';
       pdfContainer.style.backgroundColor = 'white';
       
-      // Configure html2pdf options for better text rendering
+      // Configure html2pdf options for better text rendering and content fitting
       const options = {
         filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number}.pdf`,
-        margin: [15, 15, 15, 15], // Increased margins (top, right, bottom, left) in mm
+        margin: [5, 5, 5, 5], // Reduced margins to 5mm as requested (top, right, bottom, left)
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2, 
           useCORS: true,
           letterRendering: true,
-          allowTaint: true
+          allowTaint: true,
+          logging: true,
+          removeContainer: true
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
-          compress: true,
-          precision: 16
-        }
+          compress: false, // Disable compression for better text rendering
+          precision: 16,
+          putOnlyUsedFonts: true,
+          floatPrecision: "smart"
+        },
+        enableLinks: true,
+        pagebreak: { mode: 'avoid-all' }
       };
 
       // Generate PDF using html2pdf with improved settings
@@ -180,9 +185,11 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       return;
     }
 
-    // Double check the credit note ID is present
-    if (!creditNote?.id) {
+    // Double check the credit note ID is present and use a consistent property access approach
+    const creditNoteId = creditNote?.id;
+    if (!creditNoteId) {
       console.error("Credit Note ID is missing in EmailCreditNoteDialog:", creditNote);
+      console.log("Entire credit note object:", JSON.stringify(creditNote, null, 2));
       setError("Credit Note ID is missing");
       toast({
         title: "Missing credit note data",
@@ -221,10 +228,10 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       });
       
       // Ensure we're explicitly sending the credit note ID as a string
-      const creditNoteId = String(creditNote.id);
+      const safeId = String(creditNoteId);
 
       console.log("Sending credit note email with data:", {
-        creditNoteId,
+        creditNoteId: safeId,
         recipientEmail,
         subject,
         message,
@@ -233,7 +240,7 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
 
       const { data, error } = await supabase.functions.invoke("send-invoice-email", {
         body: {
-          creditNoteId,
+          creditNoteId: safeId,
           recipientEmail,
           subject,
           message,
