@@ -31,3 +31,38 @@ export interface InvoiceOption {
   value: string;
   label: string;
 }
+
+// Add the missing interface for CreditNoteGSTDetails
+export interface CreditNoteGSTDetails {
+  cgst: number;
+  sgst: number;
+  igst: number;
+}
+
+// Add the interface for UseCreditNoteReturn
+export interface UseCreditNoteReturn {
+  creditNote: CreditNoteData;
+  setCreditNote: (value: React.SetStateAction<CreditNoteData>) => void;
+  loading: boolean;
+  loadingData: boolean;
+  invoice: any;
+  invoiceItems: any[];
+  company: any;
+  customer: any;
+  selectedItems: {[key: string]: boolean};
+  showQuantityError: boolean;
+  setShowQuantityError: (value: boolean) => void;
+  errorMessage: string;
+  invoiceOptions: InvoiceOption[];
+  subtotal: number;
+  gstDetails: CreditNoteGSTDetails;
+  total: number;
+  isGeneratingNumber: boolean;
+  handleInvoiceChange: (value: string) => Promise<void>;
+  toggleItemSelection: (itemId: string) => void;
+  addSelectedItems: () => void;
+  removeItem: (id: string) => void;
+  updateItem: (id: string, field: any, value: any) => void;
+  generateCreditNoteNumber: () => Promise<string | null>;
+  saveCreditNote: (navigate: (path: string) => void) => void;
+}

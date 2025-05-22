@@ -4,7 +4,7 @@ import { useFetchCreditNoteData } from "./useFetchCreditNoteData";
 import { useCreditNoteActions } from "./useCreditNoteActions";
 import { useCreditNoteCalculations } from "./useCreditNoteCalculations";
 import { useCreditNoteCustomer } from "./useCreditNoteCustomer";
-import { UseCreditNoteReturn } from "./types";
+import { UseCreditNoteReturn, CreditNoteData } from "./types";
 import { useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
