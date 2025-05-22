@@ -72,11 +72,24 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
+      // Improved PDF configuration for better rendering
       const options = {
         filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number || 'draft'}.pdf`,
+        margin: [15, 15, 15, 15], // Increased margins (top, right, bottom, left) in mm
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          letterRendering: true,
+          allowTaint: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true,
+          precision: 16
+        }
       };
       
       await html2pdf().set(options).from(printRef.current).save();
@@ -93,18 +106,18 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
 
   const handleEmail = () => {
-    // Prepare the credit note data with consistent property names
+    // Ensure credit note data has consistent property names
     const normalizedCreditNote = {
       ...creditNote,
       id: creditNote.id,
       creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
       creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
+      invoiceId: creditNote.invoiceId || creditNote.invoice_id,
       invoice: invoice, // Include the related invoice
       invoices: invoice, // For compatibility
-      invoiceId: creditNote.invoiceId || creditNote.invoice_id,
     };
     
-    console.log("Opening email dialog with credit note:", normalizedCreditNote);
+    console.log("Opening email dialog with normalized credit note:", normalizedCreditNote);
     setEmailDialogOpen(true);
   };
 
@@ -141,7 +154,10 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     ...creditNote,
     creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
     creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
-    reason: creditNote.reason || ""
+    reason: creditNote.reason || "",
+    // Ensure ID is explicitly included
+    id: creditNote.id,
+    invoiceId: creditNote.invoiceId || creditNote.invoice_id
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -104,26 +105,40 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
     }
   }, [invoice, open]);
 
-  // Generate a PDF of the invoice
+  // Generate a PDF of the invoice with improved settings
   const generatePDF = async (): Promise<string | null> => {
     if (!invoicePdfRef.current) return null;
 
     try {
-      // Create a clone of the invoice view for PDF generation
-      const pdfContainer = document.createElement('div');
-      pdfContainer.innerHTML = invoicePdfRef.current.innerHTML;
-      document.body.appendChild(pdfContainer);
+      // Clone the node to work with
+      const pdfContainer = invoicePdfRef.current.cloneNode(true) as HTMLElement;
       
-      // Configure html2pdf options
+      // Adjust the styling for better PDF generation
+      pdfContainer.style.width = '210mm';
+      pdfContainer.style.padding = '15mm';
+      pdfContainer.style.backgroundColor = 'white';
+      
+      // Configure html2pdf options for better text rendering
       const options = {
-        margin: 10,
         filename: `Invoice-${invoice.invoiceNumber || invoice.invoice_number}.pdf`,
+        margin: [15, 15, 15, 15], // Increased margins (top, right, bottom, left) in mm
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          letterRendering: true,
+          allowTaint: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true,
+          precision: 16
+        }
       };
 
-      // Generate PDF using html2pdf
+      // Generate PDF with improved settings
       const pdfBlob = await html2pdf()
         .from(pdfContainer)
         .set(options)
@@ -134,7 +149,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64data = reader.result as string;
-          // Extract just the base64 data part (remove data:application/pdf;base64, prefix)
+          // Extract just the base64 data part
           const base64Content = base64data.split(',')[1];
           resolve(base64Content);
         };

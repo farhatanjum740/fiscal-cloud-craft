@@ -11,7 +11,7 @@ interface InvoiceEmailProps {
   isInvoice: boolean;
 }
 
-// Simple React email template component
+// Improved React email template component
 function InvoiceEmail({ logoURL, company, message, document, isInvoice }: InvoiceEmailProps) {
   const documentType = isInvoice ? 'Invoice' : 'Credit Note';
   const documentNumber = isInvoice ? document.invoice_number : document.credit_note_number;
@@ -31,13 +31,13 @@ function InvoiceEmail({ logoURL, company, message, document, isInvoice }: Invoic
           React.createElement(
             'div', 
             null,
-            React.createElement('h1', null, documentType),
-            React.createElement('p', null, `# ${documentNumber}`)
+            React.createElement('h1', { style: { margin: '0 0 10px 0' } }, documentType),
+            React.createElement('p', { style: { margin: '0', fontSize: '16px' } }, `# ${documentNumber}`)
           ),
           logoURL && React.createElement('img', { 
             src: logoURL, 
             alt: `${company.name} logo`, 
-            style: { maxHeight: '60px', maxWidth: '100px' } 
+            style: { maxHeight: '60px', maxWidth: '100px', display: 'block' } 
           })
         ),
         React.createElement('hr', { style: { border: '1px solid #eee', margin: '20px 0' } }),
@@ -46,14 +46,14 @@ function InvoiceEmail({ logoURL, company, message, document, isInvoice }: Invoic
         React.createElement(
           'div', 
           null,
-          React.createElement('p', null, `Best Regards,`),
-          React.createElement('p', null, company.name),
+          React.createElement('p', { style: { margin: '0 0 5px 0' } }, `Best Regards,`),
+          React.createElement('p', { style: { fontWeight: 'bold', margin: '0 0 5px 0' } }, company.name),
           company.email_id && React.createElement(
             'p', 
-            null, 
-            React.createElement('a', { href: `mailto:${company.email_id}` }, company.email_id)
+            { style: { margin: '0 0 5px 0' } }, 
+            React.createElement('a', { href: `mailto:${company.email_id}`, style: { color: '#007bff' } }, company.email_id)
           ),
-          company.contact_number && React.createElement('p', null, `Phone: ${company.contact_number}`)
+          company.contact_number && React.createElement('p', { style: { margin: '0 0 5px 0' } }, `Phone: ${company.contact_number}`)
         ),
         React.createElement(
           'div', 
@@ -243,14 +243,42 @@ Deno.serve(async (req) => {
         .from('logos')
         .getPublicUrl(`${companyId}/logo.png`);
       
+      // First try with company ID as path
       logoURL = logoData.publicUrl;
-      console.log("Logo URL:", logoURL);
+      console.log("Trying logo URL with company ID:", logoURL);
       
-      // Verify if the logo URL is accessible
-      const logoResponse = await fetch(logoURL, { method: 'HEAD' });
-      if (!logoResponse.ok) {
-        console.warn(`Logo not found or inaccessible at ${logoURL}`);
-        logoURL = ''; // Reset if not accessible
+      // Verify if the logo URL is accessible by sending a HEAD request
+      try {
+        const logoResponse = await fetch(logoURL, { method: 'HEAD' });
+        if (!logoResponse.ok) {
+          console.warn(`Logo not found at primary path: ${logoURL}. Status: ${logoResponse.status}`);
+          logoURL = ''; // Reset if not accessible
+        }
+      } catch (headError) {
+        console.warn("Error checking logo URL:", headError);
+        logoURL = '';
+      }
+      
+      // If logo wasn't found with company ID, try with user ID
+      if (!logoURL && company.user_id) {
+        const { data: userLogoData } = await supabase.storage
+          .from('logos')
+          .getPublicUrl(`${company.user_id}/logo.png`);
+        
+        logoURL = userLogoData.publicUrl;
+        console.log("Trying alternative logo URL with user ID:", logoURL);
+        
+        // Verify the alternative logo URL
+        try {
+          const altLogoResponse = await fetch(logoURL, { method: 'HEAD' });
+          if (!altLogoResponse.ok) {
+            console.warn(`Logo also not found at alternative path: ${logoURL}`);
+            logoURL = ''; // Reset if not accessible
+          }
+        } catch (altHeadError) {
+          console.warn("Error checking alternative logo URL:", altHeadError);
+          logoURL = '';
+        }
       }
     } catch (error) {
       console.warn("Error getting logo URL:", error);

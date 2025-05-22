@@ -40,14 +40,27 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
   useEffect(() => {
     if (creditNote && open) {
       console.log("EmailCreditNoteDialog - Credit Note data:", creditNote);
+      console.log("Credit Note ID:", creditNote?.id);
+      console.log("Credit Note Number:", creditNote?.creditNoteNumber || creditNote?.credit_note_number);
+      console.log("Credit Note Invoice ID:", creditNote?.invoiceId || creditNote?.invoice_id);
+      
+      // Ensure we create a normalized version with consistent property names
+      const normalizedCreditNote = {
+        ...creditNote,
+        id: creditNote.id,
+        creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
+        invoiceId: creditNote.invoiceId || creditNote.invoice_id,
+      };
+      
+      console.log("Normalized credit note:", normalizedCreditNote);
       
       // Set default subject and message
-      setSubject(`Credit Note ${creditNote.creditNoteNumber || creditNote.credit_note_number} from ${company?.name}`);
-      setMessage(`Please find attached credit note ${creditNote.creditNoteNumber || creditNote.credit_note_number}.`);
+      setSubject(`Credit Note ${normalizedCreditNote.creditNoteNumber} from ${company?.name || 'our company'}`);
+      setMessage(`Please find attached credit note ${normalizedCreditNote.creditNoteNumber}.`);
       
       // Get invoice to fetch customer data
-      if (creditNote.invoiceId || creditNote.invoice_id) {
-        fetchInvoiceAndCustomer(creditNote.invoiceId || creditNote.invoice_id);
+      if (normalizedCreditNote.invoiceId) {
+        fetchInvoiceAndCustomer(normalizedCreditNote.invoiceId);
       }
     }
   }, [creditNote, company, open]);
@@ -104,33 +117,44 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
     }
   };
 
-  // Generate a PDF of the credit note
+  // Generate a PDF of the credit note with improved settings
   const generatePDF = async (): Promise<string | null> => {
     if (!creditNotePdfRef.current) return null;
 
     try {
-      // Create a clone of the credit note view for PDF generation
-      const pdfContainer = document.createElement('div');
-      pdfContainer.innerHTML = creditNotePdfRef.current.innerHTML;
-      document.body.appendChild(pdfContainer);
+      // Clone the node to work with
+      const pdfContainer = creditNotePdfRef.current.cloneNode(true) as HTMLElement;
       
-      // Configure html2pdf options
+      // Adjust the styling for better PDF generation
+      pdfContainer.style.width = '210mm';
+      pdfContainer.style.padding = '15mm';
+      pdfContainer.style.backgroundColor = 'white';
+      
+      // Configure html2pdf options for better text rendering
       const options = {
-        margin: 10,
         filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number}.pdf`,
+        margin: [15, 15, 15, 15], // Increased margins (top, right, bottom, left) in mm
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          letterRendering: true,
+          allowTaint: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true,
+          precision: 16
+        }
       };
 
-      // Generate PDF using html2pdf
+      // Generate PDF using html2pdf with improved settings
       const pdfBlob = await html2pdf()
         .from(pdfContainer)
         .set(options)
         .outputPdf('blob');
-      
-      // Remove the temporary container
-      document.body.removeChild(pdfContainer);
       
       // Convert blob to base64
       return await new Promise((resolve) => {
@@ -156,9 +180,15 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       return;
     }
 
+    // Double check the credit note ID is present
     if (!creditNote?.id) {
-      setError("Credit Note ID is missing");
       console.error("Credit Note ID is missing in EmailCreditNoteDialog:", creditNote);
+      setError("Credit Note ID is missing");
+      toast({
+        title: "Missing credit note data",
+        description: "The credit note information is incomplete. Please try again with a valid credit note.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -189,9 +219,12 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
         title: "Sending email",
         description: "Please wait while we send your credit note...",
       });
+      
+      // Ensure we're explicitly sending the credit note ID as a string
+      const creditNoteId = String(creditNote.id);
 
       console.log("Sending credit note email with data:", {
-        creditNoteId: creditNote.id,
+        creditNoteId,
         recipientEmail,
         subject,
         message,
@@ -200,7 +233,7 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
 
       const { data, error } = await supabase.functions.invoke("send-invoice-email", {
         body: {
-          creditNoteId: creditNote.id,
+          creditNoteId,
           recipientEmail,
           subject,
           message,
