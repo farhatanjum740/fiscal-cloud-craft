@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -138,7 +139,7 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
           useCORS: true,
           letterRendering: true,
           allowTaint: true,
-          logging: true,
+          logging: false, 
           removeContainer: true
         },
         jsPDF: { 

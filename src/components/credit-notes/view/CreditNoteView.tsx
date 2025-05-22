@@ -81,14 +81,18 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           scale: 2, 
           useCORS: true,
           letterRendering: true,
-          allowTaint: true
+          allowTaint: true,
+          logging: false,
+          removeContainer: true
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
           compress: false, // Disable compression for better text rendering
-          precision: 16
+          precision: 16,
+          putOnlyUsedFonts: true,
+          floatPrecision: "smart"
         },
         enableLinks: true,
         pagebreak: { mode: 'avoid-all' }
@@ -212,8 +216,8 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       
       <div 
         ref={printRef} 
-        className="bg-white p-6 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
-        style={{ width: '210mm', minHeight: '297mm' }}
+        className="bg-white p-4 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
+        style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}
       >
         <CreditNoteHeader creditNote={normalizedCreditNote} invoice={invoice} company={company} />
         
@@ -233,7 +237,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         />
         
         {normalizedCreditNote.reason && (
-          <div className="mb-4 text-xs">
+          <div className="mb-3 text-xs">
             <h4 className="font-semibold mb-1">Reason:</h4>
             <p className="whitespace-pre-line">{normalizedCreditNote.reason}</p>
           </div>

@@ -127,14 +127,18 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
           scale: 2, 
           useCORS: true,
           letterRendering: true,
-          allowTaint: true
+          allowTaint: true,
+          logging: false,
+          removeContainer: true
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
           compress: false, // Disable compression for better text rendering
-          precision: 16
+          precision: 16,
+          putOnlyUsedFonts: true,
+          floatPrecision: "smart"
         },
         enableLinks: true,
         pagebreak: { mode: 'avoid-all' }
