@@ -34,7 +34,11 @@ function InvoiceEmail({ logoURL, company, message, document, isInvoice }: Invoic
             React.createElement('h1', null, documentType),
             React.createElement('p', null, `# ${documentNumber}`)
           ),
-          logoURL && React.createElement('img', { src: logoURL, alt: `${company.name} logo`, style: { maxHeight: '60px' } })
+          logoURL && React.createElement('img', { 
+            src: logoURL, 
+            alt: `${company.name} logo`, 
+            style: { maxHeight: '60px', maxWidth: '100px' } 
+          })
         ),
         React.createElement('hr', { style: { border: '1px solid #eee', margin: '20px 0' } }),
         React.createElement('div', { style: { marginBottom: '20px', whiteSpace: 'pre-wrap' } }, message),
@@ -44,7 +48,11 @@ function InvoiceEmail({ logoURL, company, message, document, isInvoice }: Invoic
           null,
           React.createElement('p', null, `Best Regards,`),
           React.createElement('p', null, company.name),
-          React.createElement('p', null, company.email_id || 'support@invoiceninja.in'),
+          company.email_id && React.createElement(
+            'p', 
+            null, 
+            React.createElement('a', { href: `mailto:${company.email_id}` }, company.email_id)
+          ),
           company.contact_number && React.createElement('p', null, `Phone: ${company.contact_number}`)
         ),
         React.createElement(
@@ -112,6 +120,8 @@ Deno.serve(async (req) => {
     let documentError: any;
     let documentId = '';
     let isInvoice = false;
+    let companyId = '';
+    let customerId = '';
     
     if (invoiceId) {
       console.log("Fetching invoice with ID:", invoiceId);
@@ -125,18 +135,40 @@ Deno.serve(async (req) => {
       document = result.data;
       documentError = result.error;
       console.log("Invoice query result:", { data: document, error: documentError });
+      
+      if (document) {
+        companyId = document.company_id;
+        customerId = document.customer_id;
+      }
     } else {
       console.log("Fetching credit note with ID:", creditNoteId);
       documentId = creditNoteId as string;
       isInvoice = false;
-      const result = await supabase
+      
+      // First get the credit note
+      const creditNoteResult = await supabase
         .from("credit_notes")
         .select("*, company_id, invoice_id")
         .eq("id", creditNoteId)
         .single();
-      document = result.data;
-      documentError = result.error;
+      document = creditNoteResult.data;
+      documentError = creditNoteResult.error;
       console.log("Credit note query result:", { data: document, error: documentError });
+      
+      if (document && document.invoice_id) {
+        companyId = document.company_id;
+        
+        // Then get the invoice to find the customer
+        const invoiceResult = await supabase
+          .from("invoices")
+          .select("customer_id")
+          .eq("id", document.invoice_id)
+          .single();
+          
+        if (invoiceResult.data) {
+          customerId = invoiceResult.data.customer_id;
+        }
+      }
     }
 
     if (documentError) {
@@ -155,8 +187,13 @@ Deno.serve(async (req) => {
       );
     }
     
-    const companyId = document.company_id;
-    const customerId = document.customer_id;
+    if (!companyId) {
+      console.error("Company ID not found in document:", document);
+      return new Response(
+        JSON.stringify({ error: "Company ID not found in document." }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Fetch company details
     const { data: company, error: companyError } = await supabase
@@ -200,11 +237,25 @@ Deno.serve(async (req) => {
     }
 
     // Fetch the logo URL from storage
-    const { data: logoData } = await supabase.storage
-      .from('logos')
-      .getPublicUrl(`${companyId}/logo.png`);
-
-    const logoURL = logoData.publicUrl;
+    let logoURL = '';
+    try {
+      const { data: logoData } = await supabase.storage
+        .from('logos')
+        .getPublicUrl(`${companyId}/logo.png`);
+      
+      logoURL = logoData.publicUrl;
+      console.log("Logo URL:", logoURL);
+      
+      // Verify if the logo URL is accessible
+      const logoResponse = await fetch(logoURL, { method: 'HEAD' });
+      if (!logoResponse.ok) {
+        console.warn(`Logo not found or inaccessible at ${logoURL}`);
+        logoURL = ''; // Reset if not accessible
+      }
+    } catch (error) {
+      console.warn("Error getting logo URL:", error);
+      logoURL = '';
+    }
 
     // Initialize Resend client
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
@@ -221,7 +272,7 @@ Deno.serve(async (req) => {
     
     // Prepare email options
     const emailOptions: any = {
-      from: fromEmail, // Simple format without company name to avoid format issues
+      from: fromEmail,
       to: [customerEmail],
       subject: subject,
       react: InvoiceEmail({
@@ -274,7 +325,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Unexpected error:", error);
     return new Response(
       JSON.stringify({ error: `An unexpected error occurred: ${error.message}` }),

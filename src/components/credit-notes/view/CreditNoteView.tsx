@@ -42,8 +42,8 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     if (creditNote) {
       // Log specific credit note properties
       console.log("Credit Note View - Credit Note Details:", {
-        number: creditNote.creditNoteNumber,
-        date: creditNote.creditNoteDate,
+        number: creditNote.creditNoteNumber || creditNote.credit_note_number,
+        date: creditNote.creditNoteDate || creditNote.credit_note_date,
         subtotal: creditNote.subtotal,
         cgst: creditNote.cgst,
         sgst: creditNote.sgst,
@@ -73,7 +73,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
       const options = {
-        filename: `Credit-Note-${creditNote.creditNoteNumber || 'draft'}.pdf`,
+        filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number || 'draft'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -93,7 +93,18 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
 
   const handleEmail = () => {
-    console.log("Opening email dialog with credit note:", creditNote);
+    // Prepare the credit note data with consistent property names
+    const normalizedCreditNote = {
+      ...creditNote,
+      id: creditNote.id,
+      creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
+      creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
+      invoice: invoice, // Include the related invoice
+      invoices: invoice, // For compatibility
+      invoiceId: creditNote.invoiceId || creditNote.invoice_id,
+    };
+    
+    console.log("Opening email dialog with credit note:", normalizedCreditNote);
     setEmailDialogOpen(true);
   };
 
@@ -124,23 +135,14 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   const safeSgst = parseFloat(String(creditNote.sgst)) || 0;
   const safeIgst = parseFloat(String(creditNote.igst)) || 0;
   const safeTotalAmount = parseFloat(String(creditNote.total_amount)) || 0;
-  
-  console.log("Credit note values after conversion:", {
-    original: {
-      subtotal: creditNote.subtotal,
-      cgst: creditNote.cgst,
-      sgst: creditNote.sgst,
-      igst: creditNote.igst,
-      totalAmount: creditNote.total_amount
-    },
-    converted: {
-      safeSubtotal,
-      safeCgst,
-      safeSgst, 
-      safeIgst,
-      safeTotalAmount
-    }
-  });
+
+  // Create normalized version of credit note for consistency
+  const normalizedCreditNote = {
+    ...creditNote,
+    creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
+    creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
+    reason: creditNote.reason || ""
+  };
 
   return (
     <div className="bg-white">
@@ -166,11 +168,11 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         className="bg-white p-6 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
         style={{ width: '210mm', minHeight: '297mm' }}
       >
-        <CreditNoteHeader creditNote={creditNote} invoice={invoice} company={company} />
+        <CreditNoteHeader creditNote={normalizedCreditNote} invoice={invoice} company={company} />
         
         <CreditNoteCustomerInfo customer={customer} />
         
-        <CreditNoteDetails creditNote={creditNote} invoice={invoice} customer={customer} />
+        <CreditNoteDetails creditNote={normalizedCreditNote} invoice={invoice} customer={customer} />
         
         <CreditNoteItemsTable items={safeItems} useIGST={useIGST} />
         
@@ -183,10 +185,10 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           useIGST={useIGST}
         />
         
-        {creditNote.reason && (
+        {normalizedCreditNote.reason && (
           <div className="mb-4 text-xs">
             <h4 className="font-semibold mb-1">Reason:</h4>
-            <p className="whitespace-pre-line">{creditNote.reason}</p>
+            <p className="whitespace-pre-line">{normalizedCreditNote.reason}</p>
           </div>
         )}
         
@@ -196,7 +198,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       <EmailCreditNoteDialog 
         open={emailDialogOpen}
         onOpenChange={setEmailDialogOpen}
-        creditNote={creditNote}
+        creditNote={normalizedCreditNote}
         company={company}
       />
     </div>
