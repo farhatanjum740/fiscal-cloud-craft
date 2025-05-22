@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -108,9 +107,18 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   };
 
   const handleEmail = () => {
-    // First, create a normalized credit note object with consistent property names
-    // Ensuring the ID is properly extracted from the original object
-    const id = creditNote?.id;
+    // Ensure we have the credit note ID
+    if (!creditNote) {
+      toast({
+        title: "Missing Credit Note",
+        description: "Credit note data is not available. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Get ID directly from the credit note object, checking all possible locations
+    const id = creditNote.id || null;
     
     console.log("Original credit note object:", creditNote);
     console.log("Credit note ID from original object:", id);
@@ -124,16 +132,17 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       return;
     }
     
-    // Ensure credit note data has consistent property names and explicitly include the ID
-    const normalizedCreditNote = {
+    // Create a normalized credit note object with consistent property names
+    // Deep clone to avoid reference issues
+    const normalizedCreditNote = JSON.parse(JSON.stringify({
       ...creditNote,
-      id: id, // Explicitly set ID to ensure it's available
+      id: id, // Explicitly set ID
       creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
       creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
       invoiceId: creditNote.invoiceId || creditNote.invoice_id,
       invoice: invoice, // Include the related invoice
       invoices: invoice, // For compatibility
-    };
+    }));
     
     // Log credit note data for debugging before opening dialog
     console.log("Opening email dialog with credit note:", normalizedCreditNote);

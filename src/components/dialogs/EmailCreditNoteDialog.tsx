@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -39,27 +38,25 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
   // Log the credit note data for debugging
   useEffect(() => {
     if (creditNote && open) {
-      console.log("EmailCreditNoteDialog - Credit Note data:", creditNote);
-      console.log("Credit Note ID:", creditNote?.id);
-      console.log("Credit Note Number:", creditNote?.creditNoteNumber || creditNote?.credit_note_number);
-      console.log("Credit Note Invoice ID:", creditNote?.invoiceId || creditNote?.invoice_id);
+      // Create a safe copy to ensure we don't lose any data
+      const safeCreditNote = { ...creditNote };
       
-      // Deep clone the credit note to avoid reference issues
-      const normalizedCreditNote = JSON.parse(JSON.stringify(creditNote));
+      console.log("EmailCreditNoteDialog - Credit Note data:", safeCreditNote);
+      console.log("Credit Note ID:", safeCreditNote.id);
+      console.log("Credit Note Number:", safeCreditNote.creditNoteNumber || safeCreditNote.credit_note_number);
+      console.log("Credit Note Invoice ID:", safeCreditNote.invoiceId || safeCreditNote.invoice_id);
       
-      // Extra safeguard for ID
-      if (!normalizedCreditNote.id && creditNote.id) {
-        normalizedCreditNote.id = creditNote.id;
+      // Ensure the ID is preserved in our local state
+      if (!safeCreditNote.id) {
+        console.error("Credit note is missing ID in EmailCreditNoteDialog");
       }
       
-      console.log("Normalized credit note:", normalizedCreditNote);
-      
       // Set default subject and message
-      setSubject(`Credit Note ${normalizedCreditNote.creditNoteNumber} from ${company?.name || 'our company'}`);
-      setMessage(`Please find attached credit note ${normalizedCreditNote.creditNoteNumber}.`);
+      setSubject(`Credit Note ${safeCreditNote.creditNoteNumber || safeCreditNote.credit_note_number} from ${company?.name || 'our company'}`);
+      setMessage(`Please find attached credit note ${safeCreditNote.creditNoteNumber || safeCreditNote.credit_note_number}.`);
       
       // Get invoice to fetch customer data
-      const invoiceId = normalizedCreditNote.invoiceId || normalizedCreditNote.invoice_id;
+      const invoiceId = safeCreditNote.invoiceId || safeCreditNote.invoice_id;
       if (invoiceId) {
         fetchInvoiceAndCustomer(invoiceId);
       }
@@ -187,8 +184,15 @@ const EmailCreditNoteDialog: React.FC<EmailCreditNoteDialogProps> = ({
       return;
     }
 
-    // Double check the credit note ID is present
-    const creditNoteId = creditNote?.id;
+    // Extra safety checks for credit note ID
+    if (!creditNote) {
+      console.error("Missing credit note object");
+      setError("Credit note data is missing");
+      return;
+    }
+    
+    // Get the credit note ID, with additional safety checks
+    const creditNoteId = creditNote.id;
     
     console.log("About to send email for credit note:", creditNote);
     console.log("Credit note ID being used:", creditNoteId);
