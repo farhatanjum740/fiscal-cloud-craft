@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -74,7 +75,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       // Improved PDF configuration for better rendering
       const options = {
         filename: `Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number || 'draft'}.pdf`,
-        margin: [5, 5, 5, 5], // Reduced margins to 5mm as requested (top, right, bottom, left)
+        margin: [5, 5, 5, 5], // 5mm margins as requested
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2, 

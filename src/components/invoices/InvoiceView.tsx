@@ -61,11 +61,26 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your invoice..." });
       
+      // Improved PDF configuration for better rendering
       const options = {
         filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+        margin: [5, 5, 5, 5], // Reduced margins to 5mm as requested (top, right, bottom, left)
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          letterRendering: true,
+          allowTaint: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: false, // Disable compression for better text rendering
+          precision: 16
+        },
+        enableLinks: true,
+        pagebreak: { mode: 'avoid-all' }
       };
       
       await html2pdf().set(options).from(printRef.current).save();

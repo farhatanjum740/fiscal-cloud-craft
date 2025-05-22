@@ -115,13 +115,13 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       
       // Adjust the styling for better PDF generation
       pdfContainer.style.width = '210mm';
-      pdfContainer.style.padding = '15mm';
+      pdfContainer.style.padding = '10mm';
       pdfContainer.style.backgroundColor = 'white';
       
       // Configure html2pdf options for better text rendering
       const options = {
         filename: `Invoice-${invoice.invoiceNumber || invoice.invoice_number}.pdf`,
-        margin: [15, 15, 15, 15], // Increased margins (top, right, bottom, left) in mm
+        margin: [5, 5, 5, 5], // 5mm margins as requested
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2, 
@@ -133,9 +133,11 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
-          compress: true,
+          compress: false, // Disable compression for better text rendering
           precision: 16
-        }
+        },
+        enableLinks: true,
+        pagebreak: { mode: 'avoid-all' }
       };
 
       // Generate PDF with improved settings

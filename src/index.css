@@ -140,7 +140,7 @@
     width: 210mm !important;
     min-height: 297mm !important;
     max-height: 297mm !important;
-    padding: 10mm !important;
+    padding: 5mm !important; /* Reduced padding to 5mm for printing */
     margin: 0 !important;
     box-sizing: border-box !important;
     page-break-after: always !important;
