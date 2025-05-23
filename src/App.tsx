@@ -1,8 +1,10 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import AppLayout from "./layouts/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/Invoices";
@@ -19,6 +21,9 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import Index from "./pages/Index";
+import GstInvoicing from "./pages/GstInvoicing";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 import Reports from '@/pages/Reports';
 import { AuthProvider } from "./contexts/AuthContext";
@@ -90,58 +95,65 @@ class AppErrorBoundary extends React.Component<
 function App() {
   return (
     <BrowserRouter>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AppErrorBoundary>
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              
-              <Route path="/app" element={<AppLayout />}>
-                <Route index element={<Dashboard />} />
-                
-                <Route path="invoices">
-                  <Route index element={<Invoices />} />
-                  <Route path="new" element={<InvoiceEditor />} />
-                  <Route path="edit/:id" element={<InvoiceEditor />} />
-                  <Route path="view/:id" element={<InvoiceView />} />
-                </Route>
-                
-                <Route path="credit-notes">
-                  <Route path="new" element={<CreditNoteEditor />} />
-                  <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
-                  <Route path="edit/:id" element={<CreditNoteEditor />} />
-                  <Route path="view/:id" element={<CreditNoteView />} />
-                </Route>
-                
-                <Route path="customers">
-                  <Route index element={<Customers />} />
-                  <Route path="new" element={<CustomerEditor />} />
-                  <Route path="edit/:id" element={<CustomerEditor />} />
-                </Route>
-                
-                <Route path="products">
-                  <Route index element={<Products />} />
-                  <Route path="new" element={<ProductEditor />} />
-                  <Route path="edit/:id" element={<ProductEditor />} />
-                </Route>
+      <HelmetProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppErrorBoundary>
+            <AuthProvider>
+              <QueryClientProvider client={queryClient}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/gst-invoicing" element={<GstInvoicing />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
+                  
+                  <Route path="/app" element={<AppLayout />}>
+                    <Route index element={<Dashboard />} />
+                    
+                    <Route path="invoices">
+                      <Route index element={<Invoices />} />
+                      <Route path="new" element={<InvoiceEditor />} />
+                      <Route path="edit/:id" element={<InvoiceEditor />} />
+                      <Route path="view/:id" element={<InvoiceView />} />
+                    </Route>
+                    
+                    <Route path="credit-notes">
+                      <Route path="new" element={<CreditNoteEditor />} />
+                      <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
+                      <Route path="edit/:id" element={<CreditNoteEditor />} />
+                      <Route path="view/:id" element={<CreditNoteView />} />
+                    </Route>
+                    
+                    <Route path="customers">
+                      <Route index element={<Customers />} />
+                      <Route path="new" element={<CustomerEditor />} />
+                      <Route path="edit/:id" element={<CustomerEditor />} />
+                    </Route>
+                    
+                    <Route path="products">
+                      <Route index element={<Products />} />
+                      <Route path="new" element={<ProductEditor />} />
+                      <Route path="edit/:id" element={<ProductEditor />} />
+                    </Route>
 
-                <Route path="reports" element={<Reports />} />
-                
-                <Route path="settings">
-                  <Route path="company" element={<CompanyProfile />} />
-                </Route>
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </AppErrorBoundary>
-      </TooltipProvider>
+                    <Route path="reports" element={<Reports />} />
+                    
+                    <Route path="settings">
+                      <Route path="company" element={<CompanyProfile />} />
+                    </Route>
+                  </Route>
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </QueryClientProvider>
+            </AuthProvider>
+          </AppErrorBoundary>
+        </TooltipProvider>
+      </HelmetProvider>
     </BrowserRouter>
   );
 }
