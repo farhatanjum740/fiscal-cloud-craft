@@ -1,10 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useEffect } from "react";
 
-const LandingPage = () => {
+const Index = () => {
   // Track page views for analytics
   useEffect(() => {
     console.log("Home page viewed - analytics event would fire here");
@@ -28,168 +27,187 @@ const LandingPage = () => {
         <link rel="canonical" href="https://invoiceninja.com/" />
       </Helmet>
 
-      <div className="min-h-screen flex flex-col">
-        <header className="bg-primary text-white py-4">
-          <div className="container mx-auto flex justify-between items-center px-4">
-            <h1 className="text-2xl font-bold">InvoiceNinja</h1>
-            <div className="flex items-center gap-4">
-              <Link to="/signin">
-                <Button variant="ghost" className="text-white hover:text-white hover:bg-primary/80">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="bg-white text-primary hover:bg-slate-100">
-                  Sign Up
-                </Button>
-              </Link>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-b from-primary to-primary-dark text-white">
+        <div className="container mx-auto flex justify-between items-center px-4">
+          <h1 className="text-2xl font-bold">InvoiceNinja</h1>
+          <div className="flex items-center gap-4">
+            <Link to="/signin">
+              <Button variant="ghost" className="text-white hover:text-white hover:bg-primary/80">
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/signup">
+              <Button className="bg-white text-primary hover:bg-slate-100">
+                Sign Up
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 px-4 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Free GST-Compliant Invoicing Made Simple</h1>
+            <p className="text-xl mb-8">Create professional invoices, manage customers and track your business finances - all in one place. 100% compliant with Indian GST regulations.</p>
+            <Link to="/signup">
+              <Button size="lg" className="bg-white text-primary hover:bg-slate-100">
+                Get Started For Free
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-16 px-4 md:py-24 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
+          <div className="grid md:grid-cols-3 gap-10">
+            <FeatureCard 
+              title="GST-Compliant Invoicing" 
+              description="Create professional invoices that fully comply with Indian GST regulations with automatic tax calculations." 
+            />
+            <FeatureCard 
+              title="Customer Management" 
+              description="Maintain detailed client records with multiple addresses and transaction history." 
+            />
+            <FeatureCard 
+              title="Product Catalog" 
+              description="Manage your products with HSN codes and GST rates for faster invoice creation." 
+            />
+            <FeatureCard 
+              title="Financial Analytics" 
+              description="Track revenue, outstanding payments and tax liabilities with powerful reporting." 
+            />
+            <FeatureCard 
+              title="Document Generation" 
+              description="Generate professional PDF invoices and email them directly to your clients." 
+            />
+            <FeatureCard 
+              title="Multi-user Access" 
+              description="Role-based permissions for team members with different levels of access." 
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-16 px-4 md:py-24 bg-white">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Testimonials</h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="h-12 w-12 bg-blue-100 text-primary rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">John Doe</h3>
+              <p className="text-gray-600 mb-4">"InvoiceNinja has been a game-changer for my business. The software is user-friendly and the support team is always helpful."</p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="h-12 w-12 bg-blue-100 text-primary rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Jane Smith</h3>
+              <p className="text-gray-600 mb-4">"I've been using InvoiceNinja for a year now and it's been a great investment. The software has helped me streamline my business operations and save time."</p>
             </div>
           </div>
-        </header>
+        </div>
+      </section>
 
-        <main>
-          <section className="bg-gradient-to-b from-primary to-primary/90 text-white py-20">
-            <div className="container mx-auto px-4">
-              <div className="max-w-3xl mx-auto text-center">
-                <h1 className="text-4xl md:text-5xl font-bold mb-6">Free GST-Compliant Invoicing Made Simple</h1>
-                <p className="text-xl mb-8">Create professional invoices, manage customers and track your business finances - all in one place. 100% compliant with Indian GST regulations.</p>
-                <Link to="/signup">
-                  <Button size="lg" className="bg-white text-primary hover:bg-slate-100">
-                    Get Started For Free
-                  </Button>
-                </Link>
+      {/* Resources Section */}
+      <section className="py-16 px-4 md:py-24 bg-gray-50">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Resources</h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="h-12 w-12 bg-blue-100 text-primary rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
+              <h3 className="text-xl font-semibold mb-3">GST Guidelines</h3>
+              <p className="text-gray-600 mb-4">Understand the latest GST regulations and compliance requirements for your business.</p>
+              <Link to="/gst-invoicing" className="text-primary hover:underline font-medium">Learn More →</Link>
             </div>
-          </section>
-
-          <section className="py-16 bg-white">
-            <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
-              <div className="grid md:grid-cols-3 gap-10">
-                <FeatureCard 
-                  title="GST-Compliant Invoicing" 
-                  description="Create professional invoices that fully comply with Indian GST regulations with automatic tax calculations." 
-                />
-                <FeatureCard 
-                  title="Customer Management" 
-                  description="Maintain detailed client records with multiple addresses and transaction history." 
-                />
-                <FeatureCard 
-                  title="Product Catalog" 
-                  description="Manage your products with HSN codes and GST rates for faster invoice creation." 
-                />
-                <FeatureCard 
-                  title="Financial Analytics" 
-                  description="Track revenue, outstanding payments and tax liabilities with powerful reporting." 
-                />
-                <FeatureCard 
-                  title="Document Generation" 
-                  description="Generate professional PDF invoices and email them directly to your clients." 
-                />
-                <FeatureCard 
-                  title="Multi-user Access" 
-                  description="Role-based permissions for team members with different levels of access." 
-                />
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="h-12 w-12 bg-blue-100 text-primary rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
               </div>
+              <h3 className="text-xl font-semibold mb-3">Invoice Templates</h3>
+              <p className="text-gray-600 mb-4">Download free GST-compliant invoice templates for your business needs.</p>
+              <a href="#" className="text-primary hover:underline font-medium">Download Now →</a>
             </div>
-          </section>
-
-          <section className="py-16 bg-gray-50">
-            <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold text-center mb-8">Why Choose InvoiceNinja for GST Invoicing?</h2>
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <BenefitCard 
-                  title="100% GST Compliant" 
-                  description="All invoices follow the latest GST guidelines with proper CGST, SGST, and IGST calculations." 
-                />
-                <BenefitCard 
-                  title="Free Forever Plan" 
-                  description="Start with our free plan that includes all essential features for small businesses." 
-                />
-                <BenefitCard 
-                  title="No Technical Skills Required" 
-                  description="User-friendly interface designed for business owners, not accountants." 
-                />
-                <BenefitCard 
-                  title="Secure Cloud Storage" 
-                  description="All your data is securely stored and backed up automatically." 
-                />
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="h-12 w-12 bg-blue-100 text-primary rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
               </div>
-            </div>
-          </section>
-
-          <section className="py-16 bg-white">
-            <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-              <div className="max-w-3xl mx-auto divide-y">
-                <FAQItem 
-                  question="Is this software really free?" 
-                  answer="Yes, our basic plan is completely free for small businesses. We also offer premium plans with additional features for growing businesses." 
-                />
-                <FAQItem 
-                  question="Is the software compliant with GST regulations?" 
-                  answer="Yes, InvoiceNinja is fully compliant with Indian GST regulations. We regularly update our software to ensure compliance with the latest tax rules." 
-                />
-                <FAQItem 
-                  question="Can I generate GST reports for filing returns?" 
-                  answer="Yes, you can generate GSTR-1, GSTR-3B, and other reports directly from the dashboard to simplify your tax filing process." 
-                />
-                <FAQItem 
-                  question="How secure is my business data?" 
-                  answer="We use bank-level encryption to protect your data. Your information is stored securely in the cloud with regular backups." 
-                />
-                <FAQItem 
-                  question="Can I customize invoice templates?" 
-                  answer="Yes, you can customize your invoice templates with your company logo, colors, and additional fields to match your brand." 
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="py-16 bg-gray-50">
-            <div className="container mx-auto px-4 text-center">
-              <h3 className="text-3xl font-bold mb-8">Ready to streamline your invoicing?</h3>
-              <Link to="/signup">
-                <Button size="lg" className="bg-primary text-white hover:bg-primary/90">
-                  Create Your Free Account
-                </Button>
-              </Link>
-            </div>
-          </section>
-        </main>
-
-        <footer className="bg-gray-900 text-white py-10">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="mb-4 md:mb-0">
-                <h2 className="text-xl font-bold">InvoiceNinja</h2>
-                <p className="text-sm text-gray-400">GST Invoicing Solution for Indian Businesses</p>
-              </div>
-              <nav className="grid grid-cols-2 gap-8 text-sm mb-4 md:mb-0">
-                <div>
-                  <h3 className="font-semibold mb-2">Product</h3>
-                  <ul className="space-y-2">
-                    <li><Link to="/" className="text-gray-400 hover:text-white">Features</Link></li>
-                    <li><Link to="/" className="text-gray-400 hover:text-white">Pricing</Link></li>
-                    <li><Link to="/" className="text-gray-400 hover:text-white">Testimonials</Link></li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Resources</h3>
-                  <ul className="space-y-2">
-                    <li><Link to="/" className="text-gray-400 hover:text-white">Help Center</Link></li>
-                    <li><Link to="/" className="text-gray-400 hover:text-white">GST Guide</Link></li>
-                    <li><Link to="/" className="text-gray-400 hover:text-white">Blog</Link></li>
-                  </ul>
-                </div>
-              </nav>
-              <div className="text-sm text-gray-400">
-                &copy; {new Date().getFullYear()} InvoiceNinja. All rights reserved.
-              </div>
+              <h3 className="text-xl font-semibold mb-3">Knowledge Blog</h3>
+              <p className="text-gray-600 mb-4">Expert articles and guides on GST compliance, invoicing best practices, and more.</p>
+              <Link to="/blog" className="text-primary hover:underline font-medium">Read Articles →</Link>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-primary text-white text-center">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8">Ready to streamline your invoicing?</h2>
+          <Link to="/signup">
+            <Button size="lg" className="bg-white text-primary hover:bg-slate-100">
+              Create Your Free Account
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-10">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <h2 className="text-xl font-bold">InvoiceNinja</h2>
+              <p className="text-sm text-gray-400">GST Invoicing Solution for Indian Businesses</p>
+            </div>
+            <nav className="grid grid-cols-2 gap-8 text-sm mb-4 md:mb-0">
+              <div>
+                <h3 className="font-semibold mb-2">Product</h3>
+                <ul className="space-y-2">
+                  <li><Link to="/" className="text-gray-400 hover:text-white">Features</Link></li>
+                  <li><Link to="/" className="text-gray-400 hover:text-white">Pricing</Link></li>
+                  <li><Link to="/" className="text-gray-400 hover:text-white">Testimonials</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Resources</h3>
+                <ul className="space-y-2">
+                  <li><Link to="/" className="text-gray-400 hover:text-white">Help Center</Link></li>
+                  <li><Link to="/" className="text-gray-400 hover:text-white">GST Guide</Link></li>
+                  <li><Link to="/" className="text-gray-400 hover:text-white">Blog</Link></li>
+                </ul>
+              </div>
+            </nav>
+            <div className="text-sm text-gray-400">
+              &copy; {new Date().getFullYear()} InvoiceNinja. All rights reserved.
+            </div>
+          </div>
+        </div>
+      </footer>
     </>
   );
 };
@@ -233,4 +251,4 @@ const FAQItem = ({
   </div>
 );
 
-export default LandingPage;
+export default Index;

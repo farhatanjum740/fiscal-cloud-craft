@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect } from "react";
 
-// Mock blog posts data
+// Blog posts data - expanded with more content
 const blogPosts = {
   "gst-for-small-businesses": {
     title: "GST Guide for Small Businesses in India",
@@ -229,6 +229,114 @@ const blogPosts = {
     `,
     keywords: "GST invoice format, GST invoice requirements, HSN codes, GST tax invoice, e-invoicing India",
     image: "https://invoiceninja.com/blog/gst-invoice-requirements.jpg"
+  },
+  "hsn-codes-explained": {
+    title: "HSN Codes Explained: What Indian Businesses Need to Know",
+    description: "A comprehensive guide to using HSN codes correctly on your GST invoices.",
+    content: `
+      <h1>HSN Codes Explained: What Indian Businesses Need to Know</h1>
+      <p class="text-gray-500 mb-6">Published on May 5, 2025 • 7 min read</p>
+      
+      <p>Harmonized System of Nomenclature (HSN) codes are an integral part of GST-compliant invoicing in India. This guide explains what HSN codes are, why they're important, and how to use them correctly in your invoices.</p>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">What Are HSN Codes?</h2>
+      <p>HSN codes are internationally standardized numerical codes used to classify products. Under the GST system in India, these codes help identify products and determine the applicable tax rates. The codes were developed by the World Customs Organization (WCO) and have been adopted by over 200 countries worldwide.</p>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">Why Are HSN Codes Important?</h2>
+      <p>HSN codes serve several important purposes in the GST system:</p>
+      
+      <ul class="list-disc pl-6 my-4">
+        <li>They ensure uniform classification of goods across India</li>
+        <li>They help determine the correct GST rate applicable to products</li>
+        <li>They facilitate smooth filing of GST returns</li>
+        <li>They enable proper reconciliation of input tax credits</li>
+        <li>They support international trade by using a standardized system</li>
+      </ul>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">HSN Code Structure</h2>
+      <p>HSN codes can be 2, 4, 6, or 8 digits long. The more digits, the more specific the classification:</p>
+      
+      <ul class="list-disc pl-6 my-4">
+        <li><strong>2-digit code:</strong> Chapter heading</li>
+        <li><strong>4-digit code:</strong> Heading within the chapter</li>
+        <li><strong>6-digit code:</strong> Subheading</li>
+        <li><strong>8-digit code:</strong> Tariff item (most detailed classification)</li>
+      </ul>
+      
+      <p>For example, if we look at the HSN code 85076000:</p>
+      <ul class="list-disc pl-6 my-4">
+        <li>85: Electrical machinery and equipment</li>
+        <li>8507: Electric accumulators</li>
+        <li>850760: Lithium-ion accumulators</li>
+        <li>85076000: Specific type of lithium-ion battery</li>
+      </ul>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">HSN Code Requirements Based on Turnover</h2>
+      <p>The number of digits required in HSN codes on invoices depends on the annual turnover of the business:</p>
+      
+      <ul class="list-disc pl-6 my-4">
+        <li><strong>Turnover up to ₹1.5 crore:</strong> 4-digit HSN code</li>
+        <li><strong>Turnover above ₹1.5 crore and up to ₹5 crore:</strong> 6-digit HSN code</li>
+        <li><strong>Turnover above ₹5 crore:</strong> 8-digit HSN code</li>
+      </ul>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">How to Find the Correct HSN Code</h2>
+      <p>Finding the right HSN code for your products can be challenging. Here are some resources to help:</p>
+      
+      <ul class="list-disc pl-6 my-4">
+        <li>The official GST portal (www.gst.gov.in) provides a search facility for HSN codes</li>
+        <li>The CBIC (Central Board of Indirect Taxes and Customs) website has a detailed HSN code directory</li>
+        <li>GST-compliant invoicing software like InvoiceNinja often includes HSN code lookup features</li>
+        <li>You can consult with a tax professional for specific products</li>
+      </ul>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">Common Challenges with HSN Codes</h2>
+      <p>Businesses often face several challenges when dealing with HSN codes:</p>
+      
+      <ul class="list-disc pl-6 my-4">
+        <li><strong>Multiple applicable codes:</strong> Some products may seem to fit under multiple HSN codes</li>
+        <li><strong>New or innovative products:</strong> Finding appropriate codes for new innovations can be difficult</li>
+        <li><strong>Changes in HSN classification:</strong> The government occasionally updates the code structure</li>
+        <li><strong>Different interpretations:</strong> Different tax authorities might interpret classifications differently</li>
+      </ul>
+      
+      <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-8">
+        <h3 class="font-semibold">How InvoiceNinja Simplifies HSN Code Management</h3>
+        <p class="mt-2">InvoiceNinja makes HSN code management easy with these features:</p>
+        <ul class="list-disc pl-6 mt-2">
+          <li>Built-in HSN code database with search functionality</li>
+          <li>Automatic HSN code suggestions based on product descriptions</li>
+          <li>Ability to save HSN codes with product details for future use</li>
+          <li>Automatic HSN code validation to prevent errors</li>
+          <li>Regular updates to the HSN code database when changes occur</li>
+        </ul>
+      </div>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">Best Practices for HSN Code Management</h2>
+      <p>Follow these best practices to ensure proper HSN code management:</p>
+      
+      <ul class="list-disc pl-6 my-4">
+        <li>Create a master database of products with their corresponding HSN codes</li>
+        <li>Regularly update your HSN codes to reflect any government changes</li>
+        <li>Maintain consistency in using HSN codes across all your invoices</li>
+        <li>Train your staff on the importance of using correct HSN codes</li>
+        <li>Use automated software to reduce human errors in HSN code application</li>
+      </ul>
+      
+      <h2 class="text-2xl font-semibold mt-8 mb-4">Conclusion</h2>
+      <p>Proper use of HSN codes is essential for GST compliance in India. While it may seem challenging at first, with the right tools and practices, HSN code management can be streamlined. Using a GST-compliant invoicing software like InvoiceNinja can significantly simplify this aspect of your business operations.</p>
+      
+      <div class="mt-8 mb-12 text-center">
+        <p class="mb-4">Ready to simplify your HSN code management?</p>
+        <div>
+          <a href="/signup" class="bg-primary text-white hover:bg-primary/90 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium px-8 py-3">
+            Try InvoiceNinja Free
+          </a>
+        </div>
+      </div>
+    `,
+    keywords: "HSN codes, GST classification, HSN code guide, product classification GST, HSN lookup",
+    image: "https://invoiceninja.com/blog/hsn-codes.jpg"
   }
 };
 
@@ -257,6 +365,31 @@ const BlogPost = () => {
         <meta property="og:type" content="article" />
         <meta property="og:image" content={post.image} />
         <link rel="canonical" href={`https://invoiceninja.com/blog/${slug}`} />
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "BlogPosting",
+              "headline": "${post.title}",
+              "description": "${post.description}",
+              "image": "${post.image}",
+              "keywords": "${post.keywords}",
+              "datePublished": "${post.date}",
+              "author": {
+                "@type": "Organization",
+                "name": "InvoiceNinja"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "InvoiceNinja",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://invoiceninja.com/logo.png"
+                }
+              }
+            }
+          `}
+        </script>
       </Helmet>
       
       <div className="min-h-screen flex flex-col">
@@ -296,6 +429,7 @@ const BlogPost = () => {
                 <div className="grid md:grid-cols-2 gap-6">
                   {Object.entries(blogPosts)
                     .filter(([key]) => key !== slug)
+                    .slice(0, 2)
                     .map(([key, value]: [string, any]) => (
                       <div key={key} className="border rounded-lg p-4">
                         <h4 className="font-semibold mb-2">

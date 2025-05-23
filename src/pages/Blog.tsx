@@ -51,6 +51,22 @@ const blogPosts = [
     date: "April 15, 2025",
     category: "Invoicing",
     image: "/blog/invoice-management.jpg"
+  },
+  {
+    slug: "gst-reconciliation-guide",
+    title: "GST Reconciliation Guide for Indian Businesses",
+    description: "Step-by-step process to reconcile your GST data and avoid discrepancies in your filings.",
+    date: "April 10, 2025",
+    category: "GST Compliance",
+    image: "/blog/gst-reconciliation.jpg"
+  },
+  {
+    slug: "input-tax-credit-optimization",
+    title: "How to Optimize Input Tax Credit Claims Under GST",
+    description: "Maximize your input tax credit claims while staying compliant with GST regulations.",
+    date: "April 5, 2025",
+    category: "Tax Planning",
+    image: "/blog/input-tax-credit.jpg"
   }
 ];
 
@@ -58,10 +74,28 @@ const Blog = () => {
   return (
     <>
       <Helmet>
-        <title>GST Invoicing Blog - Tips and Guides | InvoiceNinja</title>
-        <meta name="description" content="Expert articles on GST compliance, invoicing best practices, and tax filing tips for Indian businesses." />
-        <meta name="keywords" content="GST blog, invoicing tips, tax compliance, HSN codes, e-invoicing India" />
+        <title>GST Invoicing Blog - Expert Tips and Guides | InvoiceNinja</title>
+        <meta name="description" content="Expert articles on GST compliance, invoicing best practices, and tax filing tips for Indian businesses. Learn how to optimize your invoicing processes." />
+        <meta name="keywords" content="GST blog, invoicing tips, tax compliance, HSN codes, e-invoicing India, ITC optimization, GST reconciliation" />
         <link rel="canonical" href="https://invoiceninja.com/blog" />
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "Blog",
+              "headline": "GST Invoicing Blog - Expert Tips and Guides",
+              "description": "Expert articles on GST compliance, invoicing best practices, and tax filing tips for Indian businesses.",
+              "publisher": {
+                "@type": "Organization",
+                "name": "InvoiceNinja",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://invoiceninja.com/logo.png"
+                }
+              }
+            }
+          `}
+        </script>
       </Helmet>
       
       <div className="min-h-screen flex flex-col">
