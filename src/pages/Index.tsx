@@ -1,13 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
 const LandingPage = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <header className="bg-primary text-white py-4">
         <div className="container mx-auto flex justify-between items-center px-4">
-          <h1 className="text-2xl font-bold">InvoiceHub</h1>
+          <h1 className="text-2xl font-bold">InvoiceNinja</h1>
           <div className="flex items-center gap-4">
             <Link to="/signin">
               <Button variant="ghost" className="text-white hover:text-white hover:bg-primary/80">
@@ -42,30 +39,12 @@ const LandingPage = () => {
           <div className="container mx-auto px-4">
             <h3 className="text-3xl font-bold text-center mb-12">Key Features</h3>
             <div className="grid md:grid-cols-3 gap-10">
-              <FeatureCard 
-                title="GST-Compliant Invoicing" 
-                description="Create professional invoices that fully comply with Indian GST regulations with automatic tax calculations." 
-              />
-              <FeatureCard 
-                title="Customer Management" 
-                description="Maintain detailed client records with multiple addresses and transaction history." 
-              />
-              <FeatureCard 
-                title="Product Catalog" 
-                description="Manage your products with HSN codes and GST rates for faster invoice creation." 
-              />
-              <FeatureCard 
-                title="Financial Analytics" 
-                description="Track revenue, outstanding payments and tax liabilities with powerful reporting." 
-              />
-              <FeatureCard 
-                title="Document Generation" 
-                description="Generate professional PDF invoices and email them directly to your clients." 
-              />
-              <FeatureCard 
-                title="Multi-user Access" 
-                description="Role-based permissions for team members with different levels of access." 
-              />
+              <FeatureCard title="GST-Compliant Invoicing" description="Create professional invoices that fully comply with Indian GST regulations with automatic tax calculations." />
+              <FeatureCard title="Customer Management" description="Maintain detailed client records with multiple addresses and transaction history." />
+              <FeatureCard title="Product Catalog" description="Manage your products with HSN codes and GST rates for faster invoice creation." />
+              <FeatureCard title="Financial Analytics" description="Track revenue, outstanding payments and tax liabilities with powerful reporting." />
+              <FeatureCard title="Document Generation" description="Generate professional PDF invoices and email them directly to your clients." />
+              <FeatureCard title="Multi-user Access" description="Role-based permissions for team members with different levels of access." />
             </div>
           </div>
         </section>
@@ -95,15 +74,16 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
-const FeatureCard = ({ title, description }: { title: string; description: string }) => (
-  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+const FeatureCard = ({
+  title,
+  description
+}: {
+  title: string;
+  description: string;
+}) => <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
     <h4 className="text-xl font-semibold mb-3 text-invoice-primary">{title}</h4>
     <p className="text-gray-600">{description}</p>
-  </div>
-);
-
+  </div>;
 export default LandingPage;
