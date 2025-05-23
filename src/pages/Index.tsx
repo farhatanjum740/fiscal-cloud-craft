@@ -28,10 +28,10 @@ const Index = () => {
         <link rel="canonical" href="https://invoiceninja.com/" />
       </Helmet>
 
-      {/* Hero Section - Reduced top padding */}
-      <section className="bg-[#121f3d] text-white py-8 md:py-12">
+      {/* Hero Section - Further reduced top padding to match design */}
+      <section className="bg-[#121f3d] text-white py-4 md:py-6">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
+          <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">InvoiceNinja</h2>
             <div className="flex items-center gap-4">
               <Link to="/signin">
@@ -47,8 +47,8 @@ const Index = () => {
             </div>
           </div>
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">GST-Compliant Invoicing Made Simple</h1>
-            <p className="text-xl mb-8">Create professional invoices, manage customers and track your business finances - all in one place.</p>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Free GST-Compliant Invoicing<br/>Made Simple</h1>
+            <p className="text-xl mb-8">Create professional invoices, manage customers and track your business finances - all<br/>in one place. 100% compliant with Indian GST regulations.</p>
             <Link to="/signup">
               <Button size="lg" className="bg-white text-[#121f3d] hover:bg-slate-100">
                 Get Started For Free
