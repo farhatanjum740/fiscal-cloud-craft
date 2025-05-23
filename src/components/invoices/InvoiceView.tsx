@@ -20,13 +20,15 @@ interface InvoiceViewProps {
 // Improved PDF configuration that prioritizes text rendering with minimal margins
 const getPdfOptions = (filename: string) => ({
   filename: filename,
-  margin: 5, // Reduced from 10mm to 5mm
-  image: { type: 'jpeg', quality: 0.95 },
+  margin: 3, // Reduced from 5mm to 3mm
+  image: { type: 'jpeg', quality: 0.98 },
   html2canvas: { 
     scale: 2, 
     useCORS: true,
     logging: false,
-    removeContainer: true
+    removeContainer: true,
+    letterRendering: true,
+    textRendering: true
   },
   jsPDF: { 
     unit: 'mm', 
@@ -34,7 +36,8 @@ const getPdfOptions = (filename: string) => ({
     orientation: 'portrait',
     compress: false,
     putOnlyUsedFonts: true,
-    floatPrecision: 16
+    floatPrecision: 16,
+    hotfixes: ["px_scaling"]
   }
 });
 
@@ -180,8 +183,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
       
       <div 
         ref={printRef} 
-        className="bg-white p-5 max-w-4xl mx-auto print:shadow-none print:border-none"
-        style={{ width: '200mm', minHeight: '287mm', boxSizing: 'border-box', margin: '0 auto' }}
+        className="bg-white p-3 max-w-4xl mx-auto print:shadow-none print:border-none"
+        style={{ width: '204mm', minHeight: '287mm', boxSizing: 'border-box', margin: '0 auto' }}
       >
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -260,27 +263,27 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>No</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '25%' }}>Item</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>HSN/SAC</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>Qty</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Unit</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>Rate</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>Amount</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '23%' }}>Item</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>HSN/SAC</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>Qty</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>Unit</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Rate</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Amount</th>
                 
                 {useIGST ? (
                   <>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>IGST %</th>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>IGST</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>IGST %</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>IGST</th>
                   </>
                 ) : (
                   <>
                     <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST %</th>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>CGST</th>
                     <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST %</th>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>SGST</th>
                   </>
                 )}
-                <th className="py-1 px-1 font-semibold text-right" style={{ width: '10%' }}>Total</th>
+                <th className="py-1 px-1 font-semibold text-right" style={{ width: '8%' }}>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -305,7 +308,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                     </td>
                     <td className="py-1 px-1 text-xs">{item.hsnCode}</td>
                     <td className="py-1 px-1 text-xs">{item.quantity}</td>
-                    <td className="py-1 px-1 text-xs">{item.unit}</td>
+                    <td className="py-1 px-1 text-xs overflow-hidden text-ellipsis whitespace-nowrap">{item.unit}</td>
                     <td className="py-1 px-1 text-xs">₹{formatAmount(price)}</td>
                     <td className="py-1 px-1 text-xs">₹{formatAmount(itemTotal)}</td>
                     

@@ -106,7 +106,7 @@
   @apply border-t border-[#1a3b7a];
 }
 
-/* Enhanced print styles for A4 page - removed borders */
+/* Enhanced print styles for A4 page - removed borders and minimized margins */
 @media print {
   /* Hide UI elements that shouldn't appear in print */
   .print-hidden,
@@ -121,7 +121,7 @@
   /* Paper settings */
   @page {
     size: A4 portrait;
-    margin: 5mm; /* Reduced margin from 10mm to 5mm */
+    margin: 3mm; /* Reduced margin from 5mm to 3mm */
   }
   
   html, body {
@@ -137,8 +137,8 @@
   
   /* Force all content into A4 size */
   div[ref="printRef"] {
-    width: 200mm !important; /* Adjusted for smaller margins */
-    min-height: 287mm !important; /* Adjusted for smaller margins */
+    width: 204mm !important; /* Adjusted for smaller margins */
+    min-height: 291mm !important; /* Adjusted for smaller margins */
     padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
@@ -157,11 +157,13 @@
     border-collapse: collapse !important;
     page-break-inside: auto !important;
     font-size: 9pt !important;
+    border: none !important;
   }
   
   tr {
     page-break-inside: avoid !important;
     page-break-after: auto !important;
+    border: none !important;
   }
   
   th, td {

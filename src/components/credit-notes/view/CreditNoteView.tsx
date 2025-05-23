@@ -23,13 +23,15 @@ interface CreditNoteViewProps {
 // Improved PDF configuration that prioritizes text rendering with minimal margins
 const getPdfOptions = (filename: string) => ({
   filename: filename,
-  margin: 5, // Reduced from 10mm to 5mm
-  image: { type: 'jpeg', quality: 0.95 },
+  margin: 3, // Reduced from 5mm to 3mm
+  image: { type: 'jpeg', quality: 0.98 },
   html2canvas: { 
     scale: 2, 
     useCORS: true,
     logging: false,
-    removeContainer: true
+    removeContainer: true,
+    letterRendering: true,
+    textRendering: true
   },
   jsPDF: { 
     unit: 'mm', 
@@ -37,7 +39,8 @@ const getPdfOptions = (filename: string) => ({
     orientation: 'portrait',
     compress: false,
     putOnlyUsedFonts: true,
-    floatPrecision: 16
+    floatPrecision: 16,
+    hotfixes: ["px_scaling"]
   }
 });
 
@@ -225,8 +228,8 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
       
       <div 
         ref={printRef} 
-        className="bg-white p-5 max-w-4xl mx-auto print:shadow-none print:border-none"
-        style={{ width: '200mm', minHeight: '287mm', boxSizing: 'border-box', margin: '0 auto' }}
+        className="bg-white p-3 max-w-4xl mx-auto print:shadow-none print:border-none"
+        style={{ width: '204mm', minHeight: '287mm', boxSizing: 'border-box', margin: '0 auto' }}
       >
         <CreditNoteHeader creditNote={normalizedCreditNote} invoice={invoice} company={company} />
         

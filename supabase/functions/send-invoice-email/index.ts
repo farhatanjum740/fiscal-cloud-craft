@@ -11,7 +11,7 @@ interface InvoiceEmailProps {
   isInvoice: boolean;
 }
 
-// Improved React email template component
+// Improved React email template component with better text display
 function InvoiceEmail({ logoURL, company, message, document, isInvoice }: InvoiceEmailProps) {
   const documentType = isInvoice ? 'Invoice' : 'Credit Note';
   const documentNumber = isInvoice ? document.invoice_number : document.credit_note_number;

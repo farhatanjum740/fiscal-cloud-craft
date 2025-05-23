@@ -19,10 +19,10 @@ interface EmailInvoiceDialogProps {
   company: any;
 }
 
-// Define a reusable PDF configuration to ensure consistency
+// Improved PDF configuration for text-based rendering
 const getPdfOptions = (filename: string) => ({
   filename: filename,
-  margin: [5, 5, 5, 5], // Consistent 5mm margins
+  margin: [3, 3, 3, 3], // Reduced margins to 3mm all around
   image: { type: 'jpeg', quality: 0.98 },
   html2canvas: { 
     scale: 2, 
@@ -31,7 +31,6 @@ const getPdfOptions = (filename: string) => ({
     allowTaint: true,
     logging: false,
     removeContainer: true,
-    // Force text rendering
     textRendering: true
   },
   jsPDF: { 
@@ -41,7 +40,8 @@ const getPdfOptions = (filename: string) => ({
     compress: false, // Disable compression for better text rendering
     precision: 16,
     putOnlyUsedFonts: true,
-    floatPrecision: "smart"
+    floatPrecision: "smart",
+    hotfixes: ["px_scaling"]
   },
   enableLinks: true,
   pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -147,21 +147,29 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       clonedNode.style.position = 'absolute';
       clonedNode.style.left = '-9999px';
       clonedNode.style.width = '210mm';
-      clonedNode.style.padding = '5mm';
+      clonedNode.style.padding = '3mm'; // Reduced from 5mm to 3mm
       clonedNode.style.backgroundColor = 'white';
       
-      // Optimize tables for PDF output
+      // Optimize tables for PDF output - remove borders and adjust spacing
       const tableElements = clonedNode.querySelectorAll('table');
       tableElements.forEach((table) => {
         table.style.width = '100%';
         table.style.tableLayout = 'fixed';
-        table.style.maxWidth = '200mm';
+        table.style.maxWidth = '204mm'; // Adjusted for new padding
+        table.style.borderCollapse = 'collapse';
+        table.style.border = 'none';
+        
+        const rows = table.querySelectorAll('tr');
+        rows.forEach((row) => {
+          (row as HTMLElement).style.borderBottom = 'none';
+        });
         
         const cells = table.querySelectorAll('th, td');
         cells.forEach((cell) => {
           (cell as HTMLElement).style.padding = '1mm';
           (cell as HTMLElement).style.fontSize = '8pt';
           (cell as HTMLElement).style.wordBreak = 'break-word';
+          (cell as HTMLElement).style.border = 'none';
         });
       });
       
@@ -169,7 +177,7 @@ const EmailInvoiceDialog: React.FC<EmailInvoiceDialogProps> = ({
       const options = getPdfOptions(`Invoice-${invoice.invoiceNumber || invoice.invoice_number}.pdf`);
       
       try {
-        // Generate the PDF
+        // Force text rendering instead of images
         const pdfBlob = await html2pdf()
           .set(options)
           .from(clonedNode)

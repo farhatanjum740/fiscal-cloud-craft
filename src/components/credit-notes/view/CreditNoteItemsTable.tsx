@@ -12,30 +12,30 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
   
   return (
     <div className="w-full overflow-visible">
-      <table className="w-full border-collapse mb-5 text-xs" style={{ width: '100%' }}>
+      <table className="w-full border-collapse mb-5 text-xs" style={{ width: '100%', tableLayout: 'fixed' }}>
         <thead>
           <tr className="bg-gray-100">
             <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>No</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '25%' }}>Item</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>HSN/SAC</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>Qty</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Unit</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>Rate</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>Amount</th>
+            <th className="py-1 px-1 font-semibold" style={{ width: '23%' }}>Item</th>
+            <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>HSN/SAC</th>
+            <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>Qty</th>
+            <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>Unit</th>
+            <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Rate</th>
+            <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Amount</th>
             {useIGST ? (
               <>
-                <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>IGST %</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>IGST</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>IGST %</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>IGST</th>
               </>
             ) : (
               <>
                 <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST %</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>CGST</th>
                 <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST %</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>SGST</th>
               </>
             )}
-            <th className="py-1 px-1 font-semibold text-right" style={{ width: '10%' }}>Total</th>
+            <th className="py-1 px-1 font-semibold text-right" style={{ width: '8%' }}>Total</th>
           </tr>
         </thead>
         <tbody>
@@ -74,7 +74,7 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
                   </td>
                   <td className="py-1 px-1 text-xs">{hsnCode}</td>
                   <td className="py-1 px-1 text-xs">{itemQuantity}</td>
-                  <td className="py-1 px-1 text-xs">{item.unit || 'Unit'}</td>
+                  <td className="py-1 px-1 text-xs overflow-hidden text-ellipsis whitespace-nowrap">{item.unit || 'Unit'}</td>
                   <td className="py-1 px-1 text-xs">₹{formatAmount(itemPrice)}</td>
                   <td className="py-1 px-1 text-xs">₹{formatAmount(itemAmount)}</td>
                   
