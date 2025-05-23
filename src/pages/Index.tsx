@@ -28,10 +28,10 @@ const Index = () => {
         <link rel="canonical" href="https://invoiceninja.com/" />
       </Helmet>
 
-      {/* Hero Section - Changed to dark blue background */}
-      <section className="bg-[#121f3d] text-white py-16 md:py-24">
+      {/* Hero Section - Reduced top padding */}
+      <section className="bg-[#121f3d] text-white py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-16">
+          <div className="flex justify-between items-center mb-10">
             <h2 className="text-2xl font-bold">InvoiceNinja</h2>
             <div className="flex items-center gap-4">
               <Link to="/signin">
