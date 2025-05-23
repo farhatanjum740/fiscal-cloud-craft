@@ -28,19 +28,30 @@ const Index = () => {
         <link rel="canonical" href="https://invoiceninja.com/" />
       </Helmet>
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-primary to-primary-dark text-white">
-        <div className="container mx-auto flex justify-between items-center px-4">
-          <h1 className="text-2xl font-bold">InvoiceNinja</h1>
-          <div className="flex items-center gap-4">
-            <Link to="/signin">
-              <Button variant="ghost" className="text-white hover:text-white hover:bg-primary/80">
-                Sign In
-              </Button>
-            </Link>
+      {/* Hero Section - Changed to dark blue background */}
+      <section className="bg-[#121f3d] text-white py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-16">
+            <h2 className="text-2xl font-bold">InvoiceNinja</h2>
+            <div className="flex items-center gap-4">
+              <Link to="/signin">
+                <Button variant="ghost" className="text-white hover:text-white hover:bg-[#1a3b7a]">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button className="bg-white text-[#121f3d] hover:bg-slate-100">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">GST-Compliant Invoicing Made Simple</h1>
+            <p className="text-xl mb-8">Create professional invoices, manage customers and track your business finances - all in one place.</p>
             <Link to="/signup">
-              <Button className="bg-white text-primary hover:bg-slate-100">
-                Sign Up
+              <Button size="lg" className="bg-white text-[#121f3d] hover:bg-slate-100">
+                Get Started For Free
               </Button>
             </Link>
           </div>
@@ -49,21 +60,6 @@ const Index = () => {
 
       {/* Features Section */}
       <section className="py-16 px-4 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Free GST-Compliant Invoicing Made Simple</h1>
-            <p className="text-xl mb-8">Create professional invoices, manage customers and track your business finances - all in one place. 100% compliant with Indian GST regulations.</p>
-            <Link to="/signup">
-              <Button size="lg" className="bg-primary text-white hover:bg-primary/90">
-                Get Started For Free
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-16 px-4 md:py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
           <div className="grid md:grid-cols-3 gap-10">
@@ -96,7 +92,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 px-4 md:py-24 bg-white">
+      <section className="py-16 px-4 md:py-24 bg-gray-50">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Testimonials</h2>
           <div className="grid md:grid-cols-2 gap-8">
@@ -124,7 +120,7 @@ const Index = () => {
       </section>
 
       {/* Resources Section */}
-      <section className="py-16 px-4 md:py-24 bg-gray-50">
+      <section className="py-16 px-4 md:py-24 bg-white">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Resources</h2>
           
@@ -166,11 +162,11 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-primary text-white text-center">
+      <section className="py-20 px-4 bg-[#121f3d] text-white text-center">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8">Ready to streamline your invoicing?</h2>
           <Link to="/signup">
-            <Button size="lg" className="bg-white text-primary hover:bg-slate-100">
+            <Button size="lg" className="bg-white text-[#121f3d] hover:bg-slate-100">
               Create Your Free Account
             </Button>
           </Link>
