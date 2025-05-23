@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -94,14 +93,14 @@ class AppErrorBoundary extends React.Component<
 
 function App() {
   return (
-    <BrowserRouter>
-      <HelmetProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppErrorBoundary>
-            <AuthProvider>
-              <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <HelmetProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AppErrorBoundary>
+              <AuthProvider>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/signin" element={<SignIn />} />
@@ -149,12 +148,12 @@ function App() {
                   
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </QueryClientProvider>
-            </AuthProvider>
-          </AppErrorBoundary>
-        </TooltipProvider>
-      </HelmetProvider>
-    </BrowserRouter>
+              </AuthProvider>
+            </AppErrorBoundary>
+          </TooltipProvider>
+        </HelmetProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 
