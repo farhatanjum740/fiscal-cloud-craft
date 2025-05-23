@@ -121,7 +121,7 @@
   /* Paper settings */
   @page {
     size: A4 portrait;
-    margin: 10mm; /* Consistent margins */
+    margin: 5mm; /* Reduced margin from 10mm to 5mm */
   }
   
   html, body {
@@ -137,8 +137,8 @@
   
   /* Force all content into A4 size */
   div[ref="printRef"] {
-    width: 190mm !important; /* Account for margins */
-    min-height: 277mm !important; /* Account for margins */
+    width: 200mm !important; /* Adjusted for smaller margins */
+    min-height: 287mm !important; /* Adjusted for smaller margins */
     padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
