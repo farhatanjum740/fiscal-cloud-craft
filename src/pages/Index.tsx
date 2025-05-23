@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -53,7 +54,7 @@ const Index = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-6">Free GST-Compliant Invoicing Made Simple</h1>
             <p className="text-xl mb-8">Create professional invoices, manage customers and track your business finances - all in one place. 100% compliant with Indian GST regulations.</p>
             <Link to="/signup">
-              <Button size="lg" className="bg-white text-primary hover:bg-slate-100">
+              <Button size="lg" className="bg-primary text-white hover:bg-primary/90">
                 Get Started For Free
               </Button>
             </Link>
@@ -197,8 +198,8 @@ const Index = () => {
                 <h3 className="font-semibold mb-2">Resources</h3>
                 <ul className="space-y-2">
                   <li><Link to="/" className="text-gray-400 hover:text-white">Help Center</Link></li>
-                  <li><Link to="/" className="text-gray-400 hover:text-white">GST Guide</Link></li>
-                  <li><Link to="/" className="text-gray-400 hover:text-white">Blog</Link></li>
+                  <li><Link to="/gst-invoicing" className="text-gray-400 hover:text-white">GST Guide</Link></li>
+                  <li><Link to="/blog" className="text-gray-400 hover:text-white">Blog</Link></li>
                 </ul>
               </div>
             </nav>
