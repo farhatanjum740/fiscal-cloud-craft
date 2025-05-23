@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -233,7 +234,7 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         
         <CreditNoteDetails creditNote={normalizedCreditNote} invoice={invoice} customer={customer} />
         
-        <div className="overflow-hidden w-full">
+        <div className="overflow-visible w-full">
           <CreditNoteItemsTable items={safeItems} useIGST={useIGST} />
         </div>
         

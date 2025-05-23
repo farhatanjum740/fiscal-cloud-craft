@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
@@ -254,32 +255,32 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Invoice Items - Using fixed table layout and controlling column widths */}
-        <div className="w-full overflow-hidden">
+        <div className="w-full overflow-visible">
           <table className="w-full border-collapse mb-3 text-xs" style={{ tableLayout: 'fixed', width: '100%', maxWidth: '100%' }}>
             <thead>
               <tr className="bg-gray-100">
-                <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>No</th>
-                <th className="py-1 px-1 border font-semibold" style={{ width: '25%' }}>Item</th>
-                <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>HSN/SAC</th>
-                <th className="py-1 px-1 border font-semibold" style={{ width: '7%' }}>Qty</th>
-                <th className="py-1 px-1 border font-semibold" style={{ width: '8%' }}>Unit</th>
-                <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>Rate</th>
-                <th className="py-1 px-1 border font-semibold" style={{ width: '10%' }}>Amount</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>No</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '25%' }}>Item</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>HSN/SAC</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>Qty</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Unit</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>Rate</th>
+                <th className="py-1 px-1 font-semibold" style={{ width: '10%' }}>Amount</th>
                 
                 {useIGST ? (
                   <>
-                    <th className="py-1 px-1 border font-semibold" style={{ width: '7%' }}>IGST %</th>
-                    <th className="py-1 px-1 border font-semibold" style={{ width: '8%' }}>IGST</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>IGST %</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>IGST</th>
                   </>
                 ) : (
                   <>
-                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>CGST %</th>
-                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>CGST</th>
-                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>SGST %</th>
-                    <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>SGST</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST %</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST %</th>
+                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST</th>
                   </>
                 )}
-                <th className="py-1 px-1 border font-semibold text-right" style={{ width: '10%' }}>Total</th>
+                <th className="py-1 px-1 font-semibold text-right" style={{ width: '10%' }}>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -297,31 +298,31 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-1 px-1 border text-xs">{index + 1}</td>
-                    <td className="py-1 px-1 border text-xs">
+                    <td className="py-1 px-1 text-xs">{index + 1}</td>
+                    <td className="py-1 px-1 text-xs">
                       <div className="font-medium">{item.productName}</div>
                       {item.description && <div className="text-xs text-gray-600">{item.description}</div>}
                     </td>
-                    <td className="py-1 px-1 border text-xs">{item.hsnCode}</td>
-                    <td className="py-1 px-1 border text-xs">{item.quantity}</td>
-                    <td className="py-1 px-1 border text-xs">{item.unit}</td>
-                    <td className="py-1 px-1 border text-xs">₹{formatAmount(price)}</td>
-                    <td className="py-1 px-1 border text-xs">₹{formatAmount(itemTotal)}</td>
+                    <td className="py-1 px-1 text-xs">{item.hsnCode}</td>
+                    <td className="py-1 px-1 text-xs">{item.quantity}</td>
+                    <td className="py-1 px-1 text-xs">{item.unit}</td>
+                    <td className="py-1 px-1 text-xs">₹{formatAmount(price)}</td>
+                    <td className="py-1 px-1 text-xs">₹{formatAmount(itemTotal)}</td>
                     
                     {useIGST ? (
                       <>
-                        <td className="py-1 px-1 border text-xs">{gstRate}%</td>
-                        <td className="py-1 px-1 border text-xs">₹{formatAmount(gstAmount)}</td>
+                        <td className="py-1 px-1 text-xs">{gstRate}%</td>
+                        <td className="py-1 px-1 text-xs">₹{formatAmount(gstAmount)}</td>
                       </>
                     ) : (
                       <>
-                        <td className="py-1 px-1 border text-xs">{splitRate}%</td>
-                        <td className="py-1 px-1 border text-xs">₹{formatAmount(splitAmount)}</td>
-                        <td className="py-1 px-1 border text-xs">{splitRate}%</td>
-                        <td className="py-1 px-1 border text-xs">₹{formatAmount(splitAmount)}</td>
+                        <td className="py-1 px-1 text-xs">{splitRate}%</td>
+                        <td className="py-1 px-1 text-xs">₹{formatAmount(splitAmount)}</td>
+                        <td className="py-1 px-1 text-xs">{splitRate}%</td>
+                        <td className="py-1 px-1 text-xs">₹{formatAmount(splitAmount)}</td>
                       </>
                     )}
-                    <td className="py-1 px-1 border text-xs text-right">₹{formatAmount(itemTotal + gstAmount)}</td>
+                    <td className="py-1 px-1 text-xs text-right">₹{formatAmount(itemTotal + gstAmount)}</td>
                   </tr>
                 );
               })}
