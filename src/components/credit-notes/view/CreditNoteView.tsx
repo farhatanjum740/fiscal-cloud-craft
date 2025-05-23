@@ -1,8 +1,8 @@
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Printer, Download, Mail } from 'lucide-react';
+import { Printer, Download } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import CreditNoteHeader from './CreditNoteHeader';
 import CreditNoteCustomerInfo from './CreditNoteCustomerInfo';
@@ -10,7 +10,6 @@ import CreditNoteDetails from './CreditNoteDetails';
 import CreditNoteItemsTable from './CreditNoteItemsTable';
 import CreditNoteSummary from './CreditNoteSummary';
 import CreditNoteFooter from './CreditNoteFooter';
-import EmailCreditNoteDialog from '@/components/dialogs/EmailCreditNoteDialog';
 
 interface CreditNoteViewProps {
   creditNote: any;
@@ -20,30 +19,6 @@ interface CreditNoteViewProps {
   isDownloadable?: boolean;
 }
 
-// Improved PDF configuration that prioritizes text rendering with minimal margins
-const getPdfOptions = (filename: string) => ({
-  filename: filename,
-  margin: 3, // Reduced from 5mm to 3mm
-  image: { type: 'jpeg', quality: 0.98 },
-  html2canvas: { 
-    scale: 2, 
-    useCORS: true,
-    logging: false,
-    removeContainer: true,
-    letterRendering: true,
-    textRendering: true
-  },
-  jsPDF: { 
-    unit: 'mm', 
-    format: 'a4', 
-    orientation: 'portrait',
-    compress: false,
-    putOnlyUsedFonts: true,
-    floatPrecision: 16,
-    hotfixes: ["px_scaling"]
-  }
-});
-
 const CreditNoteView: React.FC<CreditNoteViewProps> = ({ 
   creditNote, 
   company, 
@@ -52,7 +27,6 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   isDownloadable = true 
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   
   // Log data to console for debugging
   useEffect(() => {
@@ -66,14 +40,13 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     if (creditNote) {
       // Log specific credit note properties
       console.log("Credit Note View - Credit Note Details:", {
-        number: creditNote.creditNoteNumber || creditNote.credit_note_number,
-        date: creditNote.creditNoteDate || creditNote.credit_note_date,
+        number: creditNote.creditNoteNumber,
+        date: creditNote.creditNoteDate,
         subtotal: creditNote.subtotal,
         cgst: creditNote.cgst,
         sgst: creditNote.sgst,
         igst: creditNote.igst,
-        totalAmount: creditNote.total_amount,
-        id: creditNote.id
+        totalAmount: creditNote.total_amount
       });
     }
   }, [creditNote, company, invoice, customer]);
@@ -96,23 +69,16 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your credit note..." });
       
-      const options = getPdfOptions(`Credit-Note-${creditNote.creditNoteNumber || creditNote.credit_note_number || 'draft'}.pdf`);
+      const options = {
+        filename: `Credit-Note-${creditNote.creditNoteNumber || 'draft'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
       
-      html2pdf()
-        .from(printRef.current)
-        .set(options)
-        .save()
-        .then(() => {
-          toast({ title: "Download complete", description: "Credit note has been downloaded as PDF." });
-        })
-        .catch((error) => {
-          console.error('Error in PDF generation:', error);
-          toast({ 
-            title: "Download failed", 
-            description: "Failed to generate PDF. Please try again.", 
-            variant: "destructive" 
-          });
-        });
+      await html2pdf().set(options).from(printRef.current).save();
+      
+      toast({ title: "Download complete", description: "Credit note has been downloaded as PDF." });
     } catch (error) {
       console.error('Error generating credit note PDF:', error);
       toast({ 
@@ -121,51 +87,6 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
         variant: "destructive" 
       });
     }
-  };
-
-  const handleEmail = () => {
-    // Ensure we have the credit note ID
-    if (!creditNote) {
-      toast({
-        title: "Missing Credit Note",
-        description: "Credit note data is not available. Please try again.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Get ID directly from the credit note object, checking all possible locations
-    const id = creditNote.id || null;
-    
-    console.log("Original credit note object:", creditNote);
-    console.log("Credit note ID from original object:", id);
-    
-    if (!id) {
-      toast({
-        title: "Missing Credit Note ID",
-        description: "Could not find credit note ID. Please try again.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Create a normalized credit note object with consistent property names
-    // Deep clone to avoid reference issues
-    const normalizedCreditNote = JSON.parse(JSON.stringify({
-      ...creditNote,
-      id: id, // Explicitly set ID
-      creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
-      creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
-      invoiceId: creditNote.invoiceId || creditNote.invoice_id,
-      invoice: invoice, // Include the related invoice
-      invoices: invoice, // For compatibility
-    }));
-    
-    // Log credit note data for debugging before opening dialog
-    console.log("Opening email dialog with credit note:", normalizedCreditNote);
-    console.log("Credit note ID (explicit):", normalizedCreditNote.id);
-    
-    setEmailDialogOpen(true);
   };
 
   // Ensure items is an array and log for debugging
@@ -195,17 +116,23 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
   const safeSgst = parseFloat(String(creditNote.sgst)) || 0;
   const safeIgst = parseFloat(String(creditNote.igst)) || 0;
   const safeTotalAmount = parseFloat(String(creditNote.total_amount)) || 0;
-
-  // Create normalized version of credit note for consistency
-  const normalizedCreditNote = {
-    ...creditNote,
-    creditNoteNumber: creditNote.creditNoteNumber || creditNote.credit_note_number,
-    creditNoteDate: creditNote.creditNoteDate || creditNote.credit_note_date,
-    reason: creditNote.reason || "",
-    // Ensure ID is explicitly included
-    id: creditNote.id,
-    invoiceId: creditNote.invoiceId || creditNote.invoice_id
-  };
+  
+  console.log("Credit note values after conversion:", {
+    original: {
+      subtotal: creditNote.subtotal,
+      cgst: creditNote.cgst,
+      sgst: creditNote.sgst,
+      igst: creditNote.igst,
+      totalAmount: creditNote.total_amount
+    },
+    converted: {
+      safeSubtotal,
+      safeCgst,
+      safeSgst, 
+      safeIgst,
+      safeTotalAmount
+    }
+  });
 
   return (
     <div className="bg-white">
@@ -219,27 +146,21 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
-          <Button variant="secondary" size="sm" onClick={handleEmail} title="Email Credit Note">
-            <Mail className="h-4 w-4 mr-2" />
-            Email
-          </Button>
         </div>
       )}
       
       <div 
         ref={printRef} 
-        className="bg-white p-3 max-w-4xl mx-auto print:shadow-none print:border-none"
-        style={{ width: '204mm', minHeight: '287mm', boxSizing: 'border-box', margin: '0 auto' }}
+        className="bg-white p-6 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
+        style={{ width: '210mm', minHeight: '297mm' }}
       >
-        <CreditNoteHeader creditNote={normalizedCreditNote} invoice={invoice} company={company} />
+        <CreditNoteHeader creditNote={creditNote} invoice={invoice} company={company} />
         
         <CreditNoteCustomerInfo customer={customer} />
         
-        <CreditNoteDetails creditNote={normalizedCreditNote} invoice={invoice} customer={customer} />
+        <CreditNoteDetails creditNote={creditNote} invoice={invoice} customer={customer} />
         
-        <div className="overflow-visible w-full">
-          <CreditNoteItemsTable items={safeItems} useIGST={useIGST} />
-        </div>
+        <CreditNoteItemsTable items={safeItems} useIGST={useIGST} />
         
         <CreditNoteSummary 
           subtotal={safeSubtotal} 
@@ -250,22 +171,15 @@ const CreditNoteView: React.FC<CreditNoteViewProps> = ({
           useIGST={useIGST}
         />
         
-        {normalizedCreditNote.reason && (
-          <div className="mb-3 text-xs">
+        {creditNote.reason && (
+          <div className="mb-4 text-xs">
             <h4 className="font-semibold mb-1">Reason:</h4>
-            <p className="whitespace-pre-line">{normalizedCreditNote.reason}</p>
+            <p className="whitespace-pre-line">{creditNote.reason}</p>
           </div>
         )}
         
         <CreditNoteFooter company={company} />
       </div>
-
-      <EmailCreditNoteDialog 
-        open={emailDialogOpen}
-        onOpenChange={setEmailDialogOpen}
-        creditNote={normalizedCreditNote}
-        company={company}
-      />
     </div>
   );
 };

@@ -11,31 +11,31 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
   console.log("Credit Note Items Table Props:", { items, useIGST });
   
   return (
-    <div className="w-full overflow-visible">
-      <table className="w-full border-collapse mb-5 text-xs" style={{ width: '100%', tableLayout: 'fixed' }}>
+    <div className="w-full overflow-visible print:overflow-visible">
+      <table className="w-full text-left border-collapse mb-5 text-xs">
         <thead>
           <tr className="bg-gray-100">
-            <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>No</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '23%' }}>Item</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>HSN/SAC</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>Qty</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>Unit</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Rate</th>
-            <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Amount</th>
+            <th className="py-1 px-1 border font-semibold">S.No</th>
+            <th className="py-1 px-1 border font-semibold">Item</th>
+            <th className="py-1 px-1 border font-semibold">HSN/SAC</th>
+            <th className="py-1 px-1 border font-semibold">Qty</th>
+            <th className="py-1 px-1 border font-semibold">Unit</th>
+            <th className="py-1 px-1 border font-semibold">Rate</th>
+            <th className="py-1 px-1 border font-semibold">Amount</th>
             {useIGST ? (
               <>
-                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>IGST %</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>IGST</th>
+                <th className="py-1 px-1 border font-semibold">IGST %</th>
+                <th className="py-1 px-1 border font-semibold">IGST</th>
               </>
             ) : (
               <>
-                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST %</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>CGST</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST %</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>SGST</th>
+                <th className="py-1 px-1 border font-semibold">CGST %</th>
+                <th className="py-1 px-1 border font-semibold">CGST</th>
+                <th className="py-1 px-1 border font-semibold">SGST %</th>
+                <th className="py-1 px-1 border font-semibold">SGST</th>
               </>
             )}
-            <th className="py-1 px-1 font-semibold text-right" style={{ width: '8%' }}>Total</th>
+            <th className="py-1 px-1 border font-semibold text-right">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -68,36 +68,36 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
               
               return (
                 <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="py-1 px-1 text-xs">{index + 1}</td>
-                  <td className="py-1 px-1 text-xs">
+                  <td className="py-1 px-1 border text-xs">{index + 1}</td>
+                  <td className="py-1 px-1 border text-xs">
                     <div className="font-medium">{productName}</div>
                   </td>
-                  <td className="py-1 px-1 text-xs">{hsnCode}</td>
-                  <td className="py-1 px-1 text-xs">{itemQuantity}</td>
-                  <td className="py-1 px-1 text-xs overflow-hidden text-ellipsis whitespace-nowrap">{item.unit || 'Unit'}</td>
-                  <td className="py-1 px-1 text-xs">₹{formatAmount(itemPrice)}</td>
-                  <td className="py-1 px-1 text-xs">₹{formatAmount(itemAmount)}</td>
+                  <td className="py-1 px-1 border text-xs">{hsnCode}</td>
+                  <td className="py-1 px-1 border text-xs">{itemQuantity}</td>
+                  <td className="py-1 px-1 border text-xs">{item.unit || 'Unit'}</td>
+                  <td className="py-1 px-1 border text-xs">₹{formatAmount(itemPrice)}</td>
+                  <td className="py-1 px-1 border text-xs">₹{formatAmount(itemAmount)}</td>
                   
                   {useIGST ? (
                     <>
-                      <td className="py-1 px-1 text-xs">{gstRate}%</td>
-                      <td className="py-1 px-1 text-xs">₹{formatAmount(gstAmount)}</td>
+                      <td className="py-1 px-1 border text-xs">{gstRate}%</td>
+                      <td className="py-1 px-1 border text-xs">₹{formatAmount(gstAmount)}</td>
                     </>
                   ) : (
                     <>
-                      <td className="py-1 px-1 text-xs">{splitRate}%</td>
-                      <td className="py-1 px-1 text-xs">₹{formatAmount(splitAmount)}</td>
-                      <td className="py-1 px-1 text-xs">{splitRate}%</td>
-                      <td className="py-1 px-1 text-xs">₹{formatAmount(splitAmount)}</td>
+                      <td className="py-1 px-1 border text-xs">{splitRate}%</td>
+                      <td className="py-1 px-1 border text-xs">₹{formatAmount(splitAmount)}</td>
+                      <td className="py-1 px-1 border text-xs">{splitRate}%</td>
+                      <td className="py-1 px-1 border text-xs">₹{formatAmount(splitAmount)}</td>
                     </>
                   )}
-                  <td className="py-1 px-1 text-xs text-right">₹{formatAmount(totalWithGst)}</td>
+                  <td className="py-1 px-1 border text-xs text-right">₹{formatAmount(totalWithGst)}</td>
                 </tr>
               );
             })
           ) : (
             <tr>
-              <td colSpan={useIGST ? 10 : 12} className="py-2 text-center text-xs">
+              <td colSpan={useIGST ? 10 : 12} className="py-2 text-center border text-xs">
                 No items found
               </td>
             </tr>

@@ -1,20 +1,18 @@
 
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2, Mail } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
 import { useInvoice } from "@/hooks/useInvoice";
 import InvoiceViewComponent from "@/components/invoices/InvoiceView";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
-import EmailInvoiceDialog from "@/components/dialogs/EmailInvoiceDialog";
+import { useEffect } from "react";
 
 const InvoiceView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   
   const { 
     invoice, 
@@ -41,24 +39,6 @@ const InvoiceView = () => {
 
   // Find the customer for this invoice
   const customer = customers.find(cust => cust.id === invoice.customerId);
-  
-  // Prepare full invoice data with all needed properties
-  const fullInvoiceData = {
-    ...invoice,
-    id: id,
-    customer_id: invoice.customerId,
-    customer: customer
-  };
-  
-  // Debug the invoice data structure
-  useEffect(() => {
-    if (invoice && id && customer) {
-      console.log("InvoiceView - Full invoice data:", invoice);
-      console.log("Invoice ID from params:", id);
-      console.log("Customer data:", customer);
-      console.log("Prepared full invoice data:", fullInvoiceData);
-    }
-  }, [invoice, id, customer, fullInvoiceData]);
   
   const handleDeleteInvoice = async () => {
     if (!id) return;
@@ -110,15 +90,6 @@ const InvoiceView = () => {
     }
   };
   
-  const handleEmailInvoice = () => {
-    console.log("Opening email dialog with invoice data:", {
-      id: id,
-      invoice: fullInvoiceData,
-      customer: customer
-    });
-    setEmailDialogOpen(true);
-  };
-  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -133,11 +104,6 @@ const InvoiceView = () => {
           <Button variant="outline" onClick={() => navigate(`/app/invoices/edit/${id}`)}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
-          </Button>
-          
-          <Button variant="secondary" onClick={handleEmailInvoice}>
-            <Mail className="h-4 w-4 mr-2" />
-            Email
           </Button>
           
           <AlertDialog>
@@ -172,20 +138,11 @@ const InvoiceView = () => {
           <p className="text-muted-foreground">Loading invoice...</p>
         </div>
       ) : (
-        <>
-          <InvoiceViewComponent 
-            invoice={fullInvoiceData} 
-            company={company} 
-            customer={customer}
-          />
-          
-          <EmailInvoiceDialog
-            open={emailDialogOpen}
-            onOpenChange={setEmailDialogOpen}
-            invoice={fullInvoiceData}
-            company={company}
-          />
-        </>
+        <InvoiceViewComponent 
+          invoice={invoice} 
+          company={company} 
+          customer={customer}
+        />
       )}
     </div>
   );

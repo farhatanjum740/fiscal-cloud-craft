@@ -15,7 +15,7 @@ interface CreditNoteDetailsProps {
     creditNoteNumber: string;
     creditNoteDate: Date;
     financialYear: string;
-    reason?: string; // Changed to optional
+    reason: string;
     status: string;
   };
   setCreditNote: (value: React.SetStateAction<any>) => void;

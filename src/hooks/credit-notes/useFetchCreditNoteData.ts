@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +21,6 @@ export const useFetchCreditNoteData = (
     reason: "",
     items: [],
     status: "draft",
-    id: undefined, // Explicitly include ID in initial state
   });
 
   // Fetch necessary data
@@ -94,9 +92,6 @@ export const useFetchCreditNoteData = (
             console.log("Credit note data fetched:", creditNoteData);
             
             if (creditNoteData) {
-              // Log the ID explicitly for debugging
-              console.log("Credit note ID from database:", creditNoteData.id);
-              
               // Fetch credit note items
               const { data: creditNoteItemsData, error: itemsError } = await supabase
                 .from('credit_note_items')
@@ -126,9 +121,7 @@ export const useFetchCreditNoteData = (
               setInvoice(creditNoteData.invoices);
               
               // Set credit note state - include ALL fields from the database
-              // Most importantly, explicitly set the ID
               setCreditNote({
-                id: creditNoteData.id, // Explicitly set ID field
                 invoiceId: creditNoteData.invoice_id || "",
                 creditNoteNumber: creditNoteData.credit_note_number || "",
                 creditNoteDate: new Date(creditNoteData.credit_note_date),
@@ -147,7 +140,6 @@ export const useFetchCreditNoteData = (
               // For debugging - log the original credit note and the transformed version
               console.log("Original credit note data:", creditNoteData);
               console.log("Transformed credit note data:", {
-                id: creditNoteData.id, // Log ID explicitly
                 invoiceId: creditNoteData.invoice_id || "",
                 creditNoteNumber: creditNoteData.credit_note_number || "",
                 creditNoteDate: new Date(creditNoteData.credit_note_date),
@@ -305,7 +297,7 @@ export const useFetchCreditNoteData = (
     loadingData,
     company,
     invoice,
-    setInvoice, 
+    setInvoice, // Expose this function
     invoiceItems,
     invoiceOptions,
     creditNote,

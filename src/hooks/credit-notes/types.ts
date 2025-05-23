@@ -1,25 +1,16 @@
 
-export interface CreditNoteItem {
-  id: string;
-  invoiceItemId: string;
-  productId?: string;
-  productName: string;
-  hsnCode?: string;
-  quantity: number;
-  price: number;
-  unit: string;
-  gstRate: number;
-}
+import React from "react";
 
 export interface CreditNoteData {
-  id?: string; // Made optional but should be set when editing
+  id?: string;
   invoiceId: string;
   creditNoteNumber: string;
   creditNoteDate: Date;
   financialYear: string;
-  reason?: string;
-  items: CreditNoteItem[];
+  reason: string;
   status: string;
+  items: CreditNoteItem[];
+  // Add these properties to fix TypeScript errors
   subtotal?: number;
   cgst?: number;
   sgst?: number;
@@ -27,19 +18,30 @@ export interface CreditNoteData {
   total_amount?: number;
 }
 
-export interface InvoiceOption {
-  value: string;
-  label: string;
+export interface CreditNoteItem {
+  id: string;
+  invoiceItemId: string;
+  productId: string;
+  productName: string;
+  hsnCode: string;
+  quantity: number;
+  price: number;
+  unit: string;
+  gstRate: number;
+  maxQuantity?: number;
 }
 
-// Add the missing interface for CreditNoteGSTDetails
 export interface CreditNoteGSTDetails {
   cgst: number;
   sgst: number;
   igst: number;
 }
 
-// Add the interface for UseCreditNoteReturn
+export interface InvoiceOption {
+  value: string;
+  label: string;
+}
+
 export interface UseCreditNoteReturn {
   creditNote: CreditNoteData;
   setCreditNote: (value: React.SetStateAction<CreditNoteData>) => void;
@@ -63,6 +65,6 @@ export interface UseCreditNoteReturn {
   addSelectedItems: () => void;
   removeItem: (id: string) => void;
   updateItem: (id: string, field: any, value: any) => void;
-  generateCreditNoteNumber: () => Promise<string | null>;
+  generateCreditNoteNumber: () => Promise<string | null>;  // Update the return type here
   saveCreditNote: (navigate: (path: string) => void) => void;
 }

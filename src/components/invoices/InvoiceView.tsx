@@ -1,14 +1,12 @@
-
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
-import { Printer, Download, Mail, Phone } from 'lucide-react';
+import { Printer, Download, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
 import { formatCurrency, formatAmount, amountToWords } from '@/lib/utils';
-import EmailInvoiceDialog from '@/components/dialogs/EmailInvoiceDialog';
 
 interface InvoiceViewProps {
   invoice: any;
@@ -17,56 +15,8 @@ interface InvoiceViewProps {
   isDownloadable?: boolean;
 }
 
-// Improved PDF configuration that prioritizes text rendering with minimal margins
-const getPdfOptions = (filename: string) => ({
-  filename: filename,
-  margin: 3, // Reduced from 5mm to 3mm
-  image: { type: 'jpeg', quality: 0.98 },
-  html2canvas: { 
-    scale: 2, 
-    useCORS: true,
-    logging: false,
-    removeContainer: true,
-    letterRendering: true,
-    textRendering: true
-  },
-  jsPDF: { 
-    unit: 'mm', 
-    format: 'a4', 
-    orientation: 'portrait',
-    compress: false,
-    putOnlyUsedFonts: true,
-    floatPrecision: 16,
-    hotfixes: ["px_scaling"]
-  }
-});
-
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, customer, isDownloadable = true }) => {
   const printRef = useRef<HTMLDivElement>(null);
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-  
-  // Log data to console for debugging
-  useEffect(() => {
-    console.log("Invoice View - Data received:", {
-      invoice,
-      company,
-      customer
-    });
-    
-    if (invoice) {
-      // Log specific invoice properties including ID
-      console.log("Invoice View - Invoice Details:", {
-        id: invoice.id,
-        number: invoice.invoiceNumber,
-        date: invoice.invoiceDate,
-        subtotal: invoice.subtotal,
-        cgst: invoice.cgst,
-        sgst: invoice.sgst,
-        igst: invoice.igst,
-        totalAmount: invoice.total_amount
-      });
-    }
-  }, [invoice, company, customer]);
   
   if (!invoice || !company || !customer) {
     return (
@@ -86,23 +36,16 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your invoice..." });
       
-      const options = getPdfOptions(`Invoice-${invoice.invoiceNumber}.pdf`);
+      const options = {
+        filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
       
-      html2pdf()
-        .from(printRef.current)
-        .set(options)
-        .save()
-        .then(() => {
-          toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
-        })
-        .catch((error) => {
-          console.error('Error in PDF generation:', error);
-          toast({ 
-            title: "Download failed", 
-            description: "Failed to generate PDF. Please try again.", 
-            variant: "destructive" 
-          });
-        });
+      await html2pdf().set(options).from(printRef.current).save();
+      
+      toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
       toast({ 
@@ -111,11 +54,6 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         variant: "destructive" 
       });
     }
-  };
-  
-  const handleEmail = () => {
-    console.log("Opening email dialog with invoice:", invoice);
-    setEmailDialogOpen(true);
   };
   
   // Determine if we should show IGST or CGST/SGST based on states
@@ -174,17 +112,13 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
-          <Button variant="secondary" size="sm" onClick={handleEmail} title="Email Invoice">
-            <Mail className="h-4 w-4 mr-2" />
-            Email
-          </Button>
         </div>
       )}
       
       <div 
         ref={printRef} 
-        className="bg-white p-3 max-w-4xl mx-auto print:shadow-none print:border-none"
-        style={{ width: '204mm', minHeight: '287mm', boxSizing: 'border-box', margin: '0 auto' }}
+        className="bg-white p-6 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
+        style={{ width: '210mm', minHeight: '297mm' }}
       >
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -227,10 +161,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
           </div>
         </div>
         
-        <Separator className="my-3" />
+        <Separator className="my-4" />
         
         {/* Customer Information */}
-        <div className="grid grid-cols-2 gap-4 mb-3">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <h3 className="font-semibold text-xs text-gray-800 mb-1">Bill To:</h3>
             <p className="font-medium text-xs">{customer.name}</p>
@@ -257,33 +191,33 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
           )}
         </div>
         
-        {/* Invoice Items - Using fixed table layout and controlling column widths */}
-        <div className="w-full overflow-visible">
-          <table className="w-full border-collapse mb-3 text-xs" style={{ tableLayout: 'fixed', width: '100%', maxWidth: '100%' }}>
+        {/* Invoice Items */}
+        <div className="w-full overflow-visible print:overflow-visible">
+          <table className="w-full text-left border-collapse mb-4 text-xs">
             <thead>
               <tr className="bg-gray-100">
-                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>No</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '23%' }}>Item</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>HSN/SAC</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>Qty</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>Unit</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Rate</th>
-                <th className="py-1 px-1 font-semibold" style={{ width: '8%' }}>Amount</th>
+                <th className="py-2 px-2 border font-semibold">S.No</th>
+                <th className="py-2 px-2 border font-semibold">Item</th>
+                <th className="py-2 px-2 border font-semibold">HSN/SAC</th>
+                <th className="py-2 px-2 border font-semibold">Qty</th>
+                <th className="py-2 px-2 border font-semibold">Unit</th>
+                <th className="py-2 px-2 border font-semibold">Rate</th>
+                <th className="py-2 px-2 border font-semibold">Amount</th>
                 
                 {useIGST ? (
                   <>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>IGST %</th>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '7%' }}>IGST</th>
+                    <th className="py-2 px-2 border font-semibold">IGST %</th>
+                    <th className="py-2 px-2 border font-semibold">IGST</th>
                   </>
                 ) : (
                   <>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>CGST %</th>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>CGST</th>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '5%' }}>SGST %</th>
-                    <th className="py-1 px-1 font-semibold" style={{ width: '6%' }}>SGST</th>
+                    <th className="py-2 px-2 border font-semibold">CGST %</th>
+                    <th className="py-2 px-2 border font-semibold">CGST</th>
+                    <th className="py-2 px-2 border font-semibold">SGST %</th>
+                    <th className="py-2 px-2 border font-semibold">SGST</th>
                   </>
                 )}
-                <th className="py-1 px-1 font-semibold text-right" style={{ width: '8%' }}>Total</th>
+                <th className="py-2 px-2 border font-semibold text-right">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -301,31 +235,31 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                 
                 return (
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="py-1 px-1 text-xs">{index + 1}</td>
-                    <td className="py-1 px-1 text-xs">
+                    <td className="py-1 px-2 border text-xs">{index + 1}</td>
+                    <td className="py-1 px-2 border text-xs">
                       <div className="font-medium">{item.productName}</div>
                       {item.description && <div className="text-xs text-gray-600">{item.description}</div>}
                     </td>
-                    <td className="py-1 px-1 text-xs">{item.hsnCode}</td>
-                    <td className="py-1 px-1 text-xs">{item.quantity}</td>
-                    <td className="py-1 px-1 text-xs overflow-hidden text-ellipsis whitespace-nowrap">{item.unit}</td>
-                    <td className="py-1 px-1 text-xs">₹{formatAmount(price)}</td>
-                    <td className="py-1 px-1 text-xs">₹{formatAmount(itemTotal)}</td>
+                    <td className="py-1 px-2 border text-xs">{item.hsnCode}</td>
+                    <td className="py-1 px-2 border text-xs">{item.quantity}</td>
+                    <td className="py-1 px-2 border text-xs">{item.unit}</td>
+                    <td className="py-1 px-2 border text-xs">₹{formatAmount(price)}</td>
+                    <td className="py-1 px-2 border text-xs">₹{formatAmount(itemTotal)}</td>
                     
                     {useIGST ? (
                       <>
-                        <td className="py-1 px-1 text-xs">{gstRate}%</td>
-                        <td className="py-1 px-1 text-xs">₹{formatAmount(gstAmount)}</td>
+                        <td className="py-1 px-2 border text-xs">{gstRate}%</td>
+                        <td className="py-1 px-2 border text-xs">₹{formatAmount(gstAmount)}</td>
                       </>
                     ) : (
                       <>
-                        <td className="py-1 px-1 text-xs">{splitRate}%</td>
-                        <td className="py-1 px-1 text-xs">₹{formatAmount(splitAmount)}</td>
-                        <td className="py-1 px-1 text-xs">{splitRate}%</td>
-                        <td className="py-1 px-1 text-xs">₹{formatAmount(splitAmount)}</td>
+                        <td className="py-1 px-2 border text-xs">{splitRate}%</td>
+                        <td className="py-1 px-2 border text-xs">₹{formatAmount(splitAmount)}</td>
+                        <td className="py-1 px-2 border text-xs">{splitRate}%</td>
+                        <td className="py-1 px-2 border text-xs">₹{formatAmount(splitAmount)}</td>
                       </>
                     )}
-                    <td className="py-1 px-1 text-xs text-right">₹{formatAmount(itemTotal + gstAmount)}</td>
+                    <td className="py-1 px-2 border text-xs text-right">₹{formatAmount(itemTotal + gstAmount)}</td>
                   </tr>
                 );
               })}
@@ -334,7 +268,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Summary */}
-        <div className="flex justify-end mb-3">
+        <div className="flex justify-end mb-4">
           <div className="w-64">
             <div className="flex justify-between py-1 text-xs">
               <span>Subtotal:</span>
@@ -376,12 +310,12 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Amount in words */}
-        <div className="mb-3 border p-2 bg-gray-50 rounded text-xs">
+        <div className="mb-4 border p-2 bg-gray-50 rounded text-xs">
           <p><span className="font-medium">Amount in words:</span> {amountToWords(roundedTotal)}</p>
         </div>
         
         {/* Notes and Terms */}
-        <div className="grid grid-cols-1 gap-2 mb-3">
+        <div className="grid grid-cols-1 gap-2 mb-4">
           {invoice.termsAndConditions && (
             <div>
               <h4 className="font-semibold mb-1 text-xs">Terms & Conditions:</h4>
@@ -398,7 +332,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Bank Details */}
-        <div className="border-t pt-2 mt-2">
+        <div className="border-t pt-3 mt-3">
           <h4 className="font-semibold mb-1 text-xs">Bank Details:</h4>
           <p className="text-xs">
             {company.bank_account_name} ({company.bank_account_number}) | {company.bank_name}, {company.bank_branch} | IFSC: {company.bank_ifsc_code}
@@ -406,19 +340,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         </div>
         
         {/* Footer */}
-        <div className="text-center mt-4 text-xs text-gray-500">
+        <div className="text-center mt-6 text-xs text-gray-500">
           <p>This is a computer generated invoice.</p>
         </div>
       </div>
-
-      {isDownloadable && (
-        <EmailInvoiceDialog 
-          open={emailDialogOpen}
-          onOpenChange={setEmailDialogOpen}
-          invoice={invoice}
-          company={company}
-        />
-      )}
     </div>
   );
 };

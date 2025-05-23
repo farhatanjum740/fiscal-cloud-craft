@@ -510,50 +510,6 @@ export type Database = {
           },
         ]
       }
-      payment_history: {
-        Row: {
-          amount: number
-          created_at: string | null
-          currency: string
-          id: string
-          payment_id: string | null
-          payment_method: string | null
-          status: string
-          subscription_id: string | null
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string | null
-          currency?: string
-          id?: string
-          payment_id?: string | null
-          payment_method?: string | null
-          status: string
-          subscription_id?: string | null
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string | null
-          currency?: string
-          id?: string
-          payment_id?: string | null
-          payment_method?: string | null
-          status?: string
-          subscription_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_history_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       products: {
         Row: {
           category: string | null
@@ -617,45 +573,6 @@ export type Database = {
         }
         Relationships: []
       }
-      subscriptions: {
-        Row: {
-          active: boolean
-          created_at: string | null
-          end_date: string | null
-          id: string
-          last_payment_date: string | null
-          payment_id: string | null
-          plan: Database["public"]["Enums"]["subscription_plan"]
-          start_date: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string | null
-          end_date?: string | null
-          id?: string
-          last_payment_date?: string | null
-          payment_id?: string | null
-          plan?: Database["public"]["Enums"]["subscription_plan"]
-          start_date?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string | null
-          end_date?: string | null
-          id?: string
-          last_payment_date?: string | null
-          payment_id?: string | null
-          plan?: Database["public"]["Enums"]["subscription_plan"]
-          start_date?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -683,7 +600,7 @@ export type Database = {
       }
     }
     Enums: {
-      subscription_plan: "freemium" | "premium"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -798,8 +715,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      subscription_plan: ["freemium", "premium"],
-    },
+    Enums: {},
   },
 } as const
