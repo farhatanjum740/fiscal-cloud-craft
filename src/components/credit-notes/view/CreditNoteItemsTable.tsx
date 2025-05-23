@@ -11,8 +11,8 @@ const CreditNoteItemsTable: React.FC<CreditNoteItemsTableProps> = ({ items, useI
   console.log("Credit Note Items Table Props:", { items, useIGST });
   
   return (
-    <div className="w-full overflow-hidden print:overflow-hidden">
-      <table className="w-full border-collapse mb-5 text-xs" style={{ tableLayout: 'fixed', maxWidth: '200mm' }}>
+    <div className="w-full overflow-visible">
+      <table className="w-full border-collapse mb-5 text-xs" style={{ width: '100%' }}>
         <thead>
           <tr className="bg-gray-100">
             <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>No</th>

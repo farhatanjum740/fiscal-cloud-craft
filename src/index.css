@@ -121,7 +121,7 @@
   /* Paper settings */
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 10mm; /* Consistent margins */
   }
   
   html, body {
@@ -137,15 +137,14 @@
   
   /* Force all content into A4 size */
   div[ref="printRef"] {
-    width: 210mm !important;
-    min-height: 297mm !important;
-    max-height: 297mm !important;
-    padding: 5mm !important;
+    width: 190mm !important; /* Account for margins */
+    min-height: 277mm !important; /* Account for margins */
+    padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
     page-break-after: always !important;
     background-color: white !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     float: none !important;
     font-size: 10pt !important;
   }
@@ -153,6 +152,7 @@
   /* Improved table rendering */
   table {
     width: 100% !important;
+    max-width: 100% !important;
     table-layout: fixed !important;
     border-collapse: collapse !important;
     page-break-inside: auto !important;
@@ -170,7 +170,6 @@
     page-break-inside: avoid !important;
     overflow-wrap: break-word !important;
     word-wrap: break-word !important;
-    max-width: 100% !important;
     white-space: normal !important;
   }
   
@@ -192,6 +191,12 @@
   .overflow-x-auto, .w-full {
     overflow: visible !important;
     width: 100% !important;
-    max-width: 200mm !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure tables columns don't overflow */
+  th, td {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
   }
 }

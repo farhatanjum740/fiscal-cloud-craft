@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
@@ -17,32 +16,22 @@ interface InvoiceViewProps {
   isDownloadable?: boolean;
 }
 
-// Define a reusable PDF configuration to ensure consistency
+// Simplified PDF configuration that emphasizes text rendering
 const getPdfOptions = (filename: string) => ({
   filename: filename,
-  margin: [5, 5, 5, 5], // Consistent 5mm margins
-  image: { type: 'jpeg', quality: 0.98 },
+  margin: 10, // Use consistent 10mm margins
+  image: { type: 'jpeg', quality: 0.95 },
   html2canvas: { 
     scale: 2, 
     useCORS: true,
-    letterRendering: true,
-    allowTaint: true,
-    logging: false,
-    removeContainer: true,
-    // Force text rendering
-    textRendering: true,
+    logging: true, // Enable logging for debugging
+    removeContainer: false // Keep container to ensure content is visible
   },
   jsPDF: { 
     unit: 'mm', 
     format: 'a4', 
-    orientation: 'portrait',
-    compress: false, // Disable compression for better text rendering
-    precision: 16,
-    putOnlyUsedFonts: true,
-    floatPrecision: "smart"
-  },
-  enableLinks: true,
-  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    orientation: 'portrait'
+  }
 });
 
 export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, customer, isDownloadable = true }) => {
@@ -90,42 +79,20 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your invoice..." });
       
+      // Simple, reliable configuration
       const options = getPdfOptions(`Invoice-${invoice.invoiceNumber}.pdf`);
       
-      // Clone node to avoid modifying the visible DOM
-      const clonedNode = printRef.current.cloneNode(true) as HTMLDivElement;
-      document.body.appendChild(clonedNode);
-      clonedNode.style.display = 'block';
-      clonedNode.style.position = 'absolute';
-      clonedNode.style.left = '-9999px';
-      clonedNode.style.width = '210mm';
-      clonedNode.style.padding = '5mm';
-      
-      // Process specifically for better PDF output
-      const tableElements = clonedNode.querySelectorAll('table');
-      tableElements.forEach((table) => {
-        table.style.width = '100%';
-        table.style.tableLayout = 'fixed';
-        table.style.maxWidth = '200mm';
-        
-        const cells = table.querySelectorAll('th, td');
-        cells.forEach((cell) => {
-          (cell as HTMLElement).style.padding = '1mm';
-          (cell as HTMLElement).style.fontSize = '8pt';
-          (cell as HTMLElement).style.wordBreak = 'break-word';
+      // Basic approach - don't clone node to avoid reference issues
+      html2pdf().from(printRef.current).set(options).save().then(() => {
+        toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
+      }).catch((error) => {
+        console.error('Error in PDF generation:', error);
+        toast({ 
+          title: "Download failed", 
+          description: "Failed to generate PDF. Please try again.", 
+          variant: "destructive" 
         });
       });
-      
-      try {
-        await html2pdf().set(options).from(clonedNode).save();
-        document.body.removeChild(clonedNode);
-        toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
-      } catch (err) {
-        console.error('Error in PDF generation:', err);
-        document.body.removeChild(clonedNode);
-        throw err;
-      }
-      
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
       toast({ 
@@ -206,8 +173,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
       
       <div 
         ref={printRef} 
-        className="bg-white p-4 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none text-sm"
-        style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}
+        className="bg-white p-8 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none"
+        style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box', margin: '0 auto' }}
       >
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -282,7 +249,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         
         {/* Invoice Items - Using fixed table layout and controlling column widths */}
         <div className="w-full overflow-hidden">
-          <table className="w-full border-collapse mb-3 text-xs" style={{ tableLayout: 'fixed', maxWidth: '200mm' }}>
+          <table className="w-full border-collapse mb-3 text-xs" style={{ tableLayout: 'fixed', width: '100%', maxWidth: '100%' }}>
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-1 px-1 border font-semibold" style={{ width: '5%' }}>No</th>
