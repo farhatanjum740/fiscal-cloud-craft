@@ -16,21 +16,24 @@ interface InvoiceViewProps {
   isDownloadable?: boolean;
 }
 
-// Simplified PDF configuration that emphasizes text rendering
+// Improved PDF configuration that prioritizes text rendering
 const getPdfOptions = (filename: string) => ({
   filename: filename,
-  margin: 10, // Use consistent 10mm margins
+  margin: 10,
   image: { type: 'jpeg', quality: 0.95 },
   html2canvas: { 
     scale: 2, 
     useCORS: true,
-    logging: true, // Enable logging for debugging
-    removeContainer: false // Keep container to ensure content is visible
+    logging: false,
+    removeContainer: true
   },
   jsPDF: { 
     unit: 'mm', 
     format: 'a4', 
-    orientation: 'portrait'
+    orientation: 'portrait',
+    compress: false,
+    putOnlyUsedFonts: true,
+    floatPrecision: 16
   }
 });
 
@@ -79,20 +82,23 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
     try {
       toast({ title: "Generating PDF", description: "Please wait while we prepare your invoice..." });
       
-      // Simple, reliable configuration
       const options = getPdfOptions(`Invoice-${invoice.invoiceNumber}.pdf`);
       
-      // Basic approach - don't clone node to avoid reference issues
-      html2pdf().from(printRef.current).set(options).save().then(() => {
-        toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
-      }).catch((error) => {
-        console.error('Error in PDF generation:', error);
-        toast({ 
-          title: "Download failed", 
-          description: "Failed to generate PDF. Please try again.", 
-          variant: "destructive" 
+      html2pdf()
+        .from(printRef.current)
+        .set(options)
+        .save()
+        .then(() => {
+          toast({ title: "Download complete", description: "Invoice has been downloaded as PDF." });
+        })
+        .catch((error) => {
+          console.error('Error in PDF generation:', error);
+          toast({ 
+            title: "Download failed", 
+            description: "Failed to generate PDF. Please try again.", 
+            variant: "destructive" 
+          });
         });
-      });
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
       toast({ 
@@ -173,7 +179,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
       
       <div 
         ref={printRef} 
-        className="bg-white p-8 max-w-4xl mx-auto shadow-sm border rounded-md print:shadow-none print:border-none"
+        className="bg-white p-8 max-w-4xl mx-auto print:shadow-none print:border-none"
         style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box', margin: '0 auto' }}
       >
         {/* Header */}

@@ -106,7 +106,7 @@
   @apply border-t border-[#1a3b7a];
 }
 
-/* Enhanced print styles for A4 page */
+/* Enhanced print styles for A4 page - removed borders */
 @media print {
   /* Hide UI elements that shouldn't appear in print */
   .print-hidden,
@@ -149,7 +149,7 @@
     font-size: 10pt !important;
   }
   
-  /* Improved table rendering */
+  /* Improved table rendering - removed borders */
   table {
     width: 100% !important;
     max-width: 100% !important;
@@ -171,6 +171,7 @@
     overflow-wrap: break-word !important;
     word-wrap: break-word !important;
     white-space: normal !important;
+    border: none !important;
   }
   
   /* Ensure page breaks happen at appropriate places */
