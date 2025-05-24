@@ -26,6 +26,35 @@ import { Plus, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useInvoice } from "@/hooks/useInvoice";
 
+// Standard units commonly used in Indian businesses
+const unitOptions = [
+  { value: "pcs", label: "Pieces (Pcs)" },
+  { value: "kg", label: "Kilograms (Kg)" },
+  { value: "gm", label: "Grams (Gm)" },
+  { value: "ltr", label: "Litres (Ltr)" },
+  { value: "ml", label: "Millilitres (ML)" },
+  { value: "mtr", label: "Metres (Mtr)" },
+  { value: "cm", label: "Centimetres (CM)" },
+  { value: "ft", label: "Feet (Ft)" },
+  { value: "inch", label: "Inches (Inch)" },
+  { value: "sqft", label: "Square Feet (Sq Ft)" },
+  { value: "sqm", label: "Square Metres (Sq M)" },
+  { value: "box", label: "Box" },
+  { value: "pack", label: "Pack" },
+  { value: "set", label: "Set" },
+  { value: "pair", label: "Pair" },
+  { value: "nos", label: "Numbers (Nos)" },
+  { value: "dzn", label: "Dozen (Dzn)" },
+  { value: "roll", label: "Roll" },
+  { value: "sheet", label: "Sheet" },
+  { value: "bundle", label: "Bundle" },
+  { value: "bottle", label: "Bottle" },
+  { value: "can", label: "Can" },
+  { value: "tube", label: "Tube" },
+  { value: "bag", label: "Bag" },
+  { value: "carton", label: "Carton" },
+];
+
 const InvoiceEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -337,11 +366,21 @@ const InvoiceEditor = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Input
-                          type="text"
+                        <Select
                           value={item.unit || ""}
-                          onChange={(e) => updateItem(item.id, "unit", e.target.value)}
-                        />
+                          onValueChange={(value) => updateItem(item.id, "unit", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {unitOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Input
