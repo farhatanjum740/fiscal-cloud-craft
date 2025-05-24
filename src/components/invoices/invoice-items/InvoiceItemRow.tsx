@@ -20,7 +20,7 @@ interface InvoiceItemRowProps {
   handleProductSelect: (itemId: string, productId: string) => void;
 }
 
-// Common units for Indian businesses
+// Standard units commonly used in Indian businesses
 const unitOptions = [
   { value: "pcs", label: "Pieces (Pcs)" },
   { value: "kg", label: "Kilograms (Kg)" },
@@ -38,6 +38,15 @@ const unitOptions = [
   { value: "set", label: "Set" },
   { value: "pair", label: "Pair" },
   { value: "nos", label: "Numbers (Nos)" },
+  { value: "dzn", label: "Dozen (Dzn)" },
+  { value: "roll", label: "Roll" },
+  { value: "sheet", label: "Sheet" },
+  { value: "bundle", label: "Bundle" },
+  { value: "bottle", label: "Bottle" },
+  { value: "can", label: "Can" },
+  { value: "tube", label: "Tube" },
+  { value: "bag", label: "Bag" },
+  { value: "carton", label: "Carton" },
 ];
 
 const InvoiceItemRow = ({
