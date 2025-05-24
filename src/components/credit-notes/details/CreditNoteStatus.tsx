@@ -23,9 +23,7 @@ const CreditNoteStatus = ({
           <SelectValue placeholder="Select status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="draft">Draft</SelectItem>
           <SelectItem value="issued">Issued</SelectItem>
-          <SelectItem value="cancelled">Cancelled</SelectItem>
         </SelectContent>
       </Select>
     </div>

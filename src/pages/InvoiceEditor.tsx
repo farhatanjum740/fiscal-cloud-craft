@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -247,11 +246,8 @@ const InvoiceEditor = () => {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="unpaid">Unpaid</SelectItem>
                       <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                      <SelectItem value="issued">Issued</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
