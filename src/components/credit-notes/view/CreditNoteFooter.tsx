@@ -17,6 +17,7 @@ const CreditNoteFooter: React.FC<CreditNoteFooterProps> = ({ company }) => {
       
       <div className="text-center mt-8 text-sm text-gray-500">
         <p>This is a computer generated credit note.</p>
+        <p>Credit note created from www.invoiceninja.in</p>
       </div>
     </>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { CreditNoteData, InvoiceOption } from "./types";
+import { v4 as uuidv4 } from "uuid";
 
 export const useFetchCreditNoteData = (
   userId: string | undefined,
@@ -12,15 +13,15 @@ export const useFetchCreditNoteData = (
   const [company, setCompany] = useState<any>(null);
   const [invoice, setInvoice] = useState<any>(null);
   const [invoiceItems, setInvoiceItems] = useState<any[]>([]);
-  const [invoiceOptions, setInvoiceOptions] = useState<InvoiceOption[]>([]);
+  const [invoiceOptions, setInvoiceOptions] = useState<{ value: string; label: string }[]>([]);
   const [creditNote, setCreditNote] = useState<CreditNoteData>({
     invoiceId: "",
     creditNoteNumber: "",
     creditNoteDate: new Date(),
     financialYear: "",
     reason: "",
-    items: [],
-    status: "draft",
+    status: "issued", // Set default status to "issued"
+    items: []
   });
 
   // Fetch necessary data

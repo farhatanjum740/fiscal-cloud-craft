@@ -342,6 +342,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         {/* Footer */}
         <div className="text-center mt-6 text-xs text-gray-500">
           <p>This is a computer generated invoice.</p>
+          <p>Invoice created from www.invoiceninja.in</p>
         </div>
       </div>
     </div>
