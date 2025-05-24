@@ -2,8 +2,8 @@
 import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import CreditNoteInvoiceSelect from "./details/CreditNoteInvoiceSelect";
 import CreditNoteDatePicker from "./details/CreditNoteDatePicker";
@@ -56,6 +56,19 @@ const CreditNoteDetails = ({
       console.error("Error generating credit note number:", error);
     }
   };
+
+  // Standard credit note reasons
+  const creditNoteReasons = [
+    { value: "goods_returned", label: "Goods Returned" },
+    { value: "quality_issues", label: "Quality Issues" },
+    { value: "billing_error", label: "Billing Error" },
+    { value: "damaged_goods", label: "Damaged Goods" },
+    { value: "overcharge", label: "Overcharge" },
+    { value: "duplicate_invoice", label: "Duplicate Invoice" },
+    { value: "discount_adjustment", label: "Discount Adjustment" },
+    { value: "cancellation", label: "Order Cancellation" },
+    { value: "other", label: "Other" }
+  ];
 
   return (
     <div className="space-y-4">
@@ -125,17 +138,25 @@ const CreditNoteDetails = ({
       
       <div className="space-y-2">
         <Label htmlFor="reason">Reason for Credit Note</Label>
-        <Textarea
-          id="reason"
-          value={creditNote.reason || ""}
-          onChange={(e) => setCreditNote(prev => ({ ...prev, reason: e.target.value }))}
-          placeholder="E.g., Goods returned, Quality issues, etc."
-          rows={3}
-        />
+        <Select 
+          value={creditNote.reason || ""} 
+          onValueChange={(value) => setCreditNote(prev => ({ ...prev, reason: value }))}
+        >
+          <SelectTrigger id="reason">
+            <SelectValue placeholder="Select reason for credit note" />
+          </SelectTrigger>
+          <SelectContent>
+            {creditNoteReasons.map((reason) => (
+              <SelectItem key={reason.value} value={reason.value}>
+                {reason.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       
       <CreditNoteStatus
-        status={creditNote.status}
+        status={creditNote.status || "issued"}
         onStatusChange={(value) => setCreditNote(prev => ({ ...prev, status: value }))}
       />
     </div>
