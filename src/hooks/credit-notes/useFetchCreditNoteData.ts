@@ -48,12 +48,13 @@ export const useFetchCreditNoteData = (
           console.log("Company data fetched:", companyData);
           setCompany(companyData);
           
-          // Fetch available invoices for credit note - updated query with better filtering
+          // Fetch available invoices for credit note - more inclusive query
+          console.log("Fetching invoices for user:", userId);
+          
           const { data: invoicesData, error: invoicesError } = await supabase
             .from('invoices')
             .select('id, invoice_number, financial_year, status, total_amount, invoice_date')
             .eq('user_id', userId)
-            .in('status', ['pending', 'paid'])
             .order('invoice_date', { ascending: false });
             
           if (invoicesError) {
@@ -62,33 +63,55 @@ export const useFetchCreditNoteData = (
           }
           
           console.log("Raw invoices data fetched:", invoicesData);
+          console.log("Number of invoices found:", invoicesData?.length || 0);
           
-          // Convert to options format with better validation and logging
+          // Log each invoice for debugging
+          if (invoicesData && invoicesData.length > 0) {
+            invoicesData.forEach((inv, index) => {
+              console.log(`Invoice ${index + 1}:`, {
+                id: inv.id,
+                number: inv.invoice_number,
+                status: inv.status,
+                financial_year: inv.financial_year,
+                total_amount: inv.total_amount
+              });
+            });
+          }
+          
+          // Convert to options format with less restrictive filtering
           let options: InvoiceOption[] = [];
           
           if (Array.isArray(invoicesData) && invoicesData.length > 0) {
-            options = invoicesData
-              .filter(inv => {
-                const isValid = inv && 
-                  inv.id && 
-                  inv.invoice_number && 
-                  inv.financial_year &&
-                  typeof inv.id === 'string' &&
-                  typeof inv.invoice_number === 'string';
-                
-                if (!isValid) {
-                  console.log("Filtering out invalid invoice:", inv);
-                }
-                return isValid;
-              })
-              .map(inv => {
-                const option = {
-                  value: inv.id,
-                  label: `${inv.invoice_number} (${inv.financial_year}) - ₹${Number(inv.total_amount || 0).toLocaleString()}`
-                };
-                console.log("Created invoice option:", option);
-                return option;
-              });
+            // Filter for valid invoices that can have credit notes
+            const validInvoices = invoicesData.filter(inv => {
+              const isValid = inv && 
+                inv.id && 
+                inv.invoice_number && 
+                inv.financial_year &&
+                typeof inv.id === 'string' &&
+                typeof inv.invoice_number === 'string' &&
+                // Allow more statuses - not just pending and paid
+                inv.status && 
+                ['pending', 'paid', 'overdue', 'sent'].includes(inv.status.toLowerCase());
+              
+              if (!isValid) {
+                console.log("Filtering out invalid invoice:", inv);
+              } else {
+                console.log("Valid invoice found:", inv.invoice_number, "Status:", inv.status);
+              }
+              return isValid;
+            });
+            
+            console.log("Valid invoices after filtering:", validInvoices.length);
+            
+            options = validInvoices.map(inv => {
+              const option = {
+                value: inv.id,
+                label: `${inv.invoice_number} (${inv.financial_year}) - ₹${Number(inv.total_amount || 0).toLocaleString()} - ${inv.status}`
+              };
+              console.log("Created invoice option:", option);
+              return option;
+            });
           }
             
           console.log("Final invoice options created:", options);
@@ -97,11 +120,23 @@ export const useFetchCreditNoteData = (
           // Log the options count for debugging
           if (options.length === 0) {
             console.warn("No valid invoice options created. Raw data:", invoicesData);
-            toast({
-              title: "No Invoices Available",
-              description: "Please create and save some invoices first before creating credit notes.",
-              variant: "destructive",
-            });
+            
+            // Show more specific message based on what we found
+            if (!invoicesData || invoicesData.length === 0) {
+              toast({
+                title: "No Invoices Found",
+                description: "No invoices found in your account. Please create and save some invoices first.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "No Eligible Invoices",
+                description: `Found ${invoicesData.length} invoices, but none are eligible for credit notes. Only invoices with status 'pending', 'paid', 'overdue', or 'sent' can have credit notes.`,
+                variant: "destructive",
+              });
+            }
+          } else {
+            console.log(`Successfully created ${options.length} invoice options`);
           }
         }
         
