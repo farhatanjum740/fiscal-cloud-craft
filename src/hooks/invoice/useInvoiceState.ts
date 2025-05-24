@@ -20,7 +20,7 @@ export const useInvoiceState = () => {
   });
   const [total, setTotal] = useState<number>(0);
   
-  // Initial invoice state with status field
+  // Initial invoice state with status field defaulting to "paid"
   const [invoice, setInvoice] = useState({
     customerId: "",
     invoiceNumber: "",
@@ -42,7 +42,7 @@ export const useInvoiceState = () => {
     ],
     termsAndConditions: "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
     notes: "",
-    status: "draft", // Default status
+    status: "paid", // Default status changed to "paid"
   });
 
   return {

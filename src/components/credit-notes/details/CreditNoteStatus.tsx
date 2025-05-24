@@ -16,7 +16,7 @@ const CreditNoteStatus = ({
     <div className="space-y-2">
       <Label htmlFor="status">Status</Label>
       <Select 
-        value={status} 
+        value={status || "issued"} 
         onValueChange={onStatusChange}
       >
         <SelectTrigger id="status">

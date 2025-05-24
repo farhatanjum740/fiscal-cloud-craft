@@ -225,14 +225,17 @@ const InvoiceEditor = () => {
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="dueDate">Due Date</Label>
-                    <DatePicker
-                      selected={invoice.dueDate}
-                      onSelect={(date) => setInvoice(prev => ({ ...prev, dueDate: date }))}
-                      className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
+                  {/* Only show due date when status is unpaid */}
+                  {invoice.status === "unpaid" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="dueDate">Due Date</Label>
+                      <DatePicker
+                        selected={invoice.dueDate}
+                        onSelect={(date) => setInvoice(prev => ({ ...prev, dueDate: date }))}
+                        className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 {/* Add invoice status selection */}
@@ -240,7 +243,7 @@ const InvoiceEditor = () => {
                   <Label htmlFor="status">Invoice Status</Label>
                   <Select 
                     onValueChange={(value) => setInvoice(prev => ({ ...prev, status: value }))} 
-                    value={invoice.status || ""}
+                    value={invoice.status || "paid"}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select status" />
