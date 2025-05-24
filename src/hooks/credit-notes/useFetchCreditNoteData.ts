@@ -48,31 +48,61 @@ export const useFetchCreditNoteData = (
           console.log("Company data fetched:", companyData);
           setCompany(companyData);
           
-          // Fetch available invoices for credit note
+          // Fetch available invoices for credit note - updated query with better filtering
           const { data: invoicesData, error: invoicesError } = await supabase
             .from('invoices')
-            .select('id, invoice_number, financial_year, status')
+            .select('id, invoice_number, financial_year, status, total_amount, invoice_date')
             .eq('user_id', userId)
-            .in('status', ['pending', 'paid']);
+            .in('status', ['pending', 'paid'])
+            .order('invoice_date', { ascending: false });
             
-          if (invoicesError) throw invoicesError;
+          if (invoicesError) {
+            console.error("Error fetching invoices:", invoicesError);
+            throw invoicesError;
+          }
           
-          console.log("Invoices data fetched:", invoicesData);
+          console.log("Raw invoices data fetched:", invoicesData);
           
-          // Convert to options format and ensure we have valid data
+          // Convert to options format with better validation and logging
           let options: InvoiceOption[] = [];
           
           if (Array.isArray(invoicesData) && invoicesData.length > 0) {
             options = invoicesData
-              .filter(inv => inv && inv.id && inv.invoice_number)
-              .map(inv => ({
-                value: inv.id || "",
-                label: `${inv.invoice_number || "Unknown"} (${inv.financial_year || "Unknown"})`
-              }));
+              .filter(inv => {
+                const isValid = inv && 
+                  inv.id && 
+                  inv.invoice_number && 
+                  inv.financial_year &&
+                  typeof inv.id === 'string' &&
+                  typeof inv.invoice_number === 'string';
+                
+                if (!isValid) {
+                  console.log("Filtering out invalid invoice:", inv);
+                }
+                return isValid;
+              })
+              .map(inv => {
+                const option = {
+                  value: inv.id,
+                  label: `${inv.invoice_number} (${inv.financial_year}) - ₹${Number(inv.total_amount || 0).toLocaleString()}`
+                };
+                console.log("Created invoice option:", option);
+                return option;
+              });
           }
             
-          console.log("Invoice options created:", options);
+          console.log("Final invoice options created:", options);
           setInvoiceOptions(options);
+          
+          // Log the options count for debugging
+          if (options.length === 0) {
+            console.warn("No valid invoice options created. Raw data:", invoicesData);
+            toast({
+              title: "No Invoices Available",
+              description: "Please create and save some invoices first before creating credit notes.",
+              variant: "destructive",
+            });
+          }
         }
         
         // If editing existing credit note

@@ -52,7 +52,7 @@ const AppHeader = () => {
             <DropdownMenuContent align="end" alignOffset={8} forceMount>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/profile")}>
+              <DropdownMenuItem onClick={() => navigate("/app/settings/company")}>
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem onClick={signOut}>

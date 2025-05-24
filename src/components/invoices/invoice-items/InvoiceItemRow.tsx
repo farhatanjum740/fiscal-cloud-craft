@@ -1,10 +1,15 @@
 
-import React from "react";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { CommandSelect } from "@/components/ui/command-select";
 import type { InvoiceItem } from "@/types";
 
 interface InvoiceItemRowProps {
@@ -12,8 +17,28 @@ interface InvoiceItemRowProps {
   productOptions: { value: string; label: string }[];
   updateItem: (id: string, field: keyof InvoiceItem, value: any) => void;
   removeItem: (id: string) => void;
-  handleProductSelect: (id: string, productId: string) => void;
+  handleProductSelect: (itemId: string, productId: string) => void;
 }
+
+// Common units for Indian businesses
+const unitOptions = [
+  { value: "pcs", label: "Pieces (Pcs)" },
+  { value: "kg", label: "Kilograms (Kg)" },
+  { value: "gm", label: "Grams (Gm)" },
+  { value: "ltr", label: "Litres (Ltr)" },
+  { value: "ml", label: "Millilitres (ML)" },
+  { value: "mtr", label: "Metres (Mtr)" },
+  { value: "cm", label: "Centimetres (CM)" },
+  { value: "ft", label: "Feet (Ft)" },
+  { value: "inch", label: "Inches (Inch)" },
+  { value: "sqft", label: "Square Feet (Sq Ft)" },
+  { value: "sqm", label: "Square Metres (Sq M)" },
+  { value: "box", label: "Box" },
+  { value: "pack", label: "Pack" },
+  { value: "set", label: "Set" },
+  { value: "pair", label: "Pair" },
+  { value: "nos", label: "Numbers (Nos)" },
+];
 
 const InvoiceItemRow = ({
   item,
@@ -22,102 +47,91 @@ const InvoiceItemRow = ({
   removeItem,
   handleProductSelect,
 }: InvoiceItemRowProps) => {
-  // Make sure item is valid and has an ID
-  const itemId = item?.id || `item-${Math.random()}`;
-  
-  // Ensure product options is valid
-  const safeProductOptions = React.useMemo(() => {
-    if (!Array.isArray(productOptions)) return [];
-    return productOptions.filter(option => 
-      option && 
-      typeof option === 'object' && 
-      'value' in option && 
-      'label' in option &&
-      option.value && 
-      option.label
-    );
-  }, [productOptions]);
-
-  // Helper function for safe item property access
-  const getItemValue = (field: keyof InvoiceItem, defaultValue: any = ""): any => {
-    if (!item) return defaultValue;
-    return item[field] !== undefined && item[field] !== null ? item[field] : defaultValue;
-  };
-  
-  // Calculate the subtotal with safety checks
-  const calculateSubtotal = () => {
-    const price = Number(getItemValue("price", 0));
-    const quantity = Number(getItemValue("quantity", 1));
-    return isNaN(price) || isNaN(quantity) ? "0.00" : (price * quantity).toFixed(2);
-  };
-
   return (
-    <TableRow key={itemId}>
+    <TableRow>
       <TableCell>
-        <CommandSelect
-          options={safeProductOptions}
-          value={getItemValue("productId", "")}
-          onValueChange={(value) => {
-            if (value) {
-              handleProductSelect(itemId, value);
-            }
-          }}
-          placeholder="Select product"
-          searchInputPlaceholder="Search products..."
-          emptyMessage="No products found."
-          className="w-[180px]"
+        <Select
+          value={item.productId || ""}
+          onValueChange={(value) => handleProductSelect(item.id, value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a product" />
+          </SelectTrigger>
+          <SelectContent>
+            {productOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <Input
+          value={item.hsnCode}
+          onChange={(e) => updateItem(item.id, "hsnCode", e.target.value)}
+          placeholder="HSN Code"
         />
       </TableCell>
       <TableCell>
-        <Input 
-          value={getItemValue("hsnCode", "")} 
-          onChange={(e) => updateItem(itemId, "hsnCode", e.target.value)} 
-          className="w-[100px]" 
-        />
-      </TableCell>
-      <TableCell>
-        <Input 
+        <Input
           type="number"
-          min="1"
-          value={getItemValue("quantity", 1)} 
-          onChange={(e) => updateItem(itemId, "quantity", Number(e.target.value) || 1)} 
-          className="w-[80px]" 
-        />
-      </TableCell>
-      <TableCell>
-        <Input 
-          value={getItemValue("unit", "")} 
-          onChange={(e) => updateItem(itemId, "unit", e.target.value)} 
-          className="w-[80px]" 
-        />
-      </TableCell>
-      <TableCell>
-        <Input 
-          type="number"
+          value={item.quantity}
+          onChange={(e) =>
+            updateItem(item.id, "quantity", parseFloat(e.target.value) || 0)
+          }
+          placeholder="Qty"
           min="0"
-          value={getItemValue("price", 0)} 
-          onChange={(e) => updateItem(itemId, "price", Number(e.target.value) || 0)} 
-          className="w-[100px]" 
+          step="0.01"
         />
       </TableCell>
       <TableCell>
-        <Input 
+        <Select
+          value={item.unit || ""}
+          onValueChange={(value) => updateItem(item.id, "unit", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select unit" />
+          </SelectTrigger>
+          <SelectContent>
+            {unitOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <Input
           type="number"
+          value={item.price}
+          onChange={(e) =>
+            updateItem(item.id, "price", parseFloat(e.target.value) || 0)
+          }
+          placeholder="Price"
           min="0"
-          value={getItemValue("gstRate", 0)} 
-          onChange={(e) => updateItem(itemId, "gstRate", Number(e.target.value) || 0)} 
-          className="w-[80px]" 
+          step="0.01"
         />
       </TableCell>
       <TableCell>
-        {calculateSubtotal()}
+        <Input
+          type="number"
+          value={item.gstRate}
+          onChange={(e) =>
+            updateItem(item.id, "gstRate", parseFloat(e.target.value) || 0)
+          }
+          placeholder="GST %"
+          min="0"
+          max="100"
+          step="0.01"
+        />
       </TableCell>
       <TableCell>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-8 w-8 p-0 text-red-500"
-          onClick={() => removeItem(itemId)}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => removeItem(item.id)}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
