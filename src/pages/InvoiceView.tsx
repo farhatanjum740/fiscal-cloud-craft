@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import InvoiceViewComponent from "@/components/invoices/InvoiceView";
 import InvoiceCancelDialog from "@/components/invoices/InvoiceCancelDialog";
+import CancelledIndicator from "@/components/ui/CancelledIndicator";
 import { Badge } from "@/components/ui/badge";
 
 const InvoiceView = () => {
@@ -153,6 +154,12 @@ const InvoiceView = () => {
     );
   }
 
+  // Create invoice object with items for the InvoiceViewComponent
+  const invoiceWithItems = {
+    ...invoice,
+    items: items
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -195,11 +202,16 @@ const InvoiceView = () => {
         </div>
       </div>
 
+      <CancelledIndicator 
+        status={invoice.status}
+        reason={invoice.cancellation_reason}
+        cancelledAt={invoice.cancelled_at}
+      />
+
       <InvoiceViewComponent 
-        invoice={invoice}
+        invoice={invoiceWithItems}
         customer={customer}
         company={company}
-        items={items}
       />
     </div>
   );
