@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
@@ -37,7 +38,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
       toast({ title: "Generating PDF", description: "Please wait while we prepare your invoice..." });
       
       const options = {
-        filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+        filename: `Invoice-${invoice.invoice_number}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -79,7 +80,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
     invoice.items.forEach((item: any) => {
       const price = typeof item.price === 'number' ? item.price : 0;
       const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-      const gstRate = typeof item.gstRate === 'number' ? item.gstRate : 0;
+      const gstRate = typeof item.gst_rate === 'number' ? item.gst_rate : 0;
       
       const itemTotal = price * quantity;
       const gstAmount = (itemTotal * gstRate) / 100;
@@ -124,10 +125,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-lg font-bold text-gray-800">INVOICE</h1>
-            <p className="text-xs text-gray-500"># {invoice.invoiceNumber}</p>
-            <p className="text-xs text-gray-500 mt-1">Date: {invoice.invoiceDate ? format(new Date(invoice.invoiceDate), 'dd/MM/yyyy') : ''}</p>
-            {invoice.dueDate && (
-              <p className="text-xs text-gray-500">Due Date: {format(new Date(invoice.dueDate), 'dd/MM/yyyy')}</p>
+            <p className="text-xs text-gray-500"># {invoice.invoice_number}</p>
+            <p className="text-xs text-gray-500 mt-1">Date: {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd/MM/yyyy') : ''}</p>
+            {invoice.due_date && (
+              <p className="text-xs text-gray-500">Due Date: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}</p>
             )}
           </div>
           
@@ -225,7 +226,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                 // Ensure we're working with numbers
                 const price = typeof item.price === 'number' ? item.price : 0;
                 const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-                const gstRate = typeof item.gstRate === 'number' ? item.gstRate : 0;
+                const gstRate = typeof item.gst_rate === 'number' ? item.gst_rate : 0;
                 
                 const itemTotal = price * quantity;
                 const gstAmount = (itemTotal * gstRate) / 100;
@@ -237,10 +238,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
                   <tr key={item.id || index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
                     <td className="py-1 px-2 border text-xs">{index + 1}</td>
                     <td className="py-1 px-2 border text-xs">
-                      <div className="font-medium">{item.productName}</div>
+                      <div className="font-medium">{item.product_name}</div>
                       {item.description && <div className="text-xs text-gray-600">{item.description}</div>}
                     </td>
-                    <td className="py-1 px-2 border text-xs">{item.hsnCode}</td>
+                    <td className="py-1 px-2 border text-xs">{item.hsn_code}</td>
                     <td className="py-1 px-2 border text-xs">{item.quantity}</td>
                     <td className="py-1 px-2 border text-xs">{item.unit}</td>
                     <td className="py-1 px-2 border text-xs">₹{formatAmount(price)}</td>
@@ -316,10 +317,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, company, cust
         
         {/* Notes and Terms */}
         <div className="grid grid-cols-1 gap-2 mb-4">
-          {invoice.termsAndConditions && (
+          {invoice.terms_and_conditions && (
             <div>
               <h4 className="font-semibold mb-1 text-xs">Terms & Conditions:</h4>
-              <p className="text-xs whitespace-pre-line">{invoice.termsAndConditions}</p>
+              <p className="text-xs whitespace-pre-line">{invoice.terms_and_conditions}</p>
             </div>
           )}
           
