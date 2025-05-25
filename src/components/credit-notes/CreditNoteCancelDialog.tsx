@@ -33,8 +33,8 @@ const cancellationReasons = [
   { value: "duplicate", label: "Duplicate Credit Note" },
   { value: "error", label: "Credit Note Error" },
   { value: "customer_request", label: "Customer Request" },
-  { value: "invoice_cancelled", label: "Original Invoice Cancelled" },
-  { value: "reconciliation", label: "Account Reconciliation" },
+  { value: "business_closure", label: "Business Closure" },
+  { value: "payment_issue", label: "Payment Issue" },
   { value: "other", label: "Other" }
 ];
 

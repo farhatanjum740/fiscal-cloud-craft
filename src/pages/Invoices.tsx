@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Download, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, Download, Eye, Edit, Ban } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -41,7 +41,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import html2pdf from 'html2pdf.js';
+import {
+  Select as CancelSelect,
+  SelectContent as CancelSelectContent,
+  SelectItem as CancelSelectItem,
+  SelectTrigger as CancelSelectTrigger,
+  SelectValue as CancelSelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Status badge component
 const StatusBadge = ({ status }) => {
@@ -55,6 +62,8 @@ const StatusBadge = ({ status }) => {
         return "bg-gray-100 text-gray-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "issued":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -63,16 +72,28 @@ const StatusBadge = ({ status }) => {
   return <span className={`px-2 py-1 rounded text-xs font-medium ${getVariant()}`}>{status}</span>;
 };
 
+const cancellationReasons = [
+  { value: "duplicate", label: "Duplicate Document" },
+  { value: "error", label: "Document Error" },
+  { value: "customer_request", label: "Customer Request" },
+  { value: "business_closure", label: "Business Closure" },
+  { value: "payment_issue", label: "Payment Issue" },
+  { value: "other", label: "Other" }
+];
+
 const Invoices = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("invoices");
   const [invoices, setInvoices] = useState([]);
   const [creditNotes, setCreditNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'invoice' | 'creditNote'} | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [itemToCancel, setItemToCancel] = useState<{id: string, type: 'invoice' | 'creditNote'} | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
   
   // Fetch invoices and credit notes
   const fetchData = async () => {
@@ -145,83 +166,94 @@ const Invoices = () => {
     return searchMatch && statusMatch;
   });
 
-  // Handle delete confirmation
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete) return;
+  // Handle cancel confirmation
+  const handleCancelConfirm = async () => {
+    if (!itemToCancel || !cancellationReason) {
+      toast({
+        title: "Cancellation Reason Required",
+        description: "Please select a reason for cancellation",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
-      let result;
+      setIsCancelling(true);
       
-      if (itemToDelete.type === 'invoice') {
-        // First check if there are credit notes associated with this invoice
+      if (itemToCancel.type === 'invoice') {
+        // Check if there are non-cancelled credit notes associated with this invoice
         const { data: relatedCreditNotes } = await supabase
           .from("credit_notes")
-          .select("id")
-          .eq("invoice_id", itemToDelete.id);
+          .select("id, status")
+          .eq("invoice_id", itemToCancel.id)
+          .neq("status", "cancelled");
           
         if (relatedCreditNotes && relatedCreditNotes.length > 0) {
           toast({
-            title: "Cannot Delete Invoice",
-            description: "This invoice has credit notes attached. Delete the credit notes first.",
+            title: "Cannot Cancel Invoice",
+            description: "This invoice has active credit notes. Cancel the credit notes first.",
             variant: "destructive",
           });
-          setDeleteDialogOpen(false);
+          setCancelDialogOpen(false);
           return;
         }
         
-        // Delete invoice items first
-        await supabase
-          .from("invoice_items")
-          .delete()
-          .eq("invoice_id", itemToDelete.id);
-          
-        // Then delete the invoice
-        result = await supabase
+        // Cancel the invoice
+        const { error } = await supabase
           .from("invoices")
-          .delete()
-          .eq("id", itemToDelete.id);
+          .update({
+            status: "cancelled",
+            cancellation_reason: cancellationReason,
+            cancelled_at: new Date().toISOString(),
+            cancelled_by: user?.id
+          })
+          .eq("id", itemToCancel.id);
+          
+        if (error) throw error;
           
       } else {
-        // Delete credit note items first
-        await supabase
-          .from("credit_note_items")
-          .delete()
-          .eq("credit_note_id", itemToDelete.id);
-          
-        // Then delete the credit note
-        result = await supabase
+        // Cancel the credit note
+        const { error } = await supabase
           .from("credit_notes")
-          .delete()
-          .eq("id", itemToDelete.id);
+          .update({
+            status: "cancelled",
+            cancellation_reason: cancellationReason,
+            cancelled_at: new Date().toISOString(),
+            cancelled_by: user?.id
+          })
+          .eq("id", itemToCancel.id);
+          
+        if (error) throw error;
       }
       
-      if (result?.error) throw result.error;
-      
       toast({
-        title: "Deleted Successfully",
-        description: `${itemToDelete.type === 'invoice' ? 'Invoice' : 'Credit Note'} has been deleted.`,
+        title: "Cancelled Successfully",
+        description: `${itemToCancel.type === 'invoice' ? 'Invoice' : 'Credit Note'} has been cancelled.`,
       });
       
       // Refresh the data
       fetchData();
       
     } catch (error) {
-      console.error("Error deleting:", error);
+      console.error("Error cancelling:", error);
       toast({
         title: "Error",
-        description: `Failed to delete ${itemToDelete.type}.`,
+        description: `Failed to cancel ${itemToCancel.type}.`,
         variant: "destructive",
       });
     } finally {
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
+      setIsCancelling(false);
+      setCancelDialogOpen(false);
+      setItemToCancel(null);
+      setCancellationReason("");
     }
   };
   
-  // Handle delete dialog open
-  const handleDeleteClick = (id: string, type: 'invoice' | 'creditNote') => {
-    setItemToDelete({ id, type });
-    setDeleteDialogOpen(true);
+  // Handle cancel dialog open
+  const handleCancelClick = (id: string, type: 'invoice' | 'creditNote', status: string) => {
+    if (status === 'cancelled') return;
+    setItemToCancel({ id, type });
+    setCancelDialogOpen(true);
   };
   
   // Handle direct download from list
@@ -347,14 +379,16 @@ const Invoices = () => {
                           >
                             <Eye size={16} />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => navigate(`/app/invoices/edit/${invoice.id}`)}
-                            title="Edit Invoice"
-                          >
-                            <Edit size={16} />
-                          </Button>
+                          {invoice.status !== "cancelled" && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => navigate(`/app/invoices/edit/${invoice.id}`)}
+                              title="Edit Invoice"
+                            >
+                              <Edit size={16} />
+                            </Button>
+                          )}
                           <Button
                             size="icon"
                             variant="ghost"
@@ -363,15 +397,17 @@ const Invoices = () => {
                           >
                             <Download size={16} />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => handleDeleteClick(invoice.id, 'invoice')}
-                            title="Delete Invoice"
-                          >
-                            <Trash2 size={16} />
-                          </Button>
+                          {invoice.status !== "cancelled" && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => handleCancelClick(invoice.id, 'invoice', invoice.status)}
+                              title="Cancel Invoice"
+                            >
+                              <Ban size={16} />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -436,14 +472,16 @@ const Invoices = () => {
                           >
                             <Eye size={16} />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => navigate(`/app/credit-notes/edit/${creditNote.id}`)}
-                            title="Edit Credit Note"
-                          >
-                            <Edit size={16} />
-                          </Button>
+                          {creditNote.status !== "cancelled" && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => navigate(`/app/credit-notes/edit/${creditNote.id}`)}
+                              title="Edit Credit Note"
+                            >
+                              <Edit size={16} />
+                            </Button>
+                          )}
                           <Button
                             size="icon"
                             variant="ghost"
@@ -452,15 +490,17 @@ const Invoices = () => {
                           >
                             <Download size={16} />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => handleDeleteClick(creditNote.id, 'creditNote')}
-                            title="Delete Credit Note"
-                          >
-                            <Trash2 size={16} />
-                          </Button>
+                          {creditNote.status !== "cancelled" && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => handleCancelClick(creditNote.id, 'creditNote', creditNote.status)}
+                              title="Cancel Credit Note"
+                            >
+                              <Ban size={16} />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -472,24 +512,44 @@ const Invoices = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {itemToDelete?.type === 'invoice' ? 'Delete Invoice?' : 'Delete Credit Note?'}
+              {itemToCancel?.type === 'invoice' ? 'Cancel Invoice?' : 'Cancel Credit Note?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the {itemToDelete?.type === 'invoice' ? 'invoice' : 'credit note'} and remove it from our servers.
+              This action will mark the {itemToCancel?.type === 'invoice' ? 'invoice' : 'credit note'} as cancelled. It will remain in your records for audit purposes but cannot be used for transactions.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">
+              Reason for Cancellation *
+            </label>
+            <CancelSelect value={cancellationReason} onValueChange={setCancellationReason}>
+              <CancelSelectTrigger>
+                <CancelSelectValue placeholder="Select a reason" />
+              </CancelSelectTrigger>
+              <CancelSelectContent>
+                {cancellationReasons.map((reason) => (
+                  <CancelSelectItem key={reason.value} value={reason.value}>
+                    {reason.label}
+                  </CancelSelectItem>
+                ))}
+              </CancelSelectContent>
+            </CancelSelect>
+          </div>
+          
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isCancelling}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDeleteConfirm}
+              onClick={handleCancelConfirm}
+              disabled={isCancelling || !cancellationReason}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Delete
+              {isCancelling ? "Cancelling..." : `Cancel ${itemToCancel?.type === 'invoice' ? 'Invoice' : 'Credit Note'}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

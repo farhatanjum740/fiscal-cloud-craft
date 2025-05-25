@@ -7,6 +7,7 @@ import { useCreditNote } from "@/hooks/credit-notes";
 import CreditNoteViewComponent from "@/components/credit-notes/view";
 import CreditNoteCancelDialog from "@/components/credit-notes/CreditNoteCancelDialog";
 import CreditNoteLoading from "./CreditNoteLoading";
+import CancelledIndicator from "@/components/ui/CancelledIndicator";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -143,6 +144,12 @@ const CreditNoteViewPage = () => {
           />
         </div>
       </div>
+
+      <CancelledIndicator 
+        status={creditNote?.status || ""}
+        reason={creditNote?.cancellation_reason}
+        cancelledAt={creditNote?.cancelled_at}
+      />
 
       {loadingData ? (
         <CreditNoteLoading />
