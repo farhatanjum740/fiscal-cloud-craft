@@ -1,95 +1,158 @@
 
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
-import { useInvoice } from "@/hooks/useInvoice";
-import InvoiceViewComponent from "@/components/invoices/InvoiceView";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { toast } from "@/components/ui/use-toast";
+import { ArrowLeft, Edit, Download, Copy, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
+import InvoiceViewComponent from "@/components/invoices/InvoiceView";
+import InvoiceCancelDialog from "@/components/invoices/InvoiceCancelDialog";
+import { Badge } from "@/components/ui/badge";
 
 const InvoiceView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const { 
-    invoice, 
-    loading, 
-    loadingData, 
-    company,
-    customers,
-  } = useInvoice(id || '');
+  const { user } = useAuth();
+  const [invoice, setInvoice] = useState<any>(null);
+  const [customer, setCustomer] = useState<any>(null);
+  const [company, setCompany] = useState<any>(null);
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      if (!id || !user) return;
+
+      try {
+        // Fetch invoice
+        const { data: invoiceData, error: invoiceError } = await supabase
+          .from("invoices")
+          .select("*")
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .single();
+
+        if (invoiceError) throw invoiceError;
+
+        setInvoice(invoiceData);
+
+        // Fetch customer
+        const { data: customerData, error: customerError } = await supabase
+          .from("customers")
+          .select("*")
+          .eq("id", invoiceData.customer_id)
+          .single();
+
+        if (customerError) throw customerError;
+        setCustomer(customerData);
+
+        // Fetch company
+        const { data: companyData, error: companyError } = await supabase
+          .from("companies")
+          .select("*")
+          .eq("id", invoiceData.company_id)
+          .single();
+
+        if (companyError) throw companyError;
+        setCompany(companyData);
+
+        // Fetch invoice items
+        const { data: itemsData, error: itemsError } = await supabase
+          .from("invoice_items")
+          .select("*")
+          .eq("invoice_id", id);
+
+        if (itemsError) throw itemsError;
+        setItems(itemsData || []);
+      } catch (error: any) {
+        console.error("Error fetching invoice:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load invoice",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoice();
+  }, [id, user]);
 
   // Auto download if query param is present
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const shouldDownload = params.get('download') === 'true';
     
-    if (shouldDownload && !loadingData && document.querySelector('button[title="Download Invoice"]')) {
-      // Click the download button once data is loaded
+    if (shouldDownload && !loading && document.querySelector('button[title="Download Invoice"]')) {
       const downloadBtn = document.querySelector('button[title="Download Invoice"]') as HTMLButtonElement;
       if (downloadBtn) downloadBtn.click();
       
-      // Clean up the URL
       navigate(location.pathname, { replace: true });
     }
-  }, [location.search, loadingData, navigate, location.pathname]);
+  }, [location.search, loading, navigate, location.pathname]);
 
-  // Find the customer for this invoice
-  const customer = customers.find(cust => cust.id === invoice.customerId);
-  
-  const handleDeleteInvoice = async () => {
-    if (!id) return;
-    
-    try {
-      // Check if there are credit notes associated with this invoice
-      const { data: relatedCreditNotes } = await supabase
-        .from('credit_notes')
-        .select('id')
-        .eq('invoice_id', id);
-        
-      if (relatedCreditNotes && relatedCreditNotes.length > 0) {
-        toast({
-          title: "Cannot Delete Invoice",
-          description: "This invoice has credit notes attached. Delete the credit notes first.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // First delete related invoice items
-      const { error: itemsError } = await supabase
-        .from('invoice_items')
-        .delete()
-        .eq('invoice_id', id);
-        
-      if (itemsError) throw itemsError;
-      
-      // Then delete the invoice
-      const { error } = await supabase
-        .from('invoices')
-        .delete()
-        .eq('id', id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Invoice deleted",
-        description: "The invoice has been successfully deleted."
-      });
-      
-      navigate("/app/invoices");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: `Failed to delete invoice: ${error.message}`,
-        variant: "destructive"
-      });
+  const handleCreateCreditNote = () => {
+    navigate(`/app/credit-notes/create?invoiceId=${id}`);
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "paid":
+        return "default";
+      case "pending":
+        return "secondary";
+      case "overdue":
+        return "destructive";
+      case "cancelled":
+        return "outline";
+      default:
+        return "secondary";
     }
   };
-  
+
+  const getStatusLabel = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/app/invoices")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">Invoice Details</h1>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <p>Loading invoice...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/app/invoices")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">Invoice Details</h1>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <p>Invoice not found</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -97,53 +160,47 @@ const InvoiceView = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/app/invoices")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-3xl font-bold">Invoice Details</h1>
+          <h1 className="text-2xl font-bold">Invoice Details</h1>
+          <Badge variant={getStatusVariant(invoice.status)}>
+            {getStatusLabel(invoice.status)}
+          </Badge>
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/app/invoices/edit/${id}`)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+          {invoice.status !== "cancelled" && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(`/app/invoices/edit/${id}`)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the invoice
-                  and all related data.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteInvoice}>
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleCreateCreditNote}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Credit Note
+              </Button>
+            </>
+          )}
+          
+          <InvoiceCancelDialog 
+            id={id} 
+            status={invoice.status}
+            navigate={navigate} 
+          />
         </div>
       </div>
 
-      {loadingData ? (
-        <div className="flex flex-col items-center justify-center h-64 border rounded-md bg-gray-50">
-          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4"></div>
-          <p className="text-muted-foreground">Loading invoice...</p>
-        </div>
-      ) : (
-        <InvoiceViewComponent 
-          invoice={invoice} 
-          company={company} 
-          customer={customer}
-        />
-      )}
+      <InvoiceViewComponent 
+        invoice={invoice}
+        customer={customer}
+        company={company}
+        items={items}
+      />
     </div>
   );
 };

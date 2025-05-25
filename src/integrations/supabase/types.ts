@@ -227,6 +227,9 @@ export type Database = {
       }
       credit_notes: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           cgst: number | null
           company_id: string
           created_at: string | null
@@ -245,6 +248,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           cgst?: number | null
           company_id: string
           created_at?: string | null
@@ -263,6 +269,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           cgst?: number | null
           company_id?: string
           created_at?: string | null
@@ -428,6 +437,9 @@ export type Database = {
       }
       invoices: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           cgst: number | null
           company_id: string
           created_at: string | null
@@ -450,6 +462,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           cgst?: number | null
           company_id: string
           created_at?: string | null
@@ -472,6 +487,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           cgst?: number | null
           company_id?: string
           created_at?: string | null

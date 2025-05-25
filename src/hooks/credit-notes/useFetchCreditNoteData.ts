@@ -49,13 +49,14 @@ export const useFetchCreditNoteData = (
           console.log("Company data fetched:", companyData);
           setCompany(companyData);
           
-          // Fetch available invoices for credit note - more inclusive query
+          // Fetch available invoices for credit note - exclude cancelled invoices
           console.log("Fetching invoices for user:", userId);
           
           const { data: invoicesData, error: invoicesError } = await supabase
             .from('invoices')
             .select('id, invoice_number, financial_year, status, total_amount, invoice_date')
             .eq('user_id', userId)
+            .neq('status', 'cancelled') // Exclude cancelled invoices
             .order('invoice_date', { ascending: false });
             
           if (invoicesError) {
@@ -91,7 +92,7 @@ export const useFetchCreditNoteData = (
                 inv.financial_year &&
                 typeof inv.id === 'string' &&
                 typeof inv.invoice_number === 'string' &&
-                // Allow more statuses - not just pending and paid
+                // Allow more statuses - not just pending and paid, but exclude cancelled
                 inv.status && 
                 ['pending', 'paid', 'overdue', 'sent'].includes(inv.status.toLowerCase());
               

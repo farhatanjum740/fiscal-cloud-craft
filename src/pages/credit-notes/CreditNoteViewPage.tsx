@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit } from "lucide-react";
 import { useCreditNote } from "@/hooks/credit-notes";
 import CreditNoteViewComponent from "@/components/credit-notes/view";
-import CreditNoteDeleteDialog from "./CreditNoteDeleteDialog";
+import CreditNoteCancelDialog from "@/components/credit-notes/CreditNoteCancelDialog";
 import CreditNoteLoading from "./CreditNoteLoading";
 import { toast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 const CreditNoteViewPage = () => {
   const { id } = useParams();
@@ -43,7 +44,8 @@ const CreditNoteViewPage = () => {
         cgst: creditNote.cgst,
         sgst: creditNote.sgst,
         igst: creditNote.igst,
-        total: creditNote.total_amount
+        total: creditNote.total_amount,
+        status: creditNote.status
       });
     }
     
@@ -90,6 +92,23 @@ const CreditNoteViewPage = () => {
       navigate(location.pathname, { replace: true });
     }
   }, [location.search, loadingData, navigate, location.pathname]);
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "issued":
+        return "default";
+      case "draft":
+        return "secondary";
+      case "cancelled":
+        return "outline";
+      default:
+        return "secondary";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
   
   return (
     <div className="space-y-6">
@@ -99,18 +118,29 @@ const CreditNoteViewPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold">Credit Note Details</h1>
+          {creditNote && (
+            <Badge variant={getStatusVariant(creditNote.status)}>
+              {getStatusLabel(creditNote.status)}
+            </Badge>
+          )}
         </div>
         
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(`/app/credit-notes/edit/${id}`)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+          {creditNote && creditNote.status !== "cancelled" && (
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(`/app/credit-notes/edit/${id}`)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
           
-          <CreditNoteDeleteDialog id={id} navigate={navigate} />
+          <CreditNoteCancelDialog 
+            id={id} 
+            status={creditNote?.status}
+            navigate={navigate} 
+          />
         </div>
       </div>
 
