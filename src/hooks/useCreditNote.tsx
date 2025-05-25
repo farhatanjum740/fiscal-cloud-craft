@@ -232,20 +232,26 @@ export const useCreditNote = (id?: string) => {
       
       console.log("Invoice items data:", itemsData);
       
-      // Get credited quantities for each item
+      // Get credited quantities for each item, excluding cancelled credit notes
       const itemIds = (itemsData || []).map(item => item.id);
       
       let creditedQuantities: {[key: string]: number} = {};
       
       if (itemIds.length > 0) {
+        // Modified query to exclude credit note items from cancelled credit notes
         const { data: creditedData, error: creditedError } = await supabase
           .from('credit_note_items')
-          .select('invoice_item_id, quantity')
-          .in('invoice_item_id', itemIds);
+          .select(`
+            invoice_item_id, 
+            quantity,
+            credit_notes!inner(status)
+          `)
+          .in('invoice_item_id', itemIds)
+          .neq('credit_notes.status', 'cancelled'); // Exclude cancelled credit notes
           
         if (creditedError) throw creditedError;
         
-        console.log("Credited quantities data:", creditedData);
+        console.log("Credited quantities data (excluding cancelled):", creditedData);
         
         // Sum up quantities by invoice item id
         (creditedData || []).forEach((item: any) => {
@@ -263,7 +269,7 @@ export const useCreditNote = (id?: string) => {
         return { ...item, availableQuantity: availableQty };
       });
       
-      console.log("Items with available quantities:", itemsWithAvailable);
+      console.log("Items with available quantities (excluding cancelled credit notes):", itemsWithAvailable);
       setInvoiceItems(itemsWithAvailable);
     } catch (error: any) {
       console.error("Error fetching invoice items:", error);
