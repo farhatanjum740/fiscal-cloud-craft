@@ -16,6 +16,10 @@ export interface CreditNoteData {
   sgst?: number;
   igst?: number;
   total_amount?: number;
+  // Add cancellation-related properties
+  cancellation_reason?: string;
+  cancelled_at?: string;
+  cancelled_by?: string;
 }
 
 export interface CreditNoteItem {
