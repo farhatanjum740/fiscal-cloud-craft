@@ -24,6 +24,7 @@ import {
 import { Plus, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useInvoice } from "@/hooks/useInvoice";
+import { SubscriptionProvider } from "@/components/subscription/SubscriptionProvider";
 
 // Standard units commonly used in Indian businesses
 const unitOptions = [
@@ -54,7 +55,7 @@ const unitOptions = [
   { value: "carton", label: "Carton" },
 ];
 
-const InvoiceEditor = () => {
+const InvoiceEditorContent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -428,6 +429,14 @@ const InvoiceEditor = () => {
         </>
       )}
     </div>
+  );
+};
+
+const InvoiceEditor = () => {
+  return (
+    <SubscriptionProvider>
+      <InvoiceEditorContent />
+    </SubscriptionProvider>
   );
 };
 

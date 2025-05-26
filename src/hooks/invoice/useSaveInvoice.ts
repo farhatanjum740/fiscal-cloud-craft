@@ -3,6 +3,7 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 
 export const useSaveInvoice = (
   user: any,
@@ -18,7 +19,8 @@ export const useSaveInvoice = (
   generateInvoiceNumber: () => Promise<void>,
   setGeneratedInvoiceNumber: (value: string | null) => void
 ) => {
-  const navigate = useNavigate(); // Add navigation hook
+  const navigate = useNavigate();
+  const { checkInvoiceLimit } = useUsageLimits();
   
   const saveInvoice = useCallback(async () => {
     if (!user) {
@@ -59,6 +61,15 @@ export const useSaveInvoice = (
 
     setLoading(true);
     try {
+      // Check usage limits for new invoices only
+      if (!isEditing) {
+        const canCreate = await checkInvoiceLimit();
+        if (!canCreate) {
+          setLoading(false);
+          return; // Toast is shown by checkInvoiceLimit
+        }
+      }
+
       // Only increment the invoice counter when actually saving
       if (!isEditing) {
         // Get the invoice number components
@@ -184,7 +195,8 @@ export const useSaveInvoice = (
     loading,
     setLoading,
     setGeneratedInvoiceNumber,
-    navigate, // Add navigate to dependencies
+    navigate,
+    checkInvoiceLimit, // Add checkInvoiceLimit to dependencies
   ]);
 
   return { saveInvoice };

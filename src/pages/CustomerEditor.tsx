@@ -1,41 +1,23 @@
-
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Address } from "@/types";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { SubscriptionProvider } from "@/components/subscription/SubscriptionProvider";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 
-// List of Indian states for the dropdown
-const indianStates = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
-];
-
-const CustomerEditor = () => {
+const CustomerEditorContent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isEditing = !!id;
-  
+  const { checkCustomerLimit } = useUsageLimits();
   const [loading, setLoading] = useState(false);
   const [customer, setCustomer] = useState({
     name: "",
@@ -43,487 +25,325 @@ const CustomerEditor = () => {
     phone: "",
     gstin: "",
     category: "",
-    billingAddress: {
-      line1: "",
-      line2: "",
-      city: "",
-      state: "Maharashtra",
-      pincode: "",
-    } as Address,
-    shippingAddress: {
-      line1: "",
-      line2: "",
-      city: "",
-      state: "Maharashtra",
-      pincode: "",
-    } as Address,
-    useShippingForBilling: true,
+    billing_address_line1: "",
+    billing_address_line2: "",
+    billing_city: "",
+    billing_state: "",
+    billing_pincode: "",
+    shipping_address_line1: "",
+    shipping_address_line2: "",
+    shipping_city: "",
+    shipping_state: "",
+    shipping_pincode: "",
   });
-  
+  const [sameAsShipping, setSameAsShipping] = useState(false);
+
   useEffect(() => {
-    const fetchCustomer = async () => {
-      if (isEditing && id && user) {
-        try {
-          const { data, error } = await supabase
-            .from('customers')
-            .select('*')
-            .eq('id', id)
-            .eq('user_id', user.id)
-            .single();
-            
-          if (error) {
-            throw error;
-          }
-          
-          if (data) {
-            // Transform database format to component format
-            setCustomer({
-              name: data.name || '',
-              email: data.email || '',
-              phone: data.phone || '',
-              gstin: data.gstin || '',
-              category: data.category || '',
-              billingAddress: {
-                line1: data.billing_address_line1 || '',
-                line2: data.billing_address_line2 || '',
-                city: data.billing_city || '',
-                state: data.billing_state || 'Maharashtra',
-                pincode: data.billing_pincode || '',
-              },
-              shippingAddress: {
-                line1: data.shipping_address_line1 || '',
-                line2: data.shipping_address_line2 || '',
-                city: data.shipping_city || '',
-                state: data.shipping_state || 'Maharashtra',
-                pincode: data.shipping_pincode || '',
-              },
-              // If shipping and billing addresses match, set useShippingForBilling to true
-              useShippingForBilling: 
-                data.billing_address_line1 === data.shipping_address_line1 &&
-                data.billing_address_line2 === data.shipping_address_line2 &&
-                data.billing_city === data.shipping_city &&
-                data.billing_state === data.shipping_state &&
-                data.billing_pincode === data.shipping_pincode
-            });
-          }
-        } catch (error: any) {
-          console.error("Error fetching customer:", error);
-          toast({
-            title: "Error",
-            description: `Failed to load customer: ${error.message}`,
-            variant: "destructive",
-          });
+    if (id) {
+      fetchCustomer();
+    }
+  }, [id]);
+
+  const fetchCustomer = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setCustomer(data);
+      }
+    } catch (error: any) {
+      console.error("Error fetching customer:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch customer data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSameAsShipping = (checked: boolean) => {
+    setSameAsShipping(checked);
+    if (checked) {
+      setCustomer(prev => ({
+        ...prev,
+        shipping_address_line1: prev.billing_address_line1,
+        shipping_address_line2: prev.billing_address_line2,
+        shipping_city: prev.billing_city,
+        shipping_state: prev.billing_state,
+        shipping_pincode: prev.billing_pincode,
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Check usage limits for new customers only
+      if (!id) {
+        const canCreate = await checkCustomerLimit();
+        if (!canCreate) {
+          setLoading(false);
+          return; // Toast is shown by checkCustomerLimit
         }
       }
-    };
-    
-    fetchCustomer();
-  }, [id, isEditing, user]);
-  
-  const handleInputChange = (
-    field: string,
-    value: string,
-    addressType?: 'billingAddress' | 'shippingAddress'
-  ) => {
-    if (addressType) {
-      setCustomer((prev) => ({
-        ...prev,
-        [addressType]: {
-          ...prev[addressType],
-          [field]: value,
-        },
-      }));
-      
-      // If using same address for shipping and billing
-      if (customer.useShippingForBilling && addressType === 'shippingAddress') {
-        setCustomer((prev) => ({
-          ...prev,
-          billingAddress: {
-            ...prev.billingAddress,
-            [field]: value,
-          },
-        }));
-      }
-    } else {
-      setCustomer((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    }
-  };
-  
-  // Toggle using same address for shipping and billing
-  const toggleAddressUse = () => {
-    setCustomer((prev) => {
-      const newValue = !prev.useShippingForBilling;
-      
-      if (newValue) {
-        // Copy shipping address to billing address
-        return {
-          ...prev,
-          useShippingForBilling: newValue,
-          billingAddress: { ...prev.shippingAddress },
-        };
-      } else {
-        return { ...prev, useShippingForBilling: newValue };
-      }
-    });
-  };
-  
-  const handleSave = async () => {
-    // Validate the form
-    if (!customer.name) {
-      toast({
-        title: "Error",
-        description: "Customer name is required.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to save a customer.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // Transform component format to database format
+
       const customerData = {
-        user_id: user.id,
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        gstin: customer.gstin,
-        category: customer.category,
-        // Billing address
-        billing_address_line1: customer.billingAddress.line1,
-        billing_address_line2: customer.billingAddress.line2,
-        billing_city: customer.billingAddress.city,
-        billing_state: customer.billingAddress.state,
-        billing_pincode: customer.billingAddress.pincode,
-        // Shipping address
-        shipping_address_line1: customer.shippingAddress.line1,
-        shipping_address_line2: customer.shippingAddress.line2,
-        shipping_city: customer.shippingAddress.city,
-        shipping_state: customer.shippingAddress.state,
-        shipping_pincode: customer.shippingAddress.pincode,
+        ...customer,
+        user_id: user?.id,
       };
-      
+
       let result;
-      
-      if (isEditing) {
-        // Update existing customer
+      if (id) {
         result = await supabase
-          .from('customers')
+          .from("customers")
           .update(customerData)
-          .eq('id', id)
-          .eq('user_id', user.id);
+          .eq("id", id);
       } else {
-        // Insert new customer
         result = await supabase
-          .from('customers')
-          .insert(customerData);
+          .from("customers")
+          .insert([customerData]);
       }
-      
-      if (result.error) {
-        throw result.error;
-      }
-      
+
+      if (result.error) throw result.error;
+
       toast({
-        title: `Customer ${isEditing ? 'Updated' : 'Created'}`,
-        description: `${customer.name} has been ${isEditing ? 'updated' : 'added'} successfully.`,
+        title: "Success",
+        description: `Customer ${id ? "updated" : "created"} successfully!`,
       });
-      
+
       navigate("/app/customers");
     } catch (error: any) {
       console.error("Error saving customer:", error);
       toast({
         title: "Error",
-        description: `Failed to save customer: ${error.message}`,
+        description: `Failed to ${id ? "update" : "create"} customer: ${error.message}`,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">
-          {isEditing ? "Edit Customer" : "Add New Customer"}
+          {id ? "Edit Customer" : "Add New Customer"}
         </h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/app/customers")} disabled={loading}>
+          <Button variant="outline" onClick={() => navigate("/app/customers")}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Customer"}
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {id ? "Update" : "Create"} Customer
           </Button>
         </div>
       </div>
-      
-      <div className="grid md:grid-cols-2 gap-6">
+
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
             <CardDescription>
-              Enter the customer's basic details
+              Enter the basic customer details
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Customer Name *</Label>
-              <Input
-                id="name"
-                placeholder="Enter customer name"
-                value={customer.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Customer Name *</Label>
+                <Input
+                  id="name"
+                  value={customer.name}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={customer.email}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={customer.phone}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="gstin">GSTIN</Label>
+                <Input
+                  id="gstin"
+                  value={customer.gstin}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, gstin: e.target.value }))}
+                />
+              </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="customer@example.com"
-                value={customer.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                placeholder="Enter phone number"
-                value={customer.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="gstin">GSTIN</Label>
-              <Input
-                id="gstin"
-                placeholder="27AAAAA0000A1Z5"
-                value={customer.gstin}
-                onChange={(e) => handleInputChange("gstin", e.target.value)}
-              />
-              <p className="text-xs text-gray-500">
-                Enter 15-digit GST Identification Number
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Customer Category (Optional)</Label>
+            <div>
+              <Label htmlFor="category">Category</Label>
               <Input
                 id="category"
-                placeholder="E.g., Retail, Wholesale, etc."
                 value={customer.category}
-                onChange={(e) => handleInputChange("category", e.target.value)}
+                onChange={(e) => setCustomer(prev => ({ ...prev, category: e.target.value }))}
+                placeholder="e.g., Retail, Wholesale, Services"
               />
             </div>
           </CardContent>
         </Card>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Address Information</CardTitle>
-              <CardDescription>
-                Manage shipping and billing addresses
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="shipping">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="shipping">Shipping Address</TabsTrigger>
-                  <TabsTrigger value="billing" disabled={customer.useShippingForBilling}>
-                    Billing Address
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="shipping" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="shipping-line1">Address Line 1</Label>
-                    <Input
-                      id="shipping-line1"
-                      placeholder="Street address, P.O. box"
-                      value={customer.shippingAddress.line1}
-                      onChange={(e) => 
-                        handleInputChange("line1", e.target.value, "shippingAddress")
-                      }
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="shipping-line2">Address Line 2</Label>
-                    <Input
-                      id="shipping-line2"
-                      placeholder="Apartment, suite, unit, building, floor, etc."
-                      value={customer.shippingAddress.line2}
-                      onChange={(e) => 
-                        handleInputChange("line2", e.target.value, "shippingAddress")
-                      }
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="shipping-city">City</Label>
-                      <Input
-                        id="shipping-city"
-                        placeholder="City"
-                        value={customer.shippingAddress.city}
-                        onChange={(e) => 
-                          handleInputChange("city", e.target.value, "shippingAddress")
-                        }
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="shipping-pincode">PIN Code</Label>
-                      <Input
-                        id="shipping-pincode"
-                        placeholder="PIN Code"
-                        value={customer.shippingAddress.pincode}
-                        onChange={(e) => 
-                          handleInputChange("pincode", e.target.value, "shippingAddress")
-                        }
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="shipping-state">State</Label>
-                    <Select
-                      value={customer.shippingAddress.state}
-                      onValueChange={(value) => 
-                        handleInputChange("state", value, "shippingAddress")
-                      }
-                    >
-                      <SelectTrigger id="shipping-state">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {indianStates.map((state) => (
-                          <SelectItem key={state} value={state}>
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 pt-2">
-                    <input
-                      type="checkbox"
-                      id="use-same-address"
-                      checked={customer.useShippingForBilling}
-                      onChange={toggleAddressUse}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <Label htmlFor="use-same-address" className="text-sm cursor-pointer">
-                      Use same address for billing
-                    </Label>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="billing" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-line1">Address Line 1</Label>
-                    <Input
-                      id="billing-line1"
-                      placeholder="Street address, P.O. box"
-                      value={customer.billingAddress.line1}
-                      onChange={(e) => 
-                        handleInputChange("line1", e.target.value, "billingAddress")
-                      }
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-line2">Address Line 2</Label>
-                    <Input
-                      id="billing-line2"
-                      placeholder="Apartment, suite, unit, building, floor, etc."
-                      value={customer.billingAddress.line2}
-                      onChange={(e) => 
-                        handleInputChange("line2", e.target.value, "billingAddress")
-                      }
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="billing-city">City</Label>
-                      <Input
-                        id="billing-city"
-                        placeholder="City"
-                        value={customer.billingAddress.city}
-                        onChange={(e) => 
-                          handleInputChange("city", e.target.value, "billingAddress")
-                        }
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="billing-pincode">PIN Code</Label>
-                      <Input
-                        id="billing-pincode"
-                        placeholder="PIN Code"
-                        value={customer.billingAddress.pincode}
-                        onChange={(e) => 
-                          handleInputChange("pincode", e.target.value, "billingAddress")
-                        }
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-state">State</Label>
-                    <Select
-                      value={customer.billingAddress.state}
-                      onValueChange={(value) => 
-                        handleInputChange("state", value, "billingAddress")
-                      }
-                    >
-                      <SelectTrigger id="billing-state">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {indianStates.map((state) => (
-                          <SelectItem key={state} value={state}>
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Billing Address</CardTitle>
+            <CardDescription>
+              Enter the customer's billing address
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="billing_address_line1">Address Line 1</Label>
+              <Input
+                id="billing_address_line1"
+                value={customer.billing_address_line1}
+                onChange={(e) => setCustomer(prev => ({ ...prev, billing_address_line1: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="billing_address_line2">Address Line 2</Label>
+              <Input
+                id="billing_address_line2"
+                value={customer.billing_address_line2}
+                onChange={(e) => setCustomer(prev => ({ ...prev, billing_address_line2: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="billing_city">City</Label>
+                <Input
+                  id="billing_city"
+                  value={customer.billing_city}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, billing_city: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="billing_state">State</Label>
+                <Input
+                  id="billing_state"
+                  value={customer.billing_state}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, billing_state: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="billing_pincode">Pincode</Label>
+                <Input
+                  id="billing_pincode"
+                  value={customer.billing_pincode}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, billing_pincode: e.target.value }))}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Shipping Address</CardTitle>
+            <CardDescription>
+              Enter the customer's shipping address
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="sameAsShipping"
+                checked={sameAsShipping}
+                onCheckedChange={handleSameAsShipping}
+              />
+              <Label htmlFor="sameAsShipping">Same as billing address</Label>
+            </div>
+            
+            <div>
+              <Label htmlFor="shipping_address_line1">Address Line 1</Label>
+              <Input
+                id="shipping_address_line1"
+                value={customer.shipping_address_line1}
+                onChange={(e) => setCustomer(prev => ({ ...prev, shipping_address_line1: e.target.value }))}
+                disabled={sameAsShipping}
+              />
+            </div>
+            <div>
+              <Label htmlFor="shipping_address_line2">Address Line 2</Label>
+              <Input
+                id="shipping_address_line2"
+                value={customer.shipping_address_line2}
+                onChange={(e) => setCustomer(prev => ({ ...prev, shipping_address_line2: e.target.value }))}
+                disabled={sameAsShipping}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="shipping_city">City</Label>
+                <Input
+                  id="shipping_city"
+                  value={customer.shipping_city}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, shipping_city: e.target.value }))}
+                  disabled={sameAsShipping}
+                />
+              </div>
+              <div>
+                <Label htmlFor="shipping_state">State</Label>
+                <Input
+                  id="shipping_state"
+                  value={customer.shipping_state}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, shipping_state: e.target.value }))}
+                  disabled={sameAsShipping}
+                />
+              </div>
+              <div>
+                <Label htmlFor="shipping_pincode">Pincode</Label>
+                <Input
+                  id="shipping_pincode"
+                  value={customer.shipping_pincode}
+                  onChange={(e) => setCustomer(prev => ({ ...prev, shipping_pincode: e.target.value }))}
+                  disabled={sameAsShipping}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => navigate("/app/customers")}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {id ? "Update" : "Create"} Customer
+          </Button>
         </div>
-      </div>
-      
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={() => navigate("/app/customers")} disabled={loading}>
-          Cancel
-        </Button>
-        <Button onClick={handleSave} disabled={loading}>
-          {loading ? "Saving..." : "Save Customer"}
-        </Button>
-      </div>
+      </form>
     </div>
+  );
+};
+
+const CustomerEditor = () => {
+  return (
+    <SubscriptionProvider>
+      <CustomerEditorContent />
+    </SubscriptionProvider>
   );
 };
 

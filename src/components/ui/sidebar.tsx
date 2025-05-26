@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Sheet,
@@ -70,6 +71,15 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
                 <Settings className="h-5 w-5" />
                 <span>Company Profile</span>
               </NavLink>
+              <NavLink
+                to="/app/subscription"
+                className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${
+                  isActive("/app/subscription") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
+                }`}
+              >
+                <CreditCard className="h-5 w-5" />
+                <span>Subscription</span>
+              </NavLink>
             </div>
           </div>
         </SheetContent>
@@ -132,6 +142,15 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
             >
               <Settings className="h-5 w-5" />
               {!collapsed && <span>Company Profile</span>}
+            </NavLink>
+            <NavLink
+              to="/app/subscription"
+              className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-2'} py-2 px-4 rounded-md hover:bg-[#14325e] ${
+                isActive("/app/subscription") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
+              }`}
+            >
+              <CreditCard className="h-5 w-5" />
+              {!collapsed && <span>Subscription</span>}
             </NavLink>
           </div>
         </div>
