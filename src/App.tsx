@@ -1,3 +1,5 @@
+
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,10 +27,10 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 import Reports from '@/pages/Reports';
+import SubscriptionManagement from './pages/SubscriptionManagement';
 import Pricing from './pages/Pricing';
 import Features from './pages/Features';
 import { AuthProvider } from "./contexts/AuthContext";
-import React from "react";
 
 // Create a query client with enhanced error handling - updated for React Query v5
 const queryClient = new QueryClient({
@@ -144,6 +146,7 @@ function App() {
                     </Route>
 
                     <Route path="reports" element={<Reports />} />
+                    <Route path="subscription" element={<SubscriptionManagement />} />
                     
                     <Route path="settings">
                       <Route path="company" element={<CompanyProfile />} />
