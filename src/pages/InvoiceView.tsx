@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -96,7 +95,7 @@ const InvoiceView = () => {
   }, [location.search, loading, navigate, location.pathname]);
 
   const handleCreateCreditNote = () => {
-    navigate(`/app/credit-notes/create?invoiceId=${id}`);
+    navigate(`/app/credit-notes/new?invoiceId=${id}`);
   };
 
   const getStatusVariant = (status: string) => {
