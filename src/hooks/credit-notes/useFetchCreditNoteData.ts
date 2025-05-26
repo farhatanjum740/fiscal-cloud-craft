@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -7,7 +8,8 @@ import { v4 as uuidv4 } from "uuid";
 export const useFetchCreditNoteData = (
   userId: string | undefined,
   id?: string,
-  isEditing = false
+  isEditing = false,
+  initialInvoiceId?: string | null
 ) => {
   const [loadingData, setLoadingData] = useState(true);
   const [company, setCompany] = useState<any>(null);
@@ -15,7 +17,7 @@ export const useFetchCreditNoteData = (
   const [invoiceItems, setInvoiceItems] = useState<any[]>([]);
   const [invoiceOptions, setInvoiceOptions] = useState<{ value: string; label: string }[]>([]);
   const [creditNote, setCreditNote] = useState<CreditNoteData>({
-    invoiceId: "",
+    invoiceId: initialInvoiceId || "",
     creditNoteNumber: "",
     creditNoteDate: new Date(),
     financialYear: "",
@@ -204,23 +206,6 @@ export const useFetchCreditNoteData = (
                 total_amount: creditNoteData.total_amount || 0,
               });
               
-              // For debugging - log the original credit note and the transformed version
-              console.log("Original credit note data:", creditNoteData);
-              console.log("Transformed credit note data:", {
-                invoiceId: creditNoteData.invoice_id || "",
-                creditNoteNumber: creditNoteData.credit_note_number || "",
-                creditNoteDate: new Date(creditNoteData.credit_note_date),
-                financialYear: creditNoteData.financial_year || "",
-                reason: creditNoteData.reason || "",
-                items: transformedItems,
-                status: creditNoteData.status || "draft",
-                subtotal: creditNoteData.subtotal || 0,
-                cgst: creditNoteData.cgst || 0,
-                sgst: creditNoteData.sgst || 0,
-                igst: creditNoteData.igst || 0,
-                total_amount: creditNoteData.total_amount || 0,
-              });
-              
               // Load invoice items if we have an invoice ID
               if (creditNoteData.invoice_id) {
                 await fetchInvoiceItems(creditNoteData.invoice_id);
@@ -242,28 +227,26 @@ export const useFetchCreditNoteData = (
             });
           }
         } 
-        // If creating a new credit note based on an invoice
-        else if (id) {
-          console.log("Creating new credit note based on invoice ID:", id);
-          // Update creditNote state with the invoiceId
-          setCreditNote(prev => ({ ...prev, invoiceId: id }));
+        // If creating a new credit note with an initial invoice ID
+        else if (initialInvoiceId) {
+          console.log("Creating new credit note with initial invoice ID:", initialInvoiceId);
           
           // Fetch invoice data
           const { data: invoiceData, error: invoiceError } = await supabase
             .from('invoices')
             .select('*')
-            .eq('id', id)
+            .eq('id', initialInvoiceId)
             .eq('user_id', userId)
             .maybeSingle();
             
           if (invoiceError) throw invoiceError;
           
-          console.log("Invoice data fetched:", invoiceData);
+          console.log("Initial invoice data fetched:", invoiceData);
           
           if (invoiceData) {
             setInvoice(invoiceData);
             
-            // Set financial year from invoice
+            // Set credit note state with the invoice data
             setCreditNote(prev => ({ 
               ...prev, 
               invoiceId: invoiceData.id || "",
@@ -273,7 +256,7 @@ export const useFetchCreditNoteData = (
             // Load invoice items
             await fetchInvoiceItems(invoiceData.id);
           } else {
-            console.log("Invoice not found");
+            console.log("Initial invoice not found");
             toast({
               title: "Invoice Not Found",
               description: "The requested invoice could not be found.",
@@ -294,7 +277,7 @@ export const useFetchCreditNoteData = (
     };
     
     fetchData();
-  }, [userId, id, isEditing]);
+  }, [userId, id, isEditing, initialInvoiceId]);
   
   // Fetch invoice items
   const fetchInvoiceItems = async (invoiceId: string) => {

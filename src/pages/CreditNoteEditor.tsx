@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -60,7 +59,6 @@ const CreditNoteEditor = () => {
   const invoiceIdFromQuery = queryParams.get('invoiceId');
   
   const isEditing = !!id;
-  const queryId = invoiceIdFromQuery || undefined;
   
   // Add component mounted state to debug lifecycle issues
   const [mounted, setMounted] = useState(false);
@@ -72,7 +70,7 @@ const CreditNoteEditor = () => {
     };
   }, []);
   
-  console.log("CreditNoteEditor render - isEditing:", isEditing, "queryId:", queryId);
+  console.log("CreditNoteEditor render - isEditing:", isEditing, "invoiceIdFromQuery:", invoiceIdFromQuery);
   
   const {
     creditNote,
@@ -98,7 +96,7 @@ const CreditNoteEditor = () => {
     updateItem,
     generateCreditNoteNumber,
     saveCreditNote
-  } = useCreditNote(isEditing ? id : undefined);
+  } = useCreditNote(isEditing ? id : undefined, invoiceIdFromQuery);
   
   // Log available invoice options for debugging
   console.log("CreditNoteEditor - Invoice options received:", invoiceOptions);
@@ -211,7 +209,7 @@ const CreditNoteEditor = () => {
             setShowQuantityError={setShowQuantityError}
             errorMessage={errorMessage}
             isInvoiceLoading={isInvoiceLoading}
-            handleSave={handleSave} // Pass handleSave to CreditNoteContent
+            handleSave={handleSave}
           />
         )}
       </div>

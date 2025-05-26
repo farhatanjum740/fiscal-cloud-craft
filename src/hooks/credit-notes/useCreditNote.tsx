@@ -8,7 +8,7 @@ import { UseCreditNoteReturn } from "./types";
 import { useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
-export const useCreditNote = (id?: string): UseCreditNoteReturn => {
+export const useCreditNote = (id?: string, initialInvoiceId?: string | null): UseCreditNoteReturn => {
   const { user } = useAuth();
   const isEditing = !!id;
   const [isInitialized, setIsInitialized] = useState(false);
@@ -24,7 +24,7 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
     setCreditNote,
     fetchInvoiceItems,
     setInvoice
-  } = useFetchCreditNoteData(user?.id, id, isEditing);
+  } = useFetchCreditNoteData(user?.id, id, isEditing, initialInvoiceId);
 
   // Ensure invoiceOptions is always an array, even if the data is malformed
   const safeInvoiceOptions = Array.isArray(invoiceOptions) 
@@ -118,14 +118,6 @@ export const useCreditNote = (id?: string): UseCreditNoteReturn => {
       console.log("Credit note editor initialized with financial year:", creditNote.financialYear);
     }
   }, [isEditing, company, creditNote.financialYear, loadingData, isInitialized]);
-
-  // If there's an initial invoiceId from a query parameter, load it
-  useEffect(() => {
-    if (creditNote.invoiceId && !isEditing && !invoice) {
-      console.log("Initial invoice ID detected, loading:", creditNote.invoiceId);
-      handleInvoiceChange(creditNote.invoiceId);
-    }
-  }, [creditNote.invoiceId, isEditing, invoice]);
 
   return {
     creditNote,
