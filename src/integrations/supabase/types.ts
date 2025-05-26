@@ -638,47 +638,198 @@ export type Database = {
       subscriptions: {
         Row: {
           active: boolean
+          billing_cycle: string | null
           created_at: string | null
+          discount_percent: number | null
           end_date: string | null
           id: string
           last_payment_date: string | null
+          next_billing_date: string | null
           payment_id: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_customer_id: string | null
+          razorpay_subscription_id: string | null
           start_date: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
           active?: boolean
+          billing_cycle?: string | null
           created_at?: string | null
+          discount_percent?: number | null
           end_date?: string | null
           id?: string
           last_payment_date?: string | null
+          next_billing_date?: string | null
           payment_id?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_customer_id?: string | null
+          razorpay_subscription_id?: string | null
           start_date?: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
           active?: boolean
+          billing_cycle?: string | null
           created_at?: string | null
+          discount_percent?: number | null
           end_date?: string | null
           id?: string
           last_payment_date?: string | null
+          next_billing_date?: string | null
           payment_id?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          razorpay_customer_id?: string | null
+          razorpay_subscription_id?: string | null
           start_date?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: []
       }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          company_id: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          company_id: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          invited_by: string
+          role: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          company_id?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          accepted_at: string | null
+          company_id: string
+          created_at: string | null
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          company_id: string
+          created_at?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          role: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_usage: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          credit_notes_count: number | null
+          customers_count: number | null
+          id: string
+          invoices_count: number | null
+          month_year: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          credit_notes_count?: number | null
+          customers_count?: number | null
+          id?: string
+          invoices_count?: number | null
+          month_year: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          credit_notes_count?: number | null
+          customers_count?: number | null
+          id?: string
+          invoices_count?: number | null
+          month_year?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_perform_action: {
+        Args: { p_user_id: string; p_company_id: string; p_action_type: string }
+        Returns: boolean
+      }
       get_current_financial_year: {
         Args: { input_date?: string }
         Returns: string
@@ -699,9 +850,17 @@ export type Database = {
         }
         Returns: string
       }
+      get_subscription_limits: {
+        Args: { plan_type: Database["public"]["Enums"]["subscription_plan"] }
+        Returns: Json
+      }
+      increment_usage: {
+        Args: { p_user_id: string; p_company_id: string; p_action_type: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      subscription_plan: "freemium" | "premium"
+      subscription_plan: "freemium" | "premium" | "starter" | "professional"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -817,7 +976,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      subscription_plan: ["freemium", "premium"],
+      subscription_plan: ["freemium", "premium", "starter", "professional"],
     },
   },
 } as const

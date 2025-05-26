@@ -17,6 +17,10 @@ export type Invoice = Tables<'invoices'>;
 export type InvoiceItem = Tables<'invoice_items'>;
 export type CreditNote = Tables<'credit_notes'>;
 export type CreditNoteItem = Tables<'credit_note_items'>;
+export type Subscription = Tables<'subscriptions'>;
+export type UserUsage = Tables<'user_usage'>;
+export type UserRole = Tables<'user_roles'>;
+export type TeamInvitation = Tables<'team_invitations'>;
 
 // Insert types
 export type InsertProfile = InsertTables<'profiles'>;
@@ -28,6 +32,10 @@ export type InsertInvoice = InsertTables<'invoices'>;
 export type InsertInvoiceItem = InsertTables<'invoice_items'>;
 export type InsertCreditNote = InsertTables<'credit_notes'>;
 export type InsertCreditNoteItem = InsertTables<'credit_note_items'>;
+export type InsertSubscription = InsertTables<'subscriptions'>;
+export type InsertUserUsage = InsertTables<'user_usage'>;
+export type InsertUserRole = InsertTables<'user_roles'>;
+export type InsertTeamInvitation = InsertTables<'team_invitations'>;
 
 // Update types
 export type UpdateProfile = UpdateTables<'profiles'>;
@@ -39,6 +47,10 @@ export type UpdateInvoice = UpdateTables<'invoices'>;
 export type UpdateInvoiceItem = UpdateTables<'invoice_items'>;
 export type UpdateCreditNote = UpdateTables<'credit_notes'>;
 export type UpdateCreditNoteItem = UpdateTables<'credit_note_items'>;
+export type UpdateSubscription = UpdateTables<'subscriptions'>;
+export type UpdateUserUsage = UpdateTables<'user_usage'>;
+export type UpdateUserRole = UpdateTables<'user_roles'>;
+export type UpdateTeamInvitation = UpdateTables<'team_invitations'>;
 
 // Specific type helpers for frontend
 export interface FrontendInvoiceItem {

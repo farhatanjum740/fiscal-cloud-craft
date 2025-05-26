@@ -133,6 +133,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw error;
       }
 
+      // Create default user role as owner for their first company
+      if (data.user) {
+        // This will be handled by a trigger on company creation
+        console.log('User signed up successfully');
+      }
+
       toast({
         title: "Success",
         description: "Your account has been created! Please check your email for verification.",
