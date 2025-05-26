@@ -7,6 +7,7 @@ Allow: /
 Disallow: /app/
 Disallow: /signin
 Disallow: /signup
+Disallow: /forgot-password
 
 # Allow specific bots
 User-agent: Googlebot
@@ -27,5 +28,12 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-# Sitemap location
+# Sitemap locations
+Sitemap: https://invoiceninja.com/sitemap-index.xml
 Sitemap: https://invoiceninja.com/sitemap.xml
+Sitemap: https://invoiceninja.com/sitemap-pages.xml
+Sitemap: https://invoiceninja.com/sitemap-blog.xml
+Sitemap: https://invoiceninja.com/sitemap-images.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

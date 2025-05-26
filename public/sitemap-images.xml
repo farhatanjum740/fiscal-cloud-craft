@@ -2,66 +2,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  <!-- Main Pages -->
-  <url>
-    <loc>https://invoiceninja.com/</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://invoiceninja.com/features</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://invoiceninja.com/pricing</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://invoiceninja.com/gst-invoicing</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <!-- Authentication Pages -->
-  <url>
-    <loc>https://invoiceninja.com/signin</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://invoiceninja.com/signup</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://invoiceninja.com/forgot-password</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  
-  <!-- Blog Section -->
-  <url>
-    <loc>https://invoiceninja.com/blog</loc>
-    <lastmod>2025-05-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <!-- Blog Posts with Images -->
   <url>
     <loc>https://invoiceninja.com/blog/gst-for-small-businesses</loc>
-    <lastmod>2025-05-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/gst-small-business.jpg</image:loc>
       <image:title>GST for Small Businesses Guide</image:title>
@@ -70,9 +12,6 @@
   </url>
   <url>
     <loc>https://invoiceninja.com/blog/gst-invoice-requirements</loc>
-    <lastmod>2025-05-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/gst-invoice-requirements.jpg</image:loc>
       <image:title>GST Invoice Requirements</image:title>
@@ -81,9 +20,6 @@
   </url>
   <url>
     <loc>https://invoiceninja.com/blog/hsn-codes-explained</loc>
-    <lastmod>2025-05-05</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/hsn-codes.jpg</image:loc>
       <image:title>HSN Codes Explained</image:title>
@@ -92,9 +28,6 @@
   </url>
   <url>
     <loc>https://invoiceninja.com/blog/e-invoicing-india</loc>
-    <lastmod>2025-04-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/e-invoicing.jpg</image:loc>
       <image:title>E-Invoicing in India</image:title>
@@ -103,9 +36,6 @@
   </url>
   <url>
     <loc>https://invoiceninja.com/blog/gst-filing-tips</loc>
-    <lastmod>2025-04-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/gst-filing.jpg</image:loc>
       <image:title>GST Filing Tips</image:title>
@@ -114,9 +44,6 @@
   </url>
   <url>
     <loc>https://invoiceninja.com/blog/invoice-management-small-business</loc>
-    <lastmod>2025-04-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/invoice-management.jpg</image:loc>
       <image:title>Invoice Management for Small Business</image:title>
@@ -125,9 +52,6 @@
   </url>
   <url>
     <loc>https://invoiceninja.com/blog/gst-reconciliation-guide</loc>
-    <lastmod>2025-04-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/gst-reconciliation.jpg</image:loc>
       <image:title>GST Reconciliation Guide</image:title>
@@ -136,13 +60,26 @@
   </url>
   <url>
     <loc>https://invoiceninja.com/blog/input-tax-credit-optimization</loc>
-    <lastmod>2025-04-05</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
     <image:image>
       <image:loc>https://invoiceninja.com/blog/input-tax-credit.jpg</image:loc>
       <image:title>Input Tax Credit Optimization</image:title>
       <image:caption>Maximizing input tax credit benefits for businesses</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://invoiceninja.com/</loc>
+    <image:image>
+      <image:loc>https://invoiceninja.com/og-image.jpg</image:loc>
+      <image:title>InvoiceNinja - Free GST Invoice Software</image:title>
+      <image:caption>Professional GST-compliant invoicing software for Indian businesses</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://invoiceninja.com/</loc>
+    <image:image>
+      <image:loc>https://invoiceninja.com/logo.png</image:loc>
+      <image:title>InvoiceNinja Logo</image:title>
+      <image:caption>InvoiceNinja brand logo</image:caption>
     </image:image>
   </url>
 </urlset>
