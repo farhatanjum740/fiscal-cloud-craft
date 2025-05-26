@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import SEOHead from "@/components/seo/SEOHead";
+import StructuredData from "@/components/seo/StructuredData";
 import { useEffect } from "react";
 
 const Index = () => {
@@ -10,23 +11,48 @@ const Index = () => {
     console.log("Home page viewed - analytics event would fire here");
   }, []);
 
+  const structuredDataOrg = {
+    "name": "InvoiceNinja",
+    "description": "Free GST-compliant invoicing software for Indian businesses",
+    "foundingDate": "2024",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "IN"
+    }
+  };
+
+  const structuredDataSoftware = {
+    "name": "InvoiceNinja",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "description": "Free GST-compliant invoicing software for Indian businesses",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "INR",
+      "description": "Free forever plan available"
+    },
+    "featureList": [
+      "GST-compliant invoicing",
+      "Customer management", 
+      "Tax calculations",
+      "PDF generation",
+      "Credit notes",
+      "Financial reports"
+    ]
+  };
+
   return (
     <>
-      <Helmet>
-        <title>Free GST-Compliant Invoice Software for Indian Businesses | InvoiceNinja</title>
-        <meta name="description" content="Create professional GST-compliant invoices for free. Manage customers, track finances, and generate tax reports with our simple invoicing software designed for Indian businesses." />
-        <meta name="keywords" content="GST invoice software, free invoicing app, GST billing software, Indian GST invoices, tax compliant invoicing, small business invoice software" />
-        <meta property="og:title" content="Free GST-Compliant Invoice Software | InvoiceNinja" />
-        <meta property="og:description" content="Create professional GST-compliant invoices free. Easy-to-use software for Indian businesses to manage customers and generate tax reports." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://invoiceninja.com/" />
-        <meta property="og:image" content="https://invoiceninja.com/og-image.jpg" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Free GST-Compliant Invoice Software" />
-        <meta name="twitter:description" content="Create professional GST-compliant invoices for Indian businesses." />
-        <meta name="twitter:image" content="https://invoiceninja.com/twitter-image.jpg" />
-        <link rel="canonical" href="https://invoiceninja.com/" />
-      </Helmet>
+      <SEOHead
+        title="Free GST-Compliant Invoice Software for Indian Businesses | InvoiceNinja"
+        description="Create professional GST-compliant invoices for free. Manage customers, track finances, and generate tax reports with our simple invoicing software designed for Indian businesses."
+        keywords="GST invoice software, free invoicing app, GST billing software, Indian GST invoices, tax compliant invoicing, small business invoice software"
+        canonicalUrl="https://invoiceninja.com/"
+      />
+      
+      <StructuredData type="organization" data={structuredDataOrg} />
+      <StructuredData type="software" data={structuredDataSoftware} />
 
       {/* Hero Section - Further reduced top padding to match design */}
       <section className="bg-[#121f3d] text-white py-4 md:py-6">
@@ -34,6 +60,8 @@ const Index = () => {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold">InvoiceNinja</h2>
             <div className="flex items-center gap-4">
+              <Link to="/features" className="text-white hover:text-gray-300">Features</Link>
+              <Link to="/pricing" className="text-white hover:text-gray-300">Pricing</Link>
               <Link to="/signin">
                 <Button variant="ghost" className="text-white hover:text-white hover:bg-[#1a3b7a]">
                   Sign In
@@ -185,8 +213,8 @@ const Index = () => {
               <div>
                 <h3 className="font-semibold mb-2">Product</h3>
                 <ul className="space-y-2">
-                  <li><Link to="/" className="text-gray-400 hover:text-white">Features</Link></li>
-                  <li><Link to="/" className="text-gray-400 hover:text-white">Pricing</Link></li>
+                  <li><Link to="/features" className="text-gray-400 hover:text-white">Features</Link></li>
+                  <li><Link to="/pricing" className="text-gray-400 hover:text-white">Pricing</Link></li>
                   <li><Link to="/" className="text-gray-400 hover:text-white">Testimonials</Link></li>
                 </ul>
               </div>
