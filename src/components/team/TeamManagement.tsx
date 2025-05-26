@@ -119,7 +119,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
                 <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div>
-                      <p className="font-medium">{member.profiles?.full_name || 'Unknown User'}</p>
+                      <p className="font-medium">{member.full_name || 'Unknown User'}</p>
                       <Badge variant={getRoleBadgeVariant(member.role)}>
                         {member.role}
                       </Badge>

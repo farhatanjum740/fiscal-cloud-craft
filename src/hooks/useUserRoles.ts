@@ -5,10 +5,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, TeamInvitation } from '@/types/subscription';
 import { toast } from '@/components/ui/use-toast';
 
+interface UserRoleWithProfile extends Omit<UserRole, 'role'> {
+  role: 'owner' | 'admin' | 'staff' | 'viewer';
+  full_name?: string;
+}
+
 export const useUserRoles = (companyId?: string) => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [teamMembers, setTeamMembers] = useState<UserRole[]>([]);
+  const [teamMembers, setTeamMembers] = useState<UserRoleWithProfile[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +35,7 @@ export const useUserRoles = (companyId?: string) => {
         .eq('company_id', companyId)
         .maybeSingle();
 
-      setUserRole(userRoleData);
+      setUserRole(userRoleData as UserRole);
 
       // Get all team members if user is owner/admin
       if (userRoleData && ['owner', 'admin'].includes(userRoleData.role)) {
@@ -38,11 +43,18 @@ export const useUserRoles = (companyId?: string) => {
           .from('user_roles')
           .select(`
             *,
-            profiles!user_roles_user_id_fkey(full_name)
+            profiles(full_name)
           `)
           .eq('company_id', companyId);
 
-        setTeamMembers(teamData || []);
+        // Type cast and map the data
+        const typedTeamData = (teamData || []).map(member => ({
+          ...member,
+          role: member.role as 'owner' | 'admin' | 'staff' | 'viewer',
+          full_name: member.profiles?.[0]?.full_name || 'Unknown User'
+        }));
+
+        setTeamMembers(typedTeamData);
 
         // Get pending invitations
         const { data: invitationData } = await supabase
@@ -51,7 +63,13 @@ export const useUserRoles = (companyId?: string) => {
           .eq('company_id', companyId)
           .is('accepted_at', null);
 
-        setInvitations(invitationData || []);
+        // Type cast the invitations
+        const typedInvitations = (invitationData || []).map(invitation => ({
+          ...invitation,
+          role: invitation.role as 'admin' | 'staff' | 'viewer'
+        }));
+
+        setInvitations(typedInvitations);
       }
     } catch (error) {
       console.error('Error fetching user roles:', error);

@@ -39,7 +39,8 @@ export const useSubscription = () => {
       const { data: limitsData } = await supabase
         .rpc('get_subscription_limits', { plan_type: plan });
 
-      setLimits(limitsData);
+      // Type cast the JSON response to SubscriptionLimits
+      setLimits(limitsData as SubscriptionLimits);
 
       // Get current month usage
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
@@ -55,7 +56,7 @@ export const useSubscription = () => {
         customers_count: 0,
         credit_notes_count: 0,
         month_year: currentMonth
-      });
+      } as UserUsage);
 
     } catch (error) {
       console.error('Error fetching subscription data:', error);

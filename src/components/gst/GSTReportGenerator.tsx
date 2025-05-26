@@ -56,12 +56,12 @@ const GSTReportGenerator = () => {
         'Invoice Date': new Date(invoice.invoice_date).toLocaleDateString('en-IN'),
         'Customer Name': invoice.customers?.name || '',
         'Customer GSTIN': invoice.customers?.gstin || '',
-        'Place of Supply': invoice.customers?.state || '',
+        'Place of Supply': invoice.customers?.billing_state || '',
         'Taxable Value': invoice.subtotal,
-        'CGST Amount': invoice.cgst_amount || 0,
-        'SGST Amount': invoice.sgst_amount || 0,
-        'IGST Amount': invoice.igst_amount || 0,
-        'Total Tax': (invoice.cgst_amount || 0) + (invoice.sgst_amount || 0) + (invoice.igst_amount || 0),
+        'CGST Amount': invoice.cgst || 0,
+        'SGST Amount': invoice.sgst || 0,
+        'IGST Amount': invoice.igst || 0,
+        'Total Tax': (invoice.cgst || 0) + (invoice.sgst || 0) + (invoice.igst || 0),
         'Total Amount': invoice.total_amount
       })) || [];
 
@@ -118,9 +118,9 @@ const GSTReportGenerator = () => {
 
       // Calculate GSTR-3B summary
       const totalTaxableValue = invoices?.reduce((sum, inv) => sum + (inv.subtotal || 0), 0) || 0;
-      const totalCGST = invoices?.reduce((sum, inv) => sum + (inv.cgst_amount || 0), 0) || 0;
-      const totalSGST = invoices?.reduce((sum, inv) => sum + (inv.sgst_amount || 0), 0) || 0;
-      const totalIGST = invoices?.reduce((sum, inv) => sum + (inv.igst_amount || 0), 0) || 0;
+      const totalCGST = invoices?.reduce((sum, inv) => sum + (inv.cgst || 0), 0) || 0;
+      const totalSGST = invoices?.reduce((sum, inv) => sum + (inv.sgst || 0), 0) || 0;
+      const totalIGST = invoices?.reduce((sum, inv) => sum + (inv.igst || 0), 0) || 0;
 
       const gstr3bData = [
         { 'Description': 'Outward Taxable Supplies', 'Taxable Value': totalTaxableValue, 'CGST': totalCGST, 'SGST': totalSGST, 'IGST': totalIGST },
@@ -207,7 +207,7 @@ const GSTReportGenerator = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Start Date</label>
               <DatePicker
-                date={startDate}
+                selected={startDate}
                 onSelect={setStartDate}
                 placeholder="Select start date"
               />
@@ -216,7 +216,7 @@ const GSTReportGenerator = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">End Date</label>
               <DatePicker
-                date={endDate}
+                selected={endDate}
                 onSelect={setEndDate}
                 placeholder="Select end date"
               />
