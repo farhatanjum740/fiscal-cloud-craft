@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,26 +34,41 @@ export const useUserRoles = (companyId?: string) => {
         .eq('company_id', companyId)
         .maybeSingle();
 
-      setUserRole(userRoleData as UserRole);
+      if (userRoleData) {
+        setUserRole({
+          ...userRoleData,
+          role: userRoleData.role as 'owner' | 'admin' | 'staff' | 'viewer'
+        });
+      }
 
       // Get all team members if user is owner/admin
       if (userRoleData && ['owner', 'admin'].includes(userRoleData.role)) {
+        // First get team members
         const { data: teamData } = await supabase
           .from('user_roles')
-          .select(`
-            *,
-            profiles(full_name)
-          `)
+          .select('*')
           .eq('company_id', companyId);
 
-        // Type cast and map the data
-        const typedTeamData = (teamData || []).map(member => ({
-          ...member,
-          role: member.role as 'owner' | 'admin' | 'staff' | 'viewer',
-          full_name: member.profiles?.[0]?.full_name || 'Unknown User'
-        }));
+        if (teamData) {
+          // Then get profiles for each user
+          const userIds = teamData.map(member => member.user_id);
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds);
 
-        setTeamMembers(typedTeamData);
+          // Combine the data
+          const teamMembersWithProfiles = teamData.map(member => {
+            const profile = profilesData?.find(p => p.id === member.user_id);
+            return {
+              ...member,
+              role: member.role as 'owner' | 'admin' | 'staff' | 'viewer',
+              full_name: profile?.full_name || 'Unknown User'
+            };
+          });
+
+          setTeamMembers(teamMembersWithProfiles);
+        }
 
         // Get pending invitations
         const { data: invitationData } = await supabase
@@ -63,13 +77,14 @@ export const useUserRoles = (companyId?: string) => {
           .eq('company_id', companyId)
           .is('accepted_at', null);
 
-        // Type cast the invitations
-        const typedInvitations = (invitationData || []).map(invitation => ({
-          ...invitation,
-          role: invitation.role as 'admin' | 'staff' | 'viewer'
-        }));
+        if (invitationData) {
+          const typedInvitations = invitationData.map(invitation => ({
+            ...invitation,
+            role: invitation.role as 'admin' | 'staff' | 'viewer'
+          }));
 
-        setInvitations(typedInvitations);
+          setInvitations(typedInvitations);
+        }
       }
     } catch (error) {
       console.error('Error fetching user roles:', error);

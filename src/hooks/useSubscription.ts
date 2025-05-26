@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,8 +38,10 @@ export const useSubscription = () => {
       const { data: limitsData } = await supabase
         .rpc('get_subscription_limits', { plan_type: plan });
 
-      // Type cast the JSON response to SubscriptionLimits
-      setLimits(limitsData as SubscriptionLimits);
+      // Safely cast the JSON response to SubscriptionLimits
+      if (limitsData && typeof limitsData === 'object' && !Array.isArray(limitsData)) {
+        setLimits(limitsData as unknown as SubscriptionLimits);
+      }
 
       // Get current month usage
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
