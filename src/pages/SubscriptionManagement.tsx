@@ -7,6 +7,7 @@ import { SubscriptionProvider } from '@/components/subscription/SubscriptionProv
 import UsageDashboard from '@/components/subscription/UsageDashboard';
 import TeamManagement from '@/components/team/TeamManagement';
 import GSTReportGenerator from '@/components/gst/GSTReportGenerator';
+import PricingSection from '@/components/subscription/PricingSection';
 import { useSubscriptionContext } from '@/components/subscription/SubscriptionProvider';
 
 const SubscriptionContent = () => {
@@ -21,6 +22,7 @@ const SubscriptionContent = () => {
       <Tabs defaultValue="usage" className="space-y-6">
         <TabsList>
           <TabsTrigger value="usage">Usage & Limits</TabsTrigger>
+          <TabsTrigger value="plans">Plans & Pricing</TabsTrigger>
           <TabsTrigger value="team">Team Management</TabsTrigger>
           {limits?.reports && (
             <TabsTrigger value="reports">GST Reports</TabsTrigger>
@@ -29,6 +31,10 @@ const SubscriptionContent = () => {
 
         <TabsContent value="usage">
           <UsageDashboard />
+        </TabsContent>
+
+        <TabsContent value="plans">
+          <PricingSection />
         </TabsContent>
 
         <TabsContent value="team">

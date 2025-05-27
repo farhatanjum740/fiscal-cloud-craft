@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,6 +29,9 @@ import Reports from '@/pages/Reports';
 import SubscriptionManagement from './pages/SubscriptionManagement';
 import Pricing from './pages/Pricing';
 import Features from './pages/Features';
+import About from './pages/About';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Create a query client with enhanced error handling - updated for React Query v5
@@ -112,6 +114,9 @@ function App() {
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/features" element={<Features />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
                   <Route path="/gst-invoicing" element={<GstInvoicing />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPost />} />
