@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { mapInvoiceItemToFrontend } from "@/types/supabase-types";
 import type { InvoiceItem } from "@/types";
 
@@ -12,11 +12,11 @@ export const useFetchInvoiceData = (
   setLoadingData: (value: boolean) => void,
   setCustomers: (value: any[]) => void,
   setProducts: (value: any[]) => void,
-  setCompany: (value: any) => void,
+  company: any, // Accept company as parameter instead of setCompany
   setCompanySettings: (value: any) => void,
   setInvoice: (setter: (prev: any) => any) => void
 ) => {
-  // Fetch customers, products, company data, and company settings
+  // Fetch customers, products, and company settings
   useEffect(() => {
     const fetchData = async () => {
       console.log("fetchData started, user:", user?.id);
@@ -55,31 +55,13 @@ export const useFetchInvoiceData = (
         console.log("Products data fetched:", productsData);
         setProducts(productsData || []);
         
-        console.log("Fetching company info...");
-        // Fetch company info (taking the first one for simplicity)
-        const { data: companyData, error: companyError } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('user_id', user.id)
-          .limit(1)
-          .single();
-          
-        if (companyError && companyError.code !== 'PGRST116') {
-          // PGRST116 is "no rows returned" which we can handle
-          console.error("Error fetching company:", companyError);
-          throw companyError;
-        }
-        
-        console.log("Company data fetched:", companyData);
-        if (companyData) {
-          setCompany(companyData);
-          
-          console.log("Fetching company settings for company ID:", companyData.id);
+        if (company) {
+          console.log("Fetching company settings for company ID:", company.id);
           // Fetch company settings
           const { data: settingsData, error: settingsError } = await supabase
             .from('company_settings')
             .select('*')
-            .eq('company_id', companyData.id)
+            .eq('company_id', company.id)
             .maybeSingle();
             
           if (settingsError) {
@@ -98,7 +80,7 @@ export const useFetchInvoiceData = (
             console.log("No company settings found");
           }
         } else {
-          console.log("No company data found");
+          console.log("No company data available");
         }
         
         // If editing, fetch invoice data
@@ -119,7 +101,7 @@ export const useFetchInvoiceData = (
     };
     
     fetchData();
-  }, [user, id, isEditing, setLoadingData, setCustomers, setProducts, setCompany, setCompanySettings, setInvoice]);
+  }, [user, id, isEditing, company, setLoadingData, setCustomers, setProducts, setCompanySettings, setInvoice]);
   
   const fetchInvoiceData = async (
     invoiceId: string,

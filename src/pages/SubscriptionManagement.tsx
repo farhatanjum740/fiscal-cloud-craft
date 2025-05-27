@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCompany } from '@/hooks/useCompany';
+import { useCompanyWithFallback } from '@/hooks/useCompanyWithFallback';
 import { SubscriptionProvider } from '@/components/subscription/SubscriptionProvider';
 import UsageDashboard from '@/components/subscription/UsageDashboard';
 import TeamManagement from '@/components/team/TeamManagement';
@@ -12,7 +12,7 @@ import { useSubscriptionContext } from '@/components/subscription/SubscriptionPr
 
 const SubscriptionContent = () => {
   const { user } = useAuth();
-  const { company } = useCompany(user?.id);
+  const { company } = useCompanyWithFallback(user?.id);
   const { limits } = useSubscriptionContext();
 
   return (

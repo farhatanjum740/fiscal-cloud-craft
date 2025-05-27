@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,15 +10,16 @@ import InvoiceViewComponent from "@/components/invoices/InvoiceView";
 import InvoiceCancelDialog from "@/components/invoices/InvoiceCancelDialog";
 import CancelledIndicator from "@/components/ui/CancelledIndicator";
 import { Badge } from "@/components/ui/badge";
+import { useCompanyWithFallback } from "@/hooks/useCompanyWithFallback";
 
 const InvoiceView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { company } = useCompanyWithFallback(user?.id);
   const [invoice, setInvoice] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
-  const [company, setCompany] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,16 +49,6 @@ const InvoiceView = () => {
 
         if (customerError) throw customerError;
         setCustomer(customerData);
-
-        // Fetch company
-        const { data: companyData, error: companyError } = await supabase
-          .from("companies")
-          .select("*")
-          .eq("id", invoiceData.company_id)
-          .single();
-
-        if (companyError) throw companyError;
-        setCompany(companyData);
 
         // Fetch invoice items
         const { data: itemsData, error: itemsError } = await supabase

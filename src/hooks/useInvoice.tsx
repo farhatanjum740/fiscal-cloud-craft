@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useInvoiceState } from "./invoice/useInvoiceState";
 import { useFinancialYear } from "./invoice/useFinancialYear";
@@ -7,12 +8,16 @@ import { useInvoiceNumber } from "./invoice/useInvoiceNumber";
 import { useFetchInvoiceData } from "./invoice/useFetchInvoiceData";
 import { useSaveInvoice } from "./invoice/useSaveInvoice";
 import { useEffect, useState } from "react";
+import { useCompanyWithFallback } from "./useCompanyWithFallback";
 
 export const useInvoice = (id?: string) => {
   console.log("useInvoice hook initialized with id:", id);
   const { user } = useAuth();
   console.log("Current user:", user);
   const isEditing = !!id;
+  
+  // Use the new hook with fallback
+  const { company, loading: companyLoading } = useCompanyWithFallback(user?.id);
   
   // State management
   const {
@@ -24,8 +29,6 @@ export const useInvoice = (id?: string) => {
     setCustomers,
     products,
     setProducts,
-    company,
-    setCompany,
     companySettings,
     setCompanySettings,
     financialYears,
@@ -104,7 +107,7 @@ export const useInvoice = (id?: string) => {
     setLoadingData,
     setCustomers,
     setProducts,
-    setCompany,
+    company, // Pass the company from useCompanyWithFallback
     setCompanySettings,
     setInvoice
   );
@@ -153,7 +156,7 @@ export const useInvoice = (id?: string) => {
   return {
     invoice,
     setInvoice,
-    loading,
+    loading: loading || companyLoading,
     loadingData,
     customers,
     filteredCustomers,

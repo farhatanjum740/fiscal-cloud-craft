@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Product } from "@/types";
 
@@ -37,22 +37,40 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Fetch products
-  const { data: products, isLoading } = useQuery({
+  // Fetch products with proper error handling
+  const { data: products, isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       if (!user) return [];
       
+      console.log("Fetching products for user:", user.id);
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('user_id', user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching products:", error);
+        throw error;
+      }
+      
+      console.log("Products fetched:", data);
       return data || [];
     },
     enabled: !!user,
   });
+  
+  // Show error if products failed to load
+  useEffect(() => {
+    if (error) {
+      console.error("Products query error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load products. Please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  }, [error]);
   
   // Delete product mutation
   const deleteProductMutation = useMutation({
@@ -157,13 +175,19 @@ const Products = () => {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center h-32">
-                      Loading...
+                      Loading products...
+                    </TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center h-32 text-red-500">
+                      Failed to load products. Please refresh the page.
                     </TableCell>
                   </TableRow>
                 ) : filteredProducts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center h-32">
-                      No products found.
+                      {products?.length === 0 ? "No products found. Create your first product!" : "No products match your search."}
                     </TableCell>
                   </TableRow>
                 ) : (

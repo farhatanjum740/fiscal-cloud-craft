@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Starting Razorpay order creation...");
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -24,25 +26,37 @@ serve(async (req) => {
     const user = userData.user;
 
     if (!user) {
+      console.error("User not authenticated");
       throw new Error('User not authenticated');
     }
 
-    const { plan, billingCycle } = await req.json();
+    console.log("User authenticated:", user.id);
 
-    // Plan pricing in INR (paise)
+    const { plan, billingCycle } = await req.json();
+    console.log("Plan:", plan, "Billing cycle:", billingCycle);
+
+    // Plan pricing in INR (paise) - corrected pricing
     const pricing = {
       starter: { monthly: 49900, yearly: 499000 }, // ₹499/month, ₹4990/year
       professional: { monthly: 99900, yearly: 999000 } // ₹999/month, ₹9990/year
     };
 
+    if (!pricing[plan as keyof typeof pricing]) {
+      throw new Error('Invalid plan selected');
+    }
+
     const amount = pricing[plan as keyof typeof pricing][billingCycle as 'monthly' | 'yearly'];
+    console.log("Amount to charge:", amount, "paise");
 
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
     if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error("Razorpay credentials not configured");
       throw new Error('Razorpay credentials not configured');
     }
+
+    console.log("Creating Razorpay order with key:", razorpayKeyId);
 
     // Create Razorpay order
     const orderData = {
@@ -56,6 +70,8 @@ serve(async (req) => {
       },
     };
 
+    console.log("Order data:", orderData);
+
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
@@ -65,11 +81,16 @@ serve(async (req) => {
       body: JSON.stringify(orderData),
     });
 
+    console.log("Razorpay API response status:", response.status);
+
     if (!response.ok) {
-      throw new Error('Failed to create Razorpay order');
+      const errorText = await response.text();
+      console.error("Razorpay API error:", errorText);
+      throw new Error(`Failed to create Razorpay order: ${errorText}`);
     }
 
     const order = await response.json();
+    console.log("Razorpay order created successfully:", order.id);
 
     return new Response(JSON.stringify({ order }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
