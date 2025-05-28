@@ -35,7 +35,7 @@ serve(async (req) => {
     const { plan, billingCycle } = await req.json();
     console.log("Plan:", plan, "Billing cycle:", billingCycle);
 
-    // Plan pricing in INR (paise) - corrected pricing
+    // Corrected plan pricing in INR (paise)
     const pricing = {
       starter: { monthly: 49900, yearly: 499000 }, // ₹499/month, ₹4990/year
       professional: { monthly: 99900, yearly: 999000 } // ₹999/month, ₹9990/year
@@ -46,7 +46,7 @@ serve(async (req) => {
     }
 
     const amount = pricing[plan as keyof typeof pricing][billingCycle as 'monthly' | 'yearly'];
-    console.log("Amount to charge:", amount, "paise");
+    console.log("Amount to charge:", amount, "paise (₹" + (amount / 100) + ")");
 
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');

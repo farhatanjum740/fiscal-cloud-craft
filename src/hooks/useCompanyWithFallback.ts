@@ -43,12 +43,14 @@ export const useCompanyWithFallback = (userId?: string) => {
   useEffect(() => {
     const fetchOrCreateCompany = async () => {
       if (!userId) {
+        console.log("No userId provided to useCompanyWithFallback");
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
+        setError(null);
         console.log("Fetching company for user:", userId);
         
         // Try to fetch existing company
@@ -101,7 +103,13 @@ export const useCompanyWithFallback = (userId?: string) => {
         }
       } catch (err) {
         console.error("Error in fetchOrCreateCompany:", err);
-        setError(err instanceof Error ? err : new Error("Failed to fetch or create company"));
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch or create company";
+        setError(new Error(errorMessage));
+        toast({
+          title: "Company Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -110,32 +118,32 @@ export const useCompanyWithFallback = (userId?: string) => {
     fetchOrCreateCompany();
   }, [userId]);
 
-  return { company, loading, error, refetch: () => {
-    if (userId) {
+  const refetch = async () => {
+    if (!userId) return;
+    
+    try {
       setLoading(true);
       setError(null);
-      // Re-run the effect
-      const fetchOrCreateCompany = async () => {
-        try {
-          const { data: existingCompany, error: fetchError } = await supabase
-            .from("companies")
-            .select("*")
-            .eq("user_id", userId)
-            .maybeSingle();
-
-          if (fetchError && fetchError.code !== 'PGRST116') {
-            throw fetchError;
-          }
-
-          setCompany(existingCompany);
-        } catch (err) {
-          setError(err instanceof Error ? err : new Error("Failed to fetch company"));
-        } finally {
-          setLoading(false);
-        }
-      };
       
-      fetchOrCreateCompany();
+      const { data: existingCompany, error: fetchError } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      setCompany(existingCompany);
+    } catch (err) {
+      console.error("Error refetching company:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch company";
+      setError(new Error(errorMessage));
+    } finally {
+      setLoading(false);
     }
-  }};
+  };
+
+  return { company, loading, error, refetch };
 };

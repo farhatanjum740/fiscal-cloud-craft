@@ -16,8 +16,8 @@ export const useInvoice = (id?: string) => {
   console.log("Current user:", user);
   const isEditing = !!id;
   
-  // Use the new hook with fallback
-  const { company, loading: companyLoading } = useCompanyWithFallback(user?.id);
+  // Use the improved hook with fallback
+  const { company, loading: companyLoading, error: companyError } = useCompanyWithFallback(user?.id);
   
   // State management
   const {
@@ -99,7 +99,7 @@ export const useInvoice = (id?: string) => {
     setGeneratedInvoiceNumber
   );
   
-  // Data fetching
+  // Data fetching - wait for company to be available
   useFetchInvoiceData(
     user,
     id,
@@ -107,17 +107,18 @@ export const useInvoice = (id?: string) => {
     setLoadingData,
     setCustomers,
     setProducts,
-    company, // Pass the company from useCompanyWithFallback
+    company,
     setCompanySettings,
     setInvoice
   );
   
   // Automatically generate invoice number once company data is loaded and not editing
   useEffect(() => {
-    if (company && !isEditing && !invoice.invoiceNumber && !loadingData) {
+    if (company && !isEditing && !invoice.invoiceNumber && !loadingData && !companyLoading) {
+      console.log("Auto-generating invoice number...");
       generateInvoiceNumber();
     }
-  }, [company, isEditing, invoice.invoiceNumber, loadingData, generateInvoiceNumber]);
+  }, [company, isEditing, invoice.invoiceNumber, loadingData, companyLoading, generateInvoiceNumber]);
 
   // Set default terms and conditions and notes from company settings
   useEffect(() => {
@@ -134,8 +135,9 @@ export const useInvoice = (id?: string) => {
   useEffect(() => {
     console.log("STATE CHANGE - customers:", customers);
     console.log("STATE CHANGE - products:", products);
-    console.log("STATE CHANGE - financialYears:", financialYears);
-  }, [customers, products, financialYears]);
+    console.log("STATE CHANGE - company:", company);
+    console.log("STATE CHANGE - companyError:", companyError);
+  }, [customers, products, company, companyError]);
 
   // Initialize the saveInvoice function from the useSaveInvoice hook
   const { saveInvoice } = useSaveInvoice(
@@ -179,6 +181,7 @@ export const useInvoice = (id?: string) => {
     handleProductSelect,
     handleDateChange,
     generateInvoiceNumber,
-    saveInvoice
+    saveInvoice,
+    companyError
   };
 };

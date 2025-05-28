@@ -12,14 +12,14 @@ export const useFetchInvoiceData = (
   setLoadingData: (value: boolean) => void,
   setCustomers: (value: any[]) => void,
   setProducts: (value: any[]) => void,
-  company: any, // Accept company as parameter instead of setCompany
+  company: any,
   setCompanySettings: (value: any) => void,
   setInvoice: (setter: (prev: any) => any) => void
 ) => {
   // Fetch customers, products, and company settings
   useEffect(() => {
     const fetchData = async () => {
-      console.log("fetchData started, user:", user?.id);
+      console.log("fetchData started, user:", user?.id, "company:", company?.id);
       if (!user) {
         console.log("No user found, aborting fetch");
         return;
@@ -27,44 +27,47 @@ export const useFetchInvoiceData = (
       
       setLoadingData(true);
       try {
-        console.log("Fetching customers...");
-        // Fetch customers
-        const { data: customersData, error: customersError } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('user_id', user.id);
-          
-        if (customersError) {
-          console.error("Error fetching customers:", customersError);
-          throw customersError;
-        }
-        console.log("Customers data fetched:", customersData);
-        setCustomers(customersData || []);
+        console.log("Fetching customers and products...");
         
-        console.log("Fetching products...");
-        // Fetch products
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('user_id', user.id);
+        // Fetch customers and products in parallel
+        const [customersResult, productsResult] = await Promise.all([
+          supabase
+            .from('customers')
+            .select('*')
+            .eq('user_id', user.id),
+          supabase
+            .from('products')
+            .select('*')
+            .eq('user_id', user.id)
+        ]);
           
-        if (productsError) {
-          console.error("Error fetching products:", productsError);
-          throw productsError;
+        if (customersResult.error) {
+          console.error("Error fetching customers:", customersResult.error);
+          throw customersResult.error;
         }
-        console.log("Products data fetched:", productsData);
-        setProducts(productsData || []);
         
-        if (company) {
+        if (productsResult.error) {
+          console.error("Error fetching products:", productsResult.error);
+          throw productsResult.error;
+        }
+        
+        console.log("Customers data fetched:", customersResult.data);
+        console.log("Products data fetched:", productsResult.data);
+        
+        setCustomers(customersResult.data || []);
+        setProducts(productsResult.data || []);
+        
+        // Fetch company settings if company is available
+        if (company && company.id) {
           console.log("Fetching company settings for company ID:", company.id);
-          // Fetch company settings
+          
           const { data: settingsData, error: settingsError } = await supabase
             .from('company_settings')
             .select('*')
             .eq('company_id', company.id)
             .maybeSingle();
             
-          if (settingsError) {
+          if (settingsError && settingsError.code !== 'PGRST116') {
             console.error("Error fetching company settings:", settingsError);
             throw settingsError;
           }
@@ -77,10 +80,10 @@ export const useFetchInvoiceData = (
               financialYear: settingsData.current_financial_year,
             }));
           } else {
-            console.log("No company settings found");
+            console.log("No company settings found, will create default");
           }
         } else {
-          console.log("No company data available");
+          console.log("No company data available yet, skipping company settings fetch");
         }
         
         // If editing, fetch invoice data
@@ -100,8 +103,11 @@ export const useFetchInvoiceData = (
       }
     };
     
-    fetchData();
-  }, [user, id, isEditing, company, setLoadingData, setCustomers, setProducts, setCompanySettings, setInvoice]);
+    // Only run if we have user, and either we're not editing or we're editing and have an id
+    if (user && (!isEditing || (isEditing && id))) {
+      fetchData();
+    }
+  }, [user, id, isEditing, company?.id, setLoadingData, setCustomers, setProducts, setCompanySettings, setInvoice]);
   
   const fetchInvoiceData = async (
     invoiceId: string,
@@ -142,7 +148,7 @@ export const useFetchInvoiceData = (
       );
       console.log("Transformed invoice items:", transformedItems);
       
-      // Set invoice state - Fix for this issue: using a function to properly update state
+      // Set invoice state
       setInvoice((prev) => ({
         ...prev,
         customerId: invoiceData.customer_id,

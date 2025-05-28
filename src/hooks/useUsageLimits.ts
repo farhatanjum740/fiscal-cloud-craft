@@ -1,19 +1,19 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscriptionContext } from '@/components/subscription/SubscriptionProvider';
-import { useCompany } from '@/hooks/useCompany';
+import { useCompanyWithFallback } from '@/hooks/useCompanyWithFallback';
 import { toast } from '@/components/ui/use-toast';
 
 export const useUsageLimits = () => {
   const { user } = useAuth();
-  const { company } = useCompany(user?.id);
+  const { company } = useCompanyWithFallback(user?.id);
   const { checkLimitAndAct, canPerformAction } = useSubscriptionContext();
 
   const checkCustomerLimit = async (): Promise<boolean> => {
     if (!user || !company) {
       toast({
         title: "Error",
-        description: "User or company data not available",
+        description: "User or company data not available. Please ensure your profile is set up.",
         variant: "destructive"
       });
       return false;
@@ -26,7 +26,7 @@ export const useUsageLimits = () => {
     if (!user || !company) {
       toast({
         title: "Error", 
-        description: "User or company data not available",
+        description: "User or company data not available. Please ensure your profile is set up.",
         variant: "destructive"
       });
       return false;
@@ -39,7 +39,7 @@ export const useUsageLimits = () => {
     if (!user || !company) {
       toast({
         title: "Error",
-        description: "User or company data not available", 
+        description: "User or company data not available. Please ensure your profile is set up.", 
         variant: "destructive"
       });
       return false;
@@ -69,6 +69,8 @@ export const useUsageLimits = () => {
     checkCreditNoteLimit,
     canCreateCustomer,
     canCreateInvoice,
-    canCreateCreditNote
+    canCreateCreditNote,
+    company,
+    isCompanyLoaded: !!company
   };
 };
