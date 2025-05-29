@@ -7,9 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UserPlus, Trash2, Mail, Info } from 'lucide-react';
+import { UserPlus, Mail, Info } from 'lucide-react';
 import { useUserRoles } from '@/hooks/useUserRoles';
 
 interface TeamManagementProps {
@@ -17,7 +16,7 @@ interface TeamManagementProps {
 }
 
 const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
-  const { userRole, teamMembers, invitations, loading, inviteUser, removeUser, cancelInvitation, hasPermission } = useUserRoles(companyId);
+  const { userRole, teamMembers, invitations, loading, inviteUser, cancelInvitation, hasPermission } = useUserRoles(companyId);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'staff' | 'viewer'>('staff');
@@ -34,13 +33,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
   };
 
   const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'owner': return 'default';
-      case 'admin': return 'secondary';
-      case 'staff': return 'outline';
-      case 'viewer': return 'outline';
-      default: return 'outline';
-    }
+    return role === 'owner' ? 'default' : 'outline';
   };
 
   if (loading) {
@@ -134,26 +127,6 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
                       </Badge>
                     </div>
                   </div>
-                  {member.role !== 'owner' && hasPermission(['owner']) && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" disabled>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Feature Temporarily Disabled</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Team member removal is temporarily disabled while we simplify the access control system.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Close</AlertDialogCancel>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
                 </div>
               ))}
             </div>

@@ -53,7 +53,7 @@ export const useCompanyWithFallback = (userId?: string) => {
         setError(null);
         console.log("Fetching company for user:", userId);
         
-        // Try to fetch existing company
+        // Try to fetch existing company owned by the user
         const { data: existingCompany, error: fetchError } = await supabase
           .from("companies")
           .select("*")

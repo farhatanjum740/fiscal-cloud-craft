@@ -1,17 +1,24 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserRole, TeamInvitation } from '@/types/subscription';
+import { TeamInvitation } from '@/types/subscription';
 import { toast } from '@/components/ui/use-toast';
 
-interface UserRoleWithProfile extends Omit<UserRole, 'role'> {
-  role: 'owner' | 'admin' | 'staff' | 'viewer';
+interface SimpleUserRole {
+  id: string;
+  user_id: string;
+  company_id: string;
+  role: 'owner';
+}
+
+interface UserRoleWithProfile extends SimpleUserRole {
   full_name?: string;
 }
 
 export const useUserRoles = (companyId?: string) => {
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userRole, setUserRole] = useState<SimpleUserRole | null>(null);
   const [teamMembers, setTeamMembers] = useState<UserRoleWithProfile[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +33,7 @@ export const useUserRoles = (companyId?: string) => {
     if (!user || !companyId) return;
 
     try {
-      // Since we've simplified to ownership model, check if user owns the company
+      // Check if user owns the company
       const { data: companyData } = await supabase
         .from('companies')
         .select('user_id')
@@ -35,15 +42,16 @@ export const useUserRoles = (companyId?: string) => {
         .maybeSingle();
 
       if (companyData) {
-        // User owns this company, so they're the owner
-        setUserRole({
+        // User owns this company
+        const ownerRole: SimpleUserRole = {
           id: 'owner-role',
           user_id: user.id,
           company_id: companyId,
           role: 'owner'
-        });
+        };
+        
+        setUserRole(ownerRole);
 
-        // For now, only show the owner in team members since we've disabled user_roles table
         // Get user profile for display
         const { data: profileData } = await supabase
           .from('profiles')
@@ -52,10 +60,7 @@ export const useUserRoles = (companyId?: string) => {
           .maybeSingle();
 
         setTeamMembers([{
-          id: 'owner-role',
-          user_id: user.id,
-          company_id: companyId,
-          role: 'owner',
+          ...ownerRole,
           full_name: profileData?.full_name || 'Company Owner'
         }]);
       } else {
@@ -64,7 +69,7 @@ export const useUserRoles = (companyId?: string) => {
         setTeamMembers([]);
       }
 
-      // Get pending invitations (still works since they use invited_by)
+      // Get pending invitations
       const { data: invitationData } = await supabase
         .from('team_invitations')
         .select('*')
@@ -77,7 +82,6 @@ export const useUserRoles = (companyId?: string) => {
           ...invitation,
           role: invitation.role as 'admin' | 'staff' | 'viewer'
         }));
-
         setInvitations(typedInvitations);
       }
     } catch (error) {
@@ -93,7 +97,7 @@ export const useUserRoles = (companyId?: string) => {
     try {
       const token = crypto.randomUUID();
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+      expiresAt.setDate(expiresAt.getDate() + 7);
 
       const { error } = await supabase
         .from('team_invitations')
@@ -127,10 +131,9 @@ export const useUserRoles = (companyId?: string) => {
   };
 
   const removeUser = async (userId: string) => {
-    // Since we've simplified to ownership model, only show warning
     toast({
       title: "Team Management Simplified",
-      description: "Team management is currently simplified to company owners only. Full team features will be restored soon.",
+      description: "Team management is currently simplified to company owners only.",
     });
     return false;
   };
@@ -159,7 +162,6 @@ export const useUserRoles = (companyId?: string) => {
 
   const hasPermission = (requiredRole: string[]) => {
     if (!userRole) return false;
-    // Since we've simplified to ownership, only owners have permissions
     return userRole.role === 'owner' && requiredRole.includes('owner');
   };
 

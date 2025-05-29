@@ -15,16 +15,6 @@ export interface UserUsage {
   month_year: string;
 }
 
-export interface UserRole {
-  id: string;
-  user_id: string;
-  company_id: string;
-  role: 'owner' | 'admin' | 'staff' | 'viewer';
-  invited_by?: string;
-  invited_at?: string;
-  accepted_at?: string;
-}
-
 export interface TeamInvitation {
   id: string;
   email: string;
