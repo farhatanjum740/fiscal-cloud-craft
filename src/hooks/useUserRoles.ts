@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,9 +40,7 @@ export const useUserRoles = (companyId?: string) => {
           id: 'owner-role',
           user_id: user.id,
           company_id: companyId,
-          role: 'owner',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          role: 'owner'
         });
 
         // For now, only show the owner in team members since we've disabled user_roles table
@@ -59,8 +56,6 @@ export const useUserRoles = (companyId?: string) => {
           user_id: user.id,
           company_id: companyId,
           role: 'owner',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
           full_name: profileData?.full_name || 'Company Owner'
         }]);
       } else {
