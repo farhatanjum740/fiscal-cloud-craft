@@ -43,10 +43,7 @@ export const useUserRoles = (companyId?: string) => {
           company_id: companyId,
           role: 'owner',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          invited_by: null,
-          invited_at: null,
-          accepted_at: null
+          updated_at: new Date().toISOString()
         });
 
         // For now, only show the owner in team members since we've disabled user_roles table
@@ -64,9 +61,6 @@ export const useUserRoles = (companyId?: string) => {
           role: 'owner',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          invited_by: null,
-          invited_at: null,
-          accepted_at: null,
           full_name: profileData?.full_name || 'Company Owner'
         }]);
       } else {
