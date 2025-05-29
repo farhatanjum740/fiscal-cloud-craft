@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { UserPlus, Trash2, Mail } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { UserPlus, Trash2, Mail, Info } from 'lucide-react';
 import { useUserRoles } from '@/hooks/useUserRoles';
 
 interface TeamManagementProps {
@@ -46,7 +47,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
     return <div>Loading team data...</div>;
   }
 
-  if (!hasPermission(['owner', 'admin'])) {
+  if (!hasPermission(['owner'])) {
     return (
       <Card>
         <CardHeader>
@@ -107,6 +108,14 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
         </Dialog>
       </div>
 
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Team management has been simplified. Currently, only company owners can manage teams. 
+          Full role-based access control will be restored in a future update.
+        </AlertDescription>
+      </Alert>
+
       <div className="grid gap-6">
         <Card>
           <CardHeader>
@@ -128,22 +137,19 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
                   {member.role !== 'owner' && hasPermission(['owner']) && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" disabled>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+                          <AlertDialogTitle>Feature Temporarily Disabled</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to remove this team member? They will lose access to the company.
+                            Team member removal is temporarily disabled while we simplify the access control system.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => removeUser(member.user_id)}>
-                            Remove
-                          </AlertDialogAction>
+                          <AlertDialogCancel>Close</AlertDialogCancel>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
