@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,14 +25,19 @@ export const useUserRoles = (companyId?: string) => {
   useEffect(() => {
     if (user && companyId) {
       fetchUserRoles();
+    } else {
+      setLoading(false);
     }
   }, [user, companyId]);
 
   const fetchUserRoles = async () => {
-    if (!user || !companyId) return;
+    if (!user || !companyId) {
+      setLoading(false);
+      return;
+    }
 
     try {
-      // Check if user owns the company
+      // Check if user owns the company (simplified ownership model)
       const { data: companyData } = await supabase
         .from('companies')
         .select('user_id')
@@ -69,7 +73,7 @@ export const useUserRoles = (companyId?: string) => {
         setTeamMembers([]);
       }
 
-      // Get pending invitations
+      // Get pending invitations (keeping this for future team functionality)
       const { data: invitationData } = await supabase
         .from('team_invitations')
         .select('*')
@@ -92,42 +96,11 @@ export const useUserRoles = (companyId?: string) => {
   };
 
   const inviteUser = async (email: string, role: 'admin' | 'staff' | 'viewer') => {
-    if (!user || !companyId) return false;
-
-    try {
-      const token = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-
-      const { error } = await supabase
-        .from('team_invitations')
-        .insert({
-          email,
-          company_id: companyId,
-          role,
-          invited_by: user.id,
-          token,
-          expires_at: expiresAt.toISOString()
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Invitation Sent",
-        description: `Invitation sent to ${email}. Note: Team management is currently simplified to company owners only.`,
-      });
-
-      await fetchUserRoles();
-      return true;
-    } catch (error) {
-      console.error('Error inviting user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send invitation",
-        variant: "destructive"
-      });
-      return false;
-    }
+    toast({
+      title: "Team Management Simplified",
+      description: "Team management is currently simplified to company owners only. Invitations are not active.",
+    });
+    return false;
   };
 
   const removeUser = async (userId: string) => {

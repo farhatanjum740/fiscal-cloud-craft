@@ -733,50 +733,6 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
-        Row: {
-          accepted_at: string | null
-          company_id: string
-          created_at: string | null
-          id: string
-          invited_at: string | null
-          invited_by: string | null
-          role: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          company_id: string
-          created_at?: string | null
-          id?: string
-          invited_at?: string | null
-          invited_by?: string | null
-          role: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          accepted_at?: string | null
-          company_id?: string
-          created_at?: string | null
-          id?: string
-          invited_at?: string | null
-          invited_by?: string | null
-          role?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_usage: {
         Row: {
           company_id: string
@@ -854,17 +810,9 @@ export type Database = {
         Args: { plan_type: Database["public"]["Enums"]["subscription_plan"] }
         Returns: Json
       }
-      get_user_role_for_company: {
-        Args: { p_user_id: string; p_company_id: string }
-        Returns: string
-      }
       increment_usage: {
         Args: { p_user_id: string; p_company_id: string; p_action_type: string }
         Returns: undefined
-      }
-      user_has_company_access: {
-        Args: { p_user_id: string; p_company_id: string }
-        Returns: boolean
       }
     }
     Enums: {

@@ -16,20 +16,16 @@ interface TeamManagementProps {
 }
 
 const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
-  const { userRole, teamMembers, invitations, loading, inviteUser, cancelInvitation, hasPermission } = useUserRoles(companyId);
+  const { userRole, teamMembers, invitations, loading, cancelInvitation, hasPermission } = useUserRoles(companyId);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'staff' | 'viewer'>('staff');
 
   const handleInviteUser = async () => {
-    if (!inviteEmail.trim()) return;
-
-    const success = await inviteUser(inviteEmail, inviteRole);
-    if (success) {
-      setInviteEmail('');
-      setInviteRole('staff');
-      setIsInviteDialogOpen(false);
-    }
+    // Simplified: no actual invitations for now
+    setInviteEmail('');
+    setInviteRole('staff');
+    setIsInviteDialogOpen(false);
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -37,7 +33,14 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
   };
 
   if (loading) {
-    return <div>Loading team data...</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Team Management</CardTitle>
+          <CardDescription>Loading team data...</CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
 
   if (!hasPermission(['owner'])) {
@@ -57,16 +60,16 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
         <h2 className="text-2xl font-bold">Team Management</h2>
         <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled>
               <UserPlus className="h-4 w-4 mr-2" />
-              Invite User
+              Invite User (Disabled)
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Invite Team Member</DialogTitle>
               <DialogDescription>
-                Send an invitation to add a new team member to your company.
+                Team invitations are currently disabled in the simplified version.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -78,11 +81,12 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
                   placeholder="user@example.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
+                  disabled
                 />
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>
-                <Select value={inviteRole} onValueChange={(value: 'admin' | 'staff' | 'viewer') => setInviteRole(value)}>
+                <Select value={inviteRole} onValueChange={(value: 'admin' | 'staff' | 'viewer') => setInviteRole(value)} disabled>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -93,8 +97,8 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleInviteUser} className="w-full">
-                Send Invitation
+              <Button onClick={handleInviteUser} className="w-full" disabled>
+                Send Invitation (Disabled)
               </Button>
             </div>
           </DialogContent>
@@ -104,8 +108,8 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Team management has been simplified. Currently, only company owners can manage teams. 
-          Full role-based access control will be restored in a future update.
+          Team management has been simplified. Currently, only company owners can access the system. 
+          Full role-based access control is disabled until further implementation.
         </AlertDescription>
       </Alert>
 
@@ -121,7 +125,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
                 <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div>
-                      <p className="font-medium">{member.full_name || 'Unknown User'}</p>
+                      <p className="font-medium">{member.full_name || 'Company Owner'}</p>
                       <Badge variant={getRoleBadgeVariant(member.role)}>
                         {member.role}
                       </Badge>
@@ -137,7 +141,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ companyId }) => {
           <Card>
             <CardHeader>
               <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>Invitations that haven't been accepted yet.</CardDescription>
+              <CardDescription>Legacy invitations that haven't been accepted yet.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

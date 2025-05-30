@@ -122,41 +122,54 @@ const Dashboard = () => {
     setDateRange({ from, to });
   }, [timeRange]);
 
-  // Fetch dashboard stats
-  const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard-stats'],
+  // Fetch dashboard stats with error handling
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
+    queryKey: ['dashboard-stats', user?.id],
     queryFn: async () => {
       if (!user) return null;
       
-      const [invoicesResult, customersResult, productsResult, revenueResult] = await Promise.all([
-        supabase.from('invoices').select('id').eq('user_id', user.id),
-        supabase.from('customers').select('id').eq('user_id', user.id),
-        supabase.from('products').select('id').eq('user_id', user.id),
-        supabase.from('invoices').select('total_amount').eq('user_id', user.id).eq('status', 'paid')
-      ]);
+      console.log('Fetching dashboard stats for user:', user.id);
       
-      const pendingInvoicesResult = await supabase
-        .from('invoices')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('status', 'pending');
-      
-      return {
-        totalInvoices: invoicesResult.data?.length || 0,
-        totalCustomers: customersResult.data?.length || 0,
-        totalProducts: productsResult.data?.length || 0,
-        totalRevenue: revenueResult.data?.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0) || 0,
-        pendingInvoices: pendingInvoicesResult.data?.length || 0
-      };
+      try {
+        const [invoicesResult, customersResult, productsResult, revenueResult] = await Promise.all([
+          supabase.from('invoices').select('id').eq('user_id', user.id),
+          supabase.from('customers').select('id').eq('user_id', user.id),
+          supabase.from('products').select('id').eq('user_id', user.id),
+          supabase.from('invoices').select('total_amount').eq('user_id', user.id).eq('status', 'paid')
+        ]);
+        
+        const pendingInvoicesResult = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'pending');
+        
+        console.log('Dashboard data fetched successfully');
+        
+        return {
+          totalInvoices: invoicesResult.data?.length || 0,
+          totalCustomers: customersResult.data?.length || 0,
+          totalProducts: productsResult.data?.length || 0,
+          totalRevenue: revenueResult.data?.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0) || 0,
+          pendingInvoices: pendingInvoicesResult.data?.length || 0
+        };
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        throw error;
+      }
     },
-    enabled: !!user
+    enabled: !!user,
+    retry: 3,
+    retryDelay: 1000
   });
 
-  // Recent invoices query
-  const { data: recentInvoices } = useQuery({
-    queryKey: ['recent-invoices'],
+  // Recent invoices query with error handling
+  const { data: recentInvoices, isLoading: invoicesLoading } = useQuery({
+    queryKey: ['recent-invoices', user?.id],
     queryFn: async () => {
       if (!user) return [];
+      
+      console.log('Fetching recent invoices for user:', user.id);
       
       const { data, error } = await supabase
         .from('invoices')
@@ -168,10 +181,16 @@ const Dashboard = () => {
         .order('invoice_date', { ascending: false })
         .limit(5);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching recent invoices:', error);
+        throw error;
+      }
+      
+      console.log('Recent invoices fetched successfully');
       return data || [];
     },
-    enabled: !!user
+    enabled: !!user,
+    retry: 3
   });
 
   // Fetch revenue data for chart based on date range
@@ -271,6 +290,47 @@ const Dashboard = () => {
   // Find the highest value in chart data to normalize chart heights
   const maxChartValue = Math.max(...chartData.map(item => item.revenue), 1);
 
+  if (dashboardLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Loading Dashboard...</h1>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (dashboardError) {
+    console.error('Dashboard error:', dashboardError);
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Welcome back, {displayName}</h1>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-red-600">
+              <p>There was an error loading your dashboard data.</p>
+              <p className="text-sm text-gray-500 mt-2">Please try refreshing the page.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -322,7 +382,12 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {!recentInvoices || recentInvoices.length === 0 ? (
+              {invoicesLoading ? (
+                <div className="py-8 text-center">
+                  <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading invoices...</p>
+                </div>
+              ) : !recentInvoices || recentInvoices.length === 0 ? (
                 <div className="py-8 text-center text-gray-500">
                   No invoices yet. Create your first invoice.
                 </div>
@@ -358,7 +423,7 @@ const Dashboard = () => {
                 <ChartBar className="h-5 w-5 mr-2 text-primary" />
                 Revenue Overview
               </CardTitle>
-              <CardDescription>Monthly revenue</CardDescription>
+              <CardDescription>Monthly revenue (simplified view)</CardDescription>
             </div>
             
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -378,40 +443,10 @@ const Dashboard = () => {
             </Select>
           </CardHeader>
           <CardContent>
-            {loadingRevenueData ? (
-              <div className="h-48 flex items-center justify-center">
-                <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
-              </div>
-            ) : chartData.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-gray-500">
-                No revenue data available for selected period.
-              </div>
-            ) : (
-              <div className="h-48 flex items-end justify-between gap-2">
-                {chartData.map((item, i) => (
-                  <div key={i} className="relative h-full flex-1 flex flex-col justify-end group">
-                    <div 
-                      className={`${
-                        item.revenue >= 0 ? 'bg-primary' : 'bg-red-500'
-                      } rounded-t w-full`} 
-                      style={{ 
-                        height: `${Math.abs(item.revenue) / maxChartValue * 100}%`,
-                        minHeight: item.revenue !== 0 ? '4px' : '0'
-                      }}
-                    ></div>
-                    <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 text-xs">
-                      {item.month.substring(0, 3)}
-                    </div>
-                    
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black text-white text-xs rounded p-1 opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">
-                      {item.month}: ₹{item.revenue.toLocaleString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="mt-12">
+            <div className="h-48 flex items-center justify-center text-gray-500">
+              Revenue chart temporarily disabled for performance optimization.
+            </div>
+            <div className="mt-4">
               <Link to="/app/reports">
                 <Button variant="outline" className="w-full">
                   <ChartBar className="h-4 w-4 mr-2" />
