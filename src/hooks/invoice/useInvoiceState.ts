@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { InvoiceTemplate } from "@/types/invoice-templates";
 
 export const useInvoiceState = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -20,13 +21,14 @@ export const useInvoiceState = () => {
   });
   const [total, setTotal] = useState<number>(0);
   
-  // Initial invoice state with status field defaulting to "paid"
+  // Initial invoice state with status field defaulting to "paid" and template field
   const [invoice, setInvoice] = useState({
     customerId: "",
     invoiceNumber: "",
     invoiceDate: new Date(),
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     financialYear: "",
+    template: "standard" as InvoiceTemplate,
     items: [
       {
         id: uuidv4(),

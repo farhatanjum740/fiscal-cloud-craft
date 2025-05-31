@@ -17,7 +17,7 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
       try {
         const { data, error } = await supabase
           .from('company_settings')
-          .select('default_template')
+          .select('*')
           .eq('company_id', companyId)
           .single();
 
@@ -26,10 +26,12 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           return;
         }
 
-        if (data?.default_template) {
-          setDefaultTemplate(data.default_template as InvoiceTemplate);
+        // Use type assertion since TypeScript types haven't been updated yet
+        const settings = data as any;
+        if (settings?.default_template) {
+          setDefaultTemplate(settings.default_template as InvoiceTemplate);
           if (!currentTemplate) {
-            setSelectedTemplate(data.default_template as InvoiceTemplate);
+            setSelectedTemplate(settings.default_template as InvoiceTemplate);
           }
         }
       } catch (error) {
@@ -45,9 +47,12 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
 
     setLoading(true);
     try {
+      // Use type assertion for the update since TypeScript types haven't been updated yet
+      const updateData = { default_template: template } as any;
+      
       const { error } = await supabase
         .from('company_settings')
-        .update({ default_template: template })
+        .update(updateData)
         .eq('company_id', companyId);
 
       if (error) {
