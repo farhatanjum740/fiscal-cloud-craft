@@ -99,6 +99,7 @@ export type Database = {
           created_at: string | null
           credit_note_counter: number | null
           current_financial_year: string
+          default_template: string | null
           id: string
           invoice_counter: number | null
           invoice_prefix: string | null
@@ -110,6 +111,7 @@ export type Database = {
           created_at?: string | null
           credit_note_counter?: number | null
           current_financial_year?: string
+          default_template?: string | null
           id?: string
           invoice_counter?: number | null
           invoice_prefix?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           created_at?: string | null
           credit_note_counter?: number | null
           current_financial_year?: string
+          default_template?: string | null
           id?: string
           invoice_counter?: number | null
           invoice_prefix?: string | null

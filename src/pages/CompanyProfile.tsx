@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -13,11 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building, Upload, Phone, Mail, Loader2 } from "lucide-react";
+import { Building, Upload, Phone, Mail, Loader2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCompanyWithFallback } from "@/hooks/useCompanyWithFallback";
+import { InvoiceSettings } from "@/components/company/InvoiceSettings";
 
 // List of Indian states for the dropdown
 const indianStates = [
@@ -337,6 +337,7 @@ const CompanyProfile = () => {
           <TabsTrigger value="basic">Basic Information</TabsTrigger>
           <TabsTrigger value="address">Addresses</TabsTrigger>
           <TabsTrigger value="bank">Bank Details</TabsTrigger>
+          <TabsTrigger value="invoicing">Invoice Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
@@ -648,6 +649,10 @@ const CompanyProfile = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="invoicing">
+          <InvoiceSettings companyId={companyFromHook?.id} />
         </TabsContent>
       </Tabs>
     </div>
