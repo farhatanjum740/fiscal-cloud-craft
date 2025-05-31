@@ -25,6 +25,9 @@ import { Plus, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useInvoice } from "@/hooks/useInvoice";
 import { SubscriptionProvider } from "@/components/subscription/SubscriptionProvider";
+import { TemplateSelector } from "@/components/invoices/templates/TemplateSelector";
+import { useInvoiceTemplate } from "@/hooks/useInvoiceTemplate";
+import { InvoiceTemplate } from "@/types/invoice-templates";
 
 // Standard units commonly used in Indian businesses
 const unitOptions = [
@@ -88,6 +91,17 @@ const InvoiceEditorContent = () => {
     generateInvoiceNumber,
     saveInvoice
   } = useInvoice(id);
+
+  // Template management
+  const { selectedTemplate, setSelectedTemplate } = useInvoiceTemplate(
+    company?.id,
+    invoice.template as InvoiceTemplate
+  );
+
+  // Update invoice template when selection changes
+  useEffect(() => {
+    setInvoice(prev => ({ ...prev, template: selectedTemplate }));
+  }, [selectedTemplate, setInvoice]);
   
   useEffect(() => {
     if (companySettings) {
@@ -255,6 +269,13 @@ const InvoiceEditorContent = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Template Selection */}
+                <TemplateSelector
+                  selectedTemplate={selectedTemplate}
+                  onTemplateChange={setSelectedTemplate}
+                  disabled={loading || loadingData}
+                />
               </CardContent>
             </Card>
             

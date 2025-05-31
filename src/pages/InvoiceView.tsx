@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,11 +5,12 @@ import { ArrowLeft, Edit, Download, Copy, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import InvoiceViewComponent from "@/components/invoices/InvoiceView";
 import InvoiceCancelDialog from "@/components/invoices/InvoiceCancelDialog";
 import CancelledIndicator from "@/components/ui/CancelledIndicator";
 import { Badge } from "@/components/ui/badge";
 import { useCompanyWithFallback } from "@/hooks/useCompanyWithFallback";
+import { TemplateRenderer } from "@/components/invoices/templates/TemplateRenderer";
+import { InvoiceTemplate } from "@/types/invoice-templates";
 
 const InvoiceView = () => {
   const { id } = useParams();
@@ -145,11 +145,14 @@ const InvoiceView = () => {
     );
   }
 
-  // Create invoice object with items for the InvoiceViewComponent
+  // Create invoice object with items for the template renderer
   const invoiceWithItems = {
     ...invoice,
     items: items
   };
+
+  // Get the template from the invoice, default to 'standard'
+  const template = (invoice.template as InvoiceTemplate) || 'standard';
 
   return (
     <div className="space-y-6">
@@ -199,7 +202,8 @@ const InvoiceView = () => {
         cancelledAt={invoice.cancelled_at}
       />
 
-      <InvoiceViewComponent 
+      <TemplateRenderer 
+        template={template}
         invoice={invoiceWithItems}
         customer={customer}
         company={company}

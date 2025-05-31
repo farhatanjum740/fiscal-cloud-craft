@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -35,6 +34,9 @@ import { Separator } from "@/components/ui/separator";
 import { DatePicker } from "@/components/ui/date-picker";
 import { formatCurrency } from "@/lib/utils";
 import { useInvoice } from "@/hooks/useInvoice";
+import { TemplateSelector } from "./templates/TemplateSelector";
+import { useInvoiceTemplate } from "@/hooks/useInvoiceTemplate";
+import { InvoiceTemplate } from "@/types/invoice-templates";
 
 interface InvoiceDetailsProps {
   id?: string;
@@ -70,6 +72,17 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
     generateInvoiceNumber,
     saveInvoice
   } = useInvoice(id);
+
+  // Template management
+  const { selectedTemplate, setSelectedTemplate } = useInvoiceTemplate(
+    company?.id,
+    invoice.template as InvoiceTemplate
+  );
+
+  // Update invoice template when selection changes
+  useEffect(() => {
+    setInvoice(prev => ({ ...prev, template: selectedTemplate }));
+  }, [selectedTemplate, setInvoice]);
   
   // Filter out products that are already in the invoice
   const getAvailableProducts = (currentItemId: string) => {
@@ -216,6 +229,17 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ id }) => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Template Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TemplateSelector
+              selectedTemplate={selectedTemplate}
+              onTemplateChange={setSelectedTemplate}
+              disabled={loading}
+            />
           </div>
           
           <Separator />
