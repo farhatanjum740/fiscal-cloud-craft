@@ -1,14 +1,23 @@
 
 import { useEffect } from "react";
 
-export const useInvoiceCalculations = (
-  invoice: any,
-  customers: any[],
-  company: any,
-  setSubtotal: (value: number) => void,
-  setGstDetails: (value: { cgst: number; sgst: number; igst: number }) => void,
-  setTotal: (value: number) => void
-) => {
+interface UseInvoiceCalculationsParams {
+  invoice: any;
+  company: any;
+  customers: any[];
+  setSubtotal: (value: number) => void;
+  setGstDetails: (value: { cgst: number; sgst: number; igst: number }) => void;
+  setTotal: (value: number) => void;
+}
+
+export const useInvoiceCalculations = ({
+  invoice,
+  customers,
+  company,
+  setSubtotal,
+  setGstDetails,
+  setTotal
+}: UseInvoiceCalculationsParams) => {
   // Get customer by ID
   const getCustomerById = (id: string) => {
     console.log("Looking for customer with ID:", id);
@@ -24,7 +33,10 @@ export const useInvoiceCalculations = (
     console.log("Current invoice items:", invoice.items);
     console.log("Current customer ID:", invoice.customerId);
     
-    const calcSubtotal = invoice.items.reduce((acc: number, item: any) => {
+    // Safety check for invoice.items
+    const items = Array.isArray(invoice.items) ? invoice.items : [];
+    
+    const calcSubtotal = items.reduce((acc: number, item: any) => {
       return acc + (item.price * item.quantity);
     }, 0);
     
@@ -39,7 +51,7 @@ export const useInvoiceCalculations = (
     let sgst = 0;
     let igst = 0;
     
-    invoice.items.forEach((item: any) => {
+    items.forEach((item: any) => {
       const gstAmount = (item.price * item.quantity * item.gstRate) / 100;
       
       if (customer && company) {
