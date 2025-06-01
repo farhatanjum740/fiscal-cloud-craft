@@ -48,7 +48,7 @@ export const useInvoice = (id?: string) => {
     setTotal,
   } = invoiceState;
 
-  const { fetchData } = useFetchInvoiceData(
+  const { fetchData } = useFetchInvoiceData({
     user,
     id,
     setLoadingData,
@@ -56,45 +56,45 @@ export const useInvoice = (id?: string) => {
     setProducts,
     setCompany,
     setCompanySettings,
-    setInvoice
-  );
+    setInvoice,
+  });
 
-  const { getCurrentFinancialYear, getAvailableFinancialYears } = useFinancialYear(
+  const { getCurrentFinancialYear, getAvailableFinancialYears } = useFinancialYear({
     setFinancialYears,
-    setInvoice
-  );
+    setInvoice,
+  });
 
-  const { generateInvoiceNumber } = useInvoiceNumber(
+  const { generateInvoiceNumber } = useInvoiceNumber({
     company,
     invoice,
     setInvoice,
     setIsGeneratingInvoiceNumber,
-    setGeneratedInvoiceNumber
-  );
+    setGeneratedInvoiceNumber,
+  });
 
-  const { addItem, removeItem, updateItem, handleProductSelect } = useInvoiceItems(
+  const { addItem, removeItem, updateItem, handleProductSelect } = useInvoiceItems({
     invoice,
     setInvoice,
-    products
-  );
+    products,
+  });
 
-  useInvoiceCalculations(
+  useInvoiceCalculations({
     invoice,
     company,
     customers,
     setSubtotal,
     setGstDetails,
-    setTotal
-  );
+    setTotal,
+  });
 
-  const { saveInvoice } = useSaveInvoice(
+  const { saveInvoice } = useSaveInvoice({
     user,
     company,
     invoice,
     setLoading,
     navigate,
-    id
-  );
+    id,
+  });
 
   useEffect(() => {
     if (user) {
