@@ -1,22 +1,29 @@
 
 import { useCallback } from "react";
-import type { InvoiceItem } from "@/types";
+import { v4 as uuidv4 } from "uuid";
 
-export const useInvoiceItems = (setInvoice: (setter: (prev: any) => any) => void) => {
-  // Add a new item to the invoice
+interface UseInvoiceItemsParams {
+  invoice: any;
+  setInvoice: (setter: (prev: any) => any) => void;
+  products: any[];
+}
+
+export const useInvoiceItems = ({
+  invoice,
+  setInvoice,
+  products,
+}: UseInvoiceItemsParams) => {
   const addItem = useCallback(() => {
-    console.log("Adding new invoice item");
-    const newItem: InvoiceItem = {
-      id: `item-${Date.now()}`,
+    const newItem = {
+      id: uuidv4(),
       productId: "",
       productName: "",
       description: "",
       hsnCode: "",
-      quantity: 1,
       price: 0,
+      quantity: 1,
+      gstRate: 0,
       unit: "",
-      gstRate: 18,
-      discountRate: 0,
     };
     
     setInvoice(prev => ({
@@ -24,42 +31,43 @@ export const useInvoiceItems = (setInvoice: (setter: (prev: any) => any) => void
       items: [...prev.items, newItem]
     }));
   }, [setInvoice]);
-  
-  // Remove an item from the invoice
-  const removeItem = useCallback((id: string) => {
-    console.log("Removing invoice item with ID:", id);
+
+  const removeItem = useCallback((itemId: string) => {
     setInvoice(prev => ({
       ...prev,
-      items: prev.items.filter(item => item.id !== id)
+      items: prev.items.filter((item: any) => item.id !== itemId)
     }));
   }, [setInvoice]);
-  
-  // Update an item in the invoice
-  const updateItem = useCallback((id: string, field: keyof InvoiceItem, value: any) => {
-    console.log(`Updating item ${id}, field ${String(field)} to:`, value);
+
+  const updateItem = useCallback((itemId: string, field: string, value: any) => {
     setInvoice(prev => ({
       ...prev,
-      items: prev.items.map(item => 
-        item.id === id ? { ...item, [field]: value } : item
+      items: prev.items.map((item: any) =>
+        item.id === itemId ? { ...item, [field]: value } : item
       )
     }));
   }, [setInvoice]);
-  
-  // Handle product selection
-  const handleProductSelect = useCallback((id: string, productId: string, products: any[]) => {
-    console.log(`Product selection for item ${id}, product ID: ${productId}`);
+
+  const handleProductSelect = useCallback((itemId: string, productId: string) => {
     const selectedProduct = products.find(p => p.id === productId);
-    console.log("Selected product:", selectedProduct);
-    
     if (selectedProduct) {
-      updateItem(id, "productId", productId);
-      updateItem(id, "productName", selectedProduct.name);
-      updateItem(id, "price", selectedProduct.price);
-      updateItem(id, "hsnCode", selectedProduct.hsn_code);
-      updateItem(id, "gstRate", selectedProduct.gst_rate);
-      updateItem(id, "unit", selectedProduct.unit);
+      setInvoice(prev => ({
+        ...prev,
+        items: prev.items.map((item: any) =>
+          item.id === itemId ? {
+            ...item,
+            productId: selectedProduct.id,
+            productName: selectedProduct.name,
+            description: selectedProduct.description || "",
+            hsnCode: selectedProduct.hsn_code || "",
+            price: selectedProduct.price,
+            gstRate: selectedProduct.gst_rate,
+            unit: selectedProduct.unit || "",
+          } : item
+        )
+      }));
     }
-  }, [updateItem]);
+  }, [setInvoice, products]);
 
   return {
     addItem,

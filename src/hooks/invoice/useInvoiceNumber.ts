@@ -1,17 +1,23 @@
 
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
-export const useInvoiceNumber = (
-  company: any,
-  invoice: any,
-  setInvoice: (setter: (prev: any) => any) => void,
-  isGeneratingInvoiceNumber: boolean,
-  setIsGeneratingInvoiceNumber: (value: boolean) => void,
-  generatedInvoiceNumber: string | null,
-  setGeneratedInvoiceNumber: (value: string | null) => void
-) => {
+interface UseInvoiceNumberParams {
+  company: any;
+  invoice: any;
+  setInvoice: (setter: (prev: any) => any) => void;
+  setIsGeneratingInvoiceNumber: (value: boolean) => void;
+  setGeneratedInvoiceNumber: (value: string | null) => void;
+}
+
+export const useInvoiceNumber = ({
+  company,
+  invoice,
+  setInvoice,
+  setIsGeneratingInvoiceNumber,
+  setGeneratedInvoiceNumber,
+}: UseInvoiceNumberParams) => {
   // Generate invoice number automatically when the page loads
   const generateInvoiceNumber = useCallback(async () => {
     console.log("generateInvoiceNumber called, company:", company?.id);
@@ -27,16 +33,6 @@ export const useInvoiceNumber = (
     
     try {
       setIsGeneratingInvoiceNumber(true);
-      
-      // If we already have a generated number for this session, reuse it instead of regenerating
-      if (generatedInvoiceNumber) {
-        console.log("Reusing previously generated invoice number:", generatedInvoiceNumber);
-        setInvoice(prev => ({
-          ...prev,
-          invoiceNumber: generatedInvoiceNumber
-        }));
-        return;
-      }
       
       console.log("Generating invoice number for financial year:", invoice.financialYear);
       
@@ -83,7 +79,7 @@ export const useInvoiceNumber = (
     } finally {
       setIsGeneratingInvoiceNumber(false);
     }
-  }, [company, invoice.financialYear, setInvoice, setIsGeneratingInvoiceNumber, setGeneratedInvoiceNumber, generatedInvoiceNumber]);
+  }, [company, invoice.financialYear, setInvoice, setIsGeneratingInvoiceNumber, setGeneratedInvoiceNumber]);
 
   return { generateInvoiceNumber };
 };

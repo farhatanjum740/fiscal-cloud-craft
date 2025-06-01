@@ -1,32 +1,30 @@
 
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useUsageLimits } from "@/hooks/useUsageLimits";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-export const useSaveInvoice = (
-  user: any,
-  invoice: any,
-  company: any,
-  subtotal: number,
-  gstDetails: any,
-  total: number,
-  isEditing: boolean,
-  id: string | undefined,
-  loading: boolean,
-  setLoading: (value: boolean) => void,
-  generateInvoiceNumber: () => Promise<void>,
-  setGeneratedInvoiceNumber: (value: string | null) => void
-) => {
-  const navigate = useNavigate();
-  const { checkInvoiceLimit } = useUsageLimits();
-  
+interface UseSaveInvoiceParams {
+  user: any;
+  company: any;
+  invoice: any;
+  setLoading: (loading: boolean) => void;
+  navigate: (path: string) => void;
+  id?: string;
+}
+
+export const useSaveInvoice = ({
+  user,
+  company,
+  invoice,
+  setLoading,
+  navigate,
+  id,
+}: UseSaveInvoiceParams) => {
   const saveInvoice = useCallback(async () => {
-    if (!user) {
+    if (!user || !company) {
       toast({
         title: "Error",
-        description: "User data not available. Please log in.",
+        description: "User and company information are required",
         variant: "destructive",
       });
       return;
@@ -35,25 +33,16 @@ export const useSaveInvoice = (
     if (!invoice.customerId) {
       toast({
         title: "Error",
-        description: "Please select a customer.",
+        description: "Please select a customer",
         variant: "destructive",
       });
       return;
     }
 
-    if (!invoice.invoiceDate) {
+    if (invoice.items.length === 0) {
       toast({
         title: "Error",
-        description: "Please select an invoice date.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!invoice.items || invoice.items.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please add at least one item to the invoice.",
+        description: "Please add at least one item",
         variant: "destructive",
       });
       return;
@@ -61,117 +50,82 @@ export const useSaveInvoice = (
 
     setLoading(true);
     try {
-      // Check usage limits for new invoices only
-      if (!isEditing) {
-        const canCreate = await checkInvoiceLimit();
-        if (!canCreate) {
-          setLoading(false);
-          return; // Toast is shown by checkInvoiceLimit
-        }
-      }
-
-      // Only increment the invoice counter when actually saving
-      if (!isEditing) {
-        // Get the invoice number components
-        const parts = invoice.invoiceNumber.split('/');
-        const financialYear = parts[0];
-        const counter = parseInt(parts[1], 10);
-        
-        // Update the counter in the database
-        const { error: updateError } = await supabase
-          .from('company_settings')
-          .upsert({
-            company_id: company.id,
-            user_id: user.id,
-            current_financial_year: financialYear,
-            invoice_counter: counter + 1, // Increment for the next invoice
-          }, {
-            onConflict: 'company_id',
-          });
-          
-        if (updateError) throw updateError;
-      }
-
-      // Prepare invoice data for saving - matching the database schema exactly
       const invoiceData = {
         user_id: user.id,
         company_id: company.id,
         customer_id: invoice.customerId,
         invoice_number: invoice.invoiceNumber,
-        invoice_date: invoice.invoiceDate,
-        due_date: invoice.dueDate,
-        status: invoice.status || "draft",
-        subtotal: subtotal, // Changed from subtotal_amount to subtotal
-        cgst: gstDetails.cgst,
-        sgst: gstDetails.sgst,
-        igst: gstDetails.igst,
-        total_amount: total,
-        notes: invoice.notes,
+        invoice_date: invoice.invoiceDate.toISOString().split('T')[0],
+        due_date: invoice.dueDate ? invoice.dueDate.toISOString().split('T')[0] : null,
+        financial_year: invoice.financialYear,
+        template: invoice.template || 'standard',
+        status: invoice.status || 'paid',
         terms_and_conditions: invoice.termsAndConditions,
-        financial_year: invoice.financialYear
+        notes: invoice.notes,
+        subtotal: 0, // Will be calculated
+        cgst: 0,
+        sgst: 0,
+        igst: 0,
+        total_amount: 0,
       };
 
-      let invoiceResult;
-      if (isEditing) {
+      let savedInvoice;
+      if (id) {
         // Update existing invoice
-        invoiceResult = await supabase
-          .from("invoices")
+        const { data, error } = await supabase
+          .from('invoices')
           .update(invoiceData)
-          .eq("id", id)
+          .eq('id', id)
           .select()
           .single();
+        
+        if (error) throw error;
+        savedInvoice = data;
       } else {
         // Create new invoice
-        invoiceResult = await supabase
-          .from("invoices")
+        const { data, error } = await supabase
+          .from('invoices')
           .insert(invoiceData)
           .select()
           .single();
+        
+        if (error) throw error;
+        savedInvoice = data;
       }
-
-      if (invoiceResult.error) throw invoiceResult.error;
-
-      const invoiceId = invoiceResult.data.id;
 
       // Save invoice items
-      if (isEditing) {
-        // Delete existing items
-        const { error: deleteError } = await supabase
-          .from("invoice_items")
+      if (id) {
+        // Delete existing items first
+        await supabase
+          .from('invoice_items')
           .delete()
-          .eq("invoice_id", id);
-
-        if (deleteError) throw deleteError;
+          .eq('invoice_id', id);
       }
 
-      // Insert current items
+      // Insert new items
       const itemsToInsert = invoice.items.map((item: any) => ({
-        invoice_id: invoiceId,
-        product_id: item.productId,
+        invoice_id: savedInvoice.id,
+        product_id: item.productId || null,
         product_name: item.productName,
         description: item.description,
         hsn_code: item.hsnCode,
-        gst_rate: item.gstRate,
-        price: item.price,
         quantity: item.quantity,
+        price: item.price,
+        gst_rate: item.gstRate,
         unit: item.unit,
       }));
 
       const { error: itemsError } = await supabase
-        .from("invoice_items")
+        .from('invoice_items')
         .insert(itemsToInsert);
 
       if (itemsError) throw itemsError;
 
       toast({
         title: "Success",
-        description: `Invoice ${isEditing ? "updated" : "created"} successfully!`,
+        description: `Invoice ${id ? 'updated' : 'created'} successfully`,
       });
 
-      // Clear generated invoice number after successful save to ensure a new one is generated for the next new invoice
-      setGeneratedInvoiceNumber(null);
-      
-      // Add navigation to invoices list after successful save
       navigate("/app/invoices");
     } catch (error: any) {
       console.error("Error saving invoice:", error);
@@ -183,21 +137,7 @@ export const useSaveInvoice = (
     } finally {
       setLoading(false);
     }
-  }, [
-    user,
-    invoice,
-    company,
-    subtotal,
-    gstDetails,
-    total,
-    isEditing,
-    id,
-    loading,
-    setLoading,
-    setGeneratedInvoiceNumber,
-    navigate,
-    checkInvoiceLimit, // Add checkInvoiceLimit to dependencies
-  ]);
+  }, [user, company, invoice, setLoading, navigate, id]);
 
   return { saveInvoice };
 };
