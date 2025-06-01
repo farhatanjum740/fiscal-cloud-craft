@@ -17,21 +17,21 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
       try {
         const { data, error } = await supabase
           .from('company_settings')
-          .select('*')
+          .select('default_template')
           .eq('company_id', companyId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching default template:', error);
           return;
         }
 
-        // Use type assertion since TypeScript types haven't been updated yet
-        const settings = data as any;
-        if (settings?.default_template) {
-          setDefaultTemplate(settings.default_template as InvoiceTemplate);
+        if (data?.default_template) {
+          const template = data.default_template as InvoiceTemplate;
+          setDefaultTemplate(template);
+          // Only set as selected template if no current template is provided
           if (!currentTemplate) {
-            setSelectedTemplate(settings.default_template as InvoiceTemplate);
+            setSelectedTemplate(template);
           }
         }
       } catch (error) {
@@ -47,22 +47,32 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
 
     setLoading(true);
     try {
-      // Use type assertion for the update since TypeScript types haven't been updated yet
-      const updateData = { default_template: template } as any;
-      
-      const { error } = await supabase
+      // Check if company_settings record exists
+      const { data: existingSettings } = await supabase
         .from('company_settings')
-        .update(updateData)
-        .eq('company_id', companyId);
+        .select('id')
+        .eq('company_id', companyId)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error updating default template:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update default template",
-          variant: "destructive"
-        });
-        return false;
+      if (existingSettings) {
+        // Update existing record
+        const { error } = await supabase
+          .from('company_settings')
+          .update({ default_template: template })
+          .eq('company_id', companyId);
+
+        if (error) throw error;
+      } else {
+        // Create new record
+        const { error } = await supabase
+          .from('company_settings')
+          .insert({
+            company_id: companyId,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            default_template: template
+          });
+
+        if (error) throw error;
       }
 
       setDefaultTemplate(template);

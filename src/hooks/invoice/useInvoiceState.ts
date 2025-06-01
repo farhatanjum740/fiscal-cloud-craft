@@ -3,7 +3,7 @@ import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { InvoiceTemplate } from "@/types/invoice-templates";
 
-export const useInvoiceState = () => {
+export const useInvoiceState = (initialTemplate?: InvoiceTemplate) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingData, setLoadingData] = useState<boolean>(true);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -28,7 +28,7 @@ export const useInvoiceState = () => {
     invoiceDate: new Date(),
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)),
     financialYear: "",
-    template: "standard" as InvoiceTemplate,
+    template: (initialTemplate || "standard") as InvoiceTemplate,
     items: [
       {
         id: uuidv4(),

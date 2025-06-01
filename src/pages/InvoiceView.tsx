@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -151,8 +152,11 @@ const InvoiceView = () => {
     items: items
   };
 
-  // Get the template from the invoice, default to 'standard'
-  const template = (invoice.template as InvoiceTemplate) || 'standard';
+  // Get the template from the invoice - ensure it's a valid template
+  const validTemplates: InvoiceTemplate[] = ['standard', 'tally', 'busy', 'zoho', 'classic'];
+  const template = validTemplates.includes(invoice.template as InvoiceTemplate) 
+    ? (invoice.template as InvoiceTemplate) 
+    : 'standard';
 
   return (
     <div className="space-y-6">

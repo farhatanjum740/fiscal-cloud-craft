@@ -1,25 +1,25 @@
-
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { useInvoiceState } from "./invoice/useInvoiceState";
-import { useFinancialYear } from "./invoice/useFinancialYear";
+import { useFetchInvoiceData } from "./invoice/useFetchInvoiceData";
+import { useInvoiceNumber } from "./invoice/useInvoiceNumber";
 import { useInvoiceItems } from "./invoice/useInvoiceItems";
 import { useInvoiceCalculations } from "./invoice/useInvoiceCalculations";
-import { useInvoiceNumber } from "./invoice/useInvoiceNumber";
-import { useFetchInvoiceData } from "./invoice/useFetchInvoiceData";
 import { useSaveInvoice } from "./invoice/useSaveInvoice";
-import { useEffect, useState } from "react";
-import { useCompanyWithFallback } from "./useCompanyWithFallback";
+import { useFinancialYear } from "./invoice/useFinancialYear";
+import { InvoiceTemplate } from "@/types/invoice-templates";
 
 export const useInvoice = (id?: string) => {
-  console.log("useInvoice hook initialized with id:", id);
   const { user } = useAuth();
-  console.log("Current user:", user);
-  const isEditing = !!id;
-  
-  // Use the improved hook with fallback
-  const { company, loading: companyLoading, error: companyError } = useCompanyWithFallback(user?.id);
-  
-  // State management
+  const navigate = useNavigate();
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [defaultTemplate, setDefaultTemplate] = useState<InvoiceTemplate>('standard');
+
+  const invoiceState = useInvoiceState(defaultTemplate);
   const {
     loading,
     setLoading,
@@ -29,6 +29,8 @@ export const useInvoice = (id?: string) => {
     setCustomers,
     products,
     setProducts,
+    company,
+    setCompany,
     companySettings,
     setCompanySettings,
     financialYears,
@@ -44,121 +46,115 @@ export const useInvoice = (id?: string) => {
     gstDetails,
     setGstDetails,
     total,
-    setTotal
-  } = useInvoiceState();
-  
-  // Search state for customer and product dropdowns
-  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
-  const [productSearchQuery, setProductSearchQuery] = useState("");
-  
-  // Filtered customers and products based on search
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase())
-  );
-  
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(productSearchQuery.toLowerCase())
-  );
-  
-  // Financial year management
-  const { 
-    updateFinancialYearFromDate 
-  } = useFinancialYear(setFinancialYears, setInvoice);
-  
-  // Update financial year when invoice date changes
-  const handleDateChange = (date: Date) => {
-    setInvoice(prev => ({ ...prev, invoiceDate: date }));
-    updateFinancialYearFromDate(date, setInvoice, setGeneratedInvoiceNumber);
-  };
-  
-  // Invoice items management
-  const { addItem, removeItem, updateItem: baseUpdateItem } = useInvoiceItems(setInvoice);
-  const handleProductSelect = (id: string, productId: string) => {
-    baseUpdateItem(id, "productId", productId);
-    const selectedProduct = products.find(p => p.id === productId);
-    if (selectedProduct) {
-      baseUpdateItem(id, "productName", selectedProduct.name);
-      baseUpdateItem(id, "price", selectedProduct.price);
-      baseUpdateItem(id, "hsnCode", selectedProduct.hsn_code);
-      baseUpdateItem(id, "gstRate", selectedProduct.gst_rate);
-      baseUpdateItem(id, "unit", selectedProduct.unit);
-    }
-  };
-  
-  // Calculations
-  useInvoiceCalculations(invoice, customers, company, setSubtotal, setGstDetails, setTotal);
-  
-  // Invoice number generation
-  const { generateInvoiceNumber } = useInvoiceNumber(
-    company,
-    invoice,
-    setInvoice,
-    isGeneratingInvoiceNumber,
-    setIsGeneratingInvoiceNumber,
-    generatedInvoiceNumber,
-    setGeneratedInvoiceNumber
-  );
-  
-  // Data fetching - wait for company to be available
-  useFetchInvoiceData(
+    setTotal,
+  } = invoiceState;
+
+  // Fetch company's default template
+  useEffect(() => {
+    const fetchDefaultTemplate = async () => {
+      if (!company?.id) return;
+
+      try {
+        const { data } = await supabase
+          .from('company_settings')
+          .select('default_template')
+          .eq('company_id', company.id)
+          .maybeSingle();
+
+        if (data?.default_template) {
+          const template = data.default_template as InvoiceTemplate;
+          setDefaultTemplate(template);
+          // Only update invoice template if this is a new invoice (no id)
+          if (!id) {
+            setInvoice(prev => ({ ...prev, template }));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching default template:', error);
+      }
+    };
+
+    fetchDefaultTemplate();
+  }, [company?.id, id, setInvoice]);
+
+  const { fetchData } = useFetchInvoiceData({
     user,
     id,
-    isEditing,
     setLoadingData,
     setCustomers,
     setProducts,
-    company,
+    setCompany,
     setCompanySettings,
-    setInvoice
-  );
-  
-  // Automatically generate invoice number once company data is loaded and not editing
-  useEffect(() => {
-    if (company && !isEditing && !invoice.invoiceNumber && !loadingData && !companyLoading) {
-      console.log("Auto-generating invoice number...");
-      generateInvoiceNumber();
-    }
-  }, [company, isEditing, invoice.invoiceNumber, loadingData, companyLoading, generateInvoiceNumber]);
+    setInvoice,
+  });
 
-  // Set default terms and conditions and notes from company settings
-  useEffect(() => {
-    if (companySettings && !isEditing) {
-      setInvoice(prev => ({
-        ...prev,
-        termsAndConditions: companySettings.default_terms || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
-        notes: companySettings.default_notes || ""
-      }));
-    }
-  }, [companySettings, isEditing, setInvoice]);
-  
-  // Debug logging for state changes
-  useEffect(() => {
-    console.log("STATE CHANGE - customers:", customers);
-    console.log("STATE CHANGE - products:", products);
-    console.log("STATE CHANGE - company:", company);
-    console.log("STATE CHANGE - companyError:", companyError);
-  }, [customers, products, company, companyError]);
+  const { getCurrentFinancialYear, getAvailableFinancialYears } = useFinancialYear({
+    setFinancialYears,
+    setInvoice,
+  });
 
-  // Initialize the saveInvoice function from the useSaveInvoice hook
-  const { saveInvoice } = useSaveInvoice(
-    user,
+  const { generateInvoiceNumber } = useInvoiceNumber({
+    company,
+    invoice,
+    setInvoice,
+    setIsGeneratingInvoiceNumber,
+    setGeneratedInvoiceNumber,
+  });
+
+  const { addItem, removeItem, updateItem, handleProductSelect } = useInvoiceItems({
+    invoice,
+    setInvoice,
+    products,
+  });
+
+  useInvoiceCalculations({
     invoice,
     company,
-    subtotal,
-    gstDetails,
-    total,
-    isEditing,
-    id,
-    loading,
+    customers,
+    setSubtotal,
+    setGstDetails,
+    setTotal,
+  });
+
+  const { saveInvoice } = useSaveInvoice({
+    user,
+    company,
+    invoice,
     setLoading,
-    generateInvoiceNumber,
-    setGeneratedInvoiceNumber
+    navigate,
+    id,
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+  }, [user, fetchData]);
+
+  useEffect(() => {
+    getCurrentFinancialYear();
+    getAvailableFinancialYears();
+  }, [getCurrentFinancialYear, getAvailableFinancialYears]);
+
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      setInvoice(prev => ({ ...prev, invoiceDate: date }));
+      getCurrentFinancialYear(date);
+    }
+  };
+
+  const filteredCustomers = customers.filter(customer =>
+    customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase())
+  );
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(productSearchQuery.toLowerCase())
   );
 
   return {
     invoice,
     setInvoice,
-    loading: loading || companyLoading,
+    loading,
     loadingData,
     customers,
     filteredCustomers,
@@ -177,11 +173,10 @@ export const useInvoice = (id?: string) => {
     setProductSearchQuery,
     addItem,
     removeItem,
-    updateItem: baseUpdateItem,
+    updateItem,
     handleProductSelect,
     handleDateChange,
     generateInvoiceNumber,
     saveInvoice,
-    companyError
   };
 };

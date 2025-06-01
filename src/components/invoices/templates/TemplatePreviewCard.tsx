@@ -45,15 +45,20 @@ export const TemplatePreviewCard: React.FC<TemplatePreviewCardProps> = ({
         </div>
         
         <div 
-          className="border rounded-lg overflow-hidden mb-3 bg-white"
+          className="border rounded-lg overflow-hidden mb-3 bg-white relative"
           style={{ 
-            height: '300px',
-            transform: 'scale(0.3)',
-            transformOrigin: 'top left',
-            width: '333%' // Scale factor to fit the preview
+            height: '400px',
+            width: '100%'
           }}
         >
-          <div className="pointer-events-none">
+          <div 
+            className="absolute inset-0 pointer-events-none origin-top-left"
+            style={{
+              transform: 'scale(0.25)',
+              width: '400%',
+              height: '400%'
+            }}
+          >
             <TemplateRenderer
               template={template}
               invoice={sampleInvoice}
