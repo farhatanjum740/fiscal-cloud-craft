@@ -15,6 +15,8 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
       if (!companyId) return;
 
       try {
+        console.log("Fetching default template for company:", companyId);
+        
         const { data, error } = await supabase
           .from('company_settings')
           .select('default_template')
@@ -26,12 +28,25 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           return;
         }
 
+        console.log("Fetched company settings:", data);
+
         if (data?.default_template) {
           const template = data.default_template as InvoiceTemplate;
+          console.log("Setting default template to:", template);
           setDefaultTemplate(template);
           // Only set as selected template if no current template is provided
           if (!currentTemplate) {
+            console.log("No current template, using default:", template);
             setSelectedTemplate(template);
+          } else {
+            console.log("Using current template:", currentTemplate);
+            setSelectedTemplate(currentTemplate);
+          }
+        } else {
+          console.log("No default template found, using standard");
+          // If no current template is provided, use standard
+          if (!currentTemplate) {
+            setSelectedTemplate('standard');
           }
         }
       } catch (error) {
@@ -47,6 +62,8 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
 
     setLoading(true);
     try {
+      console.log("Updating default template to:", template);
+      
       // Check if company_settings record exists
       const { data: existingSettings } = await supabase
         .from('company_settings')
@@ -76,6 +93,7 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
       }
 
       setDefaultTemplate(template);
+      console.log("Successfully updated default template");
       toast({
         title: "Success",
         description: "Default template updated successfully"

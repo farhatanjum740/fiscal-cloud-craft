@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { InvoiceTemplate } from "@/types/invoice-templates";
 
 interface UseFetchInvoiceDataParams {
   user: any;
@@ -58,6 +59,7 @@ export const useFetchInvoiceData = ({
       setCompany(companyData);
       
       // Fetch company settings
+      let defaultTemplate: InvoiceTemplate = 'standard';
       if (companyData) {
         const { data: settingsData, error: settingsError } = await supabase
           .from('company_settings')
@@ -67,6 +69,11 @@ export const useFetchInvoiceData = ({
         
         if (settingsError) console.error('Error fetching company settings:', settingsError);
         setCompanySettings(settingsData);
+        
+        // Extract default template from settings
+        if (settingsData?.default_template) {
+          defaultTemplate = settingsData.default_template as InvoiceTemplate;
+        }
       }
       
       // If editing existing invoice, fetch its data
@@ -87,11 +94,11 @@ export const useFetchInvoiceData = ({
             invoiceDate: new Date(invoiceData.invoice_date),
             dueDate: invoiceData.due_date ? new Date(invoiceData.due_date) : new Date(new Date().setDate(new Date().getDate() + 30)),
             financialYear: invoiceData.financial_year,
-            template: invoiceData.template || 'standard',
+            template: (invoiceData.template as InvoiceTemplate) || defaultTemplate,
             status: invoiceData.status || 'paid',
             termsAndConditions: invoiceData.terms_and_conditions || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
             notes: invoiceData.notes || "",
-            items: invoiceData.invoice_items.map((item: any) => ({
+            items: Array.isArray(invoiceData.invoice_items) ? invoiceData.invoice_items.map((item: any) => ({
               id: item.id,
               productId: item.product_id,
               productName: item.product_name,
@@ -101,9 +108,15 @@ export const useFetchInvoiceData = ({
               quantity: item.quantity,
               gstRate: item.gst_rate,
               unit: item.unit,
-            }))
+            })) : []
           }));
         }
+      } else {
+        // For new invoices, apply the default template from company settings
+        setInvoice(prev => ({
+          ...prev,
+          template: defaultTemplate
+        }));
       }
     } catch (error: any) {
       console.error('Error fetching data:', error);

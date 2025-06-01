@@ -22,6 +22,7 @@ export const useInvoiceState = (initialTemplate?: InvoiceTemplate) => {
   const [total, setTotal] = useState<number>(0);
   
   // Initial invoice state with status field defaulting to "paid" and template field
+  // Ensure items is always initialized as an array
   const [invoice, setInvoice] = useState({
     customerId: "",
     invoiceNumber: "",

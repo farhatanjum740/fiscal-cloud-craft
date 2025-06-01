@@ -29,15 +29,31 @@ export const useInvoiceCalculations = ({
   
   // Calculate totals whenever invoice items change or customer changes
   useEffect(() => {
+    // Early return if invoice is not ready
+    if (!invoice || !invoice.items) {
+      console.log("Invoice or invoice.items not ready yet, skipping calculations");
+      return;
+    }
+
     console.log("Calculating totals...");
     console.log("Current invoice items:", invoice.items);
     console.log("Current customer ID:", invoice.customerId);
     
-    // Safety check for invoice.items
+    // Safety check for invoice.items - ensure it's an array
     const items = Array.isArray(invoice.items) ? invoice.items : [];
     
+    if (items.length === 0) {
+      console.log("No items to calculate, setting defaults");
+      setSubtotal(0);
+      setGstDetails({ cgst: 0, sgst: 0, igst: 0 });
+      setTotal(0);
+      return;
+    }
+    
     const calcSubtotal = items.reduce((acc: number, item: any) => {
-      return acc + (item.price * item.quantity);
+      const price = typeof item.price === 'number' ? item.price : 0;
+      const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+      return acc + (price * quantity);
     }, 0);
     
     console.log("Calculated subtotal:", calcSubtotal);
@@ -52,7 +68,11 @@ export const useInvoiceCalculations = ({
     let igst = 0;
     
     items.forEach((item: any) => {
-      const gstAmount = (item.price * item.quantity * item.gstRate) / 100;
+      const price = typeof item.price === 'number' ? item.price : 0;
+      const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+      const gstRate = typeof item.gstRate === 'number' ? item.gstRate : 0;
+      
+      const gstAmount = (price * quantity * gstRate) / 100;
       
       if (customer && company) {
         console.log("Customer state:", customer.shipping_state);
@@ -84,7 +104,7 @@ export const useInvoiceCalculations = ({
     console.log("Final total:", finalTotal);
     setTotal(finalTotal);
     
-  }, [invoice.items, invoice.customerId, customers, company, setSubtotal, setGstDetails, setTotal]);
+  }, [invoice, invoice?.items, invoice?.customerId, customers, company, setSubtotal, setGstDetails, setTotal]);
 
   return {
     getCustomerById

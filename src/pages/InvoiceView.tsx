@@ -29,6 +29,8 @@ const InvoiceView = () => {
       if (!id || !user) return;
 
       try {
+        console.log("Fetching invoice with ID:", id);
+        
         // Fetch invoice
         const { data: invoiceData, error: invoiceError } = await supabase
           .from("invoices")
@@ -39,6 +41,9 @@ const InvoiceView = () => {
 
         if (invoiceError) throw invoiceError;
 
+        console.log("Fetched invoice data:", invoiceData);
+        console.log("Invoice template from database:", invoiceData.template);
+        
         setInvoice(invoiceData);
 
         // Fetch customer
@@ -152,11 +157,13 @@ const InvoiceView = () => {
     items: items
   };
 
-  // Get the template from the invoice - ensure it's a valid template
+  // Get the template from the invoice - ensure it's a valid template, with proper fallback
   const validTemplates: InvoiceTemplate[] = ['standard', 'tally', 'busy', 'zoho', 'classic'];
   const template = validTemplates.includes(invoice.template as InvoiceTemplate) 
     ? (invoice.template as InvoiceTemplate) 
     : 'standard';
+
+  console.log("Final template being used:", template);
 
   return (
     <div className="space-y-6">
