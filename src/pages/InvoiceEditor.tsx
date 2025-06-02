@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -25,9 +26,7 @@ import { Plus, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useInvoice } from "@/hooks/useInvoice";
 import { SubscriptionProvider } from "@/components/subscription/SubscriptionProvider";
-import { TemplateSelector } from "@/components/invoices/templates/TemplateSelector";
-import { useInvoiceTemplate } from "@/hooks/useInvoiceTemplate";
-import { InvoiceTemplate } from "@/types/invoice-templates";
+import { TEMPLATE_OPTIONS } from "@/types/invoice-templates";
 
 // Standard units commonly used in Indian businesses
 const unitOptions = [
@@ -91,17 +90,6 @@ const InvoiceEditorContent = () => {
     generateInvoiceNumber,
     saveInvoice
   } = useInvoice(id);
-
-  // Template management
-  const { selectedTemplate, setSelectedTemplate } = useInvoiceTemplate(
-    company?.id,
-    invoice.template as InvoiceTemplate
-  );
-
-  // Update invoice template when selection changes
-  useEffect(() => {
-    setInvoice(prev => ({ ...prev, template: selectedTemplate }));
-  }, [selectedTemplate, setInvoice]);
   
   useEffect(() => {
     if (companySettings) {
@@ -121,6 +109,12 @@ const InvoiceEditorContent = () => {
         item.id !== currentItemId && item.productId === product.id
       );
     });
+  };
+
+  // Get the template label for display
+  const getTemplateLabel = (templateValue: string) => {
+    const templateOption = TEMPLATE_OPTIONS.find(t => t.value === templateValue);
+    return templateOption ? templateOption.label : 'Standard';
   };
   
   const handleSave = () => {
@@ -270,12 +264,19 @@ const InvoiceEditorContent = () => {
                   </Select>
                 </div>
 
-                {/* Template Selection */}
-                <TemplateSelector
-                  selectedTemplate={selectedTemplate}
-                  onTemplateChange={setSelectedTemplate}
-                  disabled={loading || loadingData}
-                />
+                {/* Template Display (Read-only) */}
+                <div className="space-y-2">
+                  <Label htmlFor="template">Invoice Template</Label>
+                  <Input
+                    id="template"
+                    value={getTemplateLabel(invoice.template || 'standard')}
+                    disabled={true}
+                    className="bg-gray-50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Template is set by company settings. Contact admin to change.
+                  </p>
+                </div>
               </CardContent>
             </Card>
             
@@ -435,7 +436,7 @@ const InvoiceEditorContent = () => {
           
           <div className="flex justify-end gap-2">
             <div>Subtotal: ₹{subtotal.toLocaleString()}</div>
-            <div>GST: ₹{gstDetails.cgst + gstDetails.sgst + gstDetails.igst}</div>
+            <div>GST: ₹{(gstDetails.cgst + gstDetails.sgst + gstDetails.igst).toLocaleString()}</div>
             <div>Total: ₹{total.toLocaleString()}</div>
           </div>
           

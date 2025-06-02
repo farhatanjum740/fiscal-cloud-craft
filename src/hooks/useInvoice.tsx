@@ -16,9 +16,8 @@ export const useInvoice = (id?: string) => {
   const navigate = useNavigate();
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
   const [productSearchQuery, setProductSearchQuery] = useState("");
-  const [defaultTemplate, setDefaultTemplate] = useState<InvoiceTemplate>('standard');
 
-  const invoiceState = useInvoiceState(defaultTemplate);
+  const invoiceState = useInvoiceState();
   const {
     loading,
     setLoading,
@@ -91,6 +90,9 @@ export const useInvoice = (id?: string) => {
     user,
     company,
     invoice,
+    subtotal,
+    gstDetails,
+    total,
     setLoading,
     navigate,
     id,

@@ -7,6 +7,9 @@ interface UseSaveInvoiceParams {
   user: any;
   company: any;
   invoice: any;
+  subtotal: number;
+  gstDetails: { cgst: number; sgst: number; igst: number };
+  total: number;
   setLoading: (loading: boolean) => void;
   navigate: (path: string) => void;
   id?: string;
@@ -16,11 +19,16 @@ export const useSaveInvoice = ({
   user,
   company,
   invoice,
+  subtotal,
+  gstDetails,
+  total,
   setLoading,
   navigate,
   id,
 }: UseSaveInvoiceParams) => {
   const saveInvoice = useCallback(async () => {
+    console.log("Saving invoice with calculated amounts:", { subtotal, gstDetails, total });
+    
     if (!user || !company) {
       toast({
         title: "Error",
@@ -39,10 +47,19 @@ export const useSaveInvoice = ({
       return;
     }
 
-    if (invoice.items.length === 0) {
+    if (!Array.isArray(invoice.items) || invoice.items.length === 0) {
       toast({
         title: "Error",
         description: "Please add at least one item",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!invoice.invoiceNumber) {
+      toast({
+        title: "Error",
+        description: "Invoice number is required",
         variant: "destructive",
       });
       return;
@@ -62,12 +79,14 @@ export const useSaveInvoice = ({
         status: invoice.status || 'paid',
         terms_and_conditions: invoice.termsAndConditions,
         notes: invoice.notes,
-        subtotal: 0, // Will be calculated
-        cgst: 0,
-        sgst: 0,
-        igst: 0,
-        total_amount: 0,
+        subtotal: subtotal,
+        cgst: gstDetails.cgst,
+        sgst: gstDetails.sgst,
+        igst: gstDetails.igst,
+        total_amount: total,
       };
+
+      console.log("Saving invoice data:", invoiceData);
 
       let savedInvoice;
       if (id) {
@@ -91,6 +110,12 @@ export const useSaveInvoice = ({
         
         if (error) throw error;
         savedInvoice = data;
+
+        // Update the company settings counter for new invoices only
+        await supabase.rpc('get_next_invoice_number', {
+          p_company_id: company.id,
+          p_financial_year: invoice.financialYear
+        });
       }
 
       // Save invoice items
@@ -137,7 +162,7 @@ export const useSaveInvoice = ({
     } finally {
       setLoading(false);
     }
-  }, [user, company, invoice, setLoading, navigate, id]);
+  }, [user, company, invoice, subtotal, gstDetails, total, setLoading, navigate, id]);
 
   return { saveInvoice };
 };

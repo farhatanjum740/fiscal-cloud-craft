@@ -36,26 +36,31 @@ export const useInvoiceNumber = ({
       
       console.log("Generating invoice number for financial year:", invoice.financialYear);
       
-      // Instead of incrementing, just fetch the next available number without updating the counter
-      // The counter will only be updated when an invoice is actually saved
+      // Get current settings or create new ones
       const { data: settingsData, error: settingsError } = await supabase
         .from('company_settings')
         .select('invoice_counter, current_financial_year')
         .eq('company_id', company.id)
-        .single();
+        .maybeSingle();
         
       if (settingsError) {
+        console.error("Error fetching settings:", settingsError);
         throw settingsError;
       }
       
-      // Calculate the next invoice number but don't save it yet
-      let nextCounter = 1; // Default to 1 if no settings exist
+      let nextCounter = 1; // Default to 1 for new companies
       
       if (settingsData) {
+        console.log("Found existing settings:", settingsData);
         if (settingsData.current_financial_year === invoice.financialYear) {
-          nextCounter = settingsData.invoice_counter;
+          // Same financial year, use next counter
+          nextCounter = (settingsData.invoice_counter || 0) + 1;
+        } else {
+          // Different financial year, start from 1
+          nextCounter = 1;
         }
-        // If financial year has changed, start from 1
+      } else {
+        console.log("No existing settings found, will create new record");
       }
       
       // Format the invoice number: YYYY-YYYY/001
