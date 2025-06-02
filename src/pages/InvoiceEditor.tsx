@@ -25,7 +25,6 @@ import { Plus, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useInvoice } from "@/hooks/useInvoice";
 import { SubscriptionProvider } from "@/components/subscription/SubscriptionProvider";
-import { TEMPLATE_OPTIONS } from "@/types/invoice-templates";
 
 // Standard units commonly used in Indian businesses
 const unitOptions = [
@@ -112,8 +111,7 @@ const InvoiceEditorContent = () => {
 
   // Get the template label for display
   const getTemplateLabel = (templateValue: string) => {
-    const templateOption = TEMPLATE_OPTIONS.find(t => t.value === templateValue);
-    return templateOption ? templateOption.label : 'Standard';
+    return 'Company Default Template';
   };
   
   const handleSave = () => {
@@ -138,7 +136,7 @@ const InvoiceEditorContent = () => {
     if (!invoice.invoiceNumber) {
       toast({
         title: "Missing Invoice Number",
-        description: "Please generate an invoice number before saving.",
+        description: "Invoice number is being generated. Please wait.",
         variant: "destructive",
       });
       return;
@@ -209,23 +207,13 @@ const InvoiceEditorContent = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="invoiceNumber"
-                        value={invoice.invoiceNumber || ""}
-                        readOnly
-                        className="bg-gray-50"
-                        placeholder={isGeneratingInvoiceNumber ? "Generating..." : "Click Generate"}
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={generateInvoiceNumber}
-                        disabled={isGeneratingInvoiceNumber || !company || !invoice.financialYear}
-                      >
-                        {isGeneratingInvoiceNumber ? "..." : "Generate"}
-                      </Button>
-                    </div>
+                    <Input
+                      id="invoiceNumber"
+                      value={invoice.invoiceNumber || (isGeneratingInvoiceNumber ? "Generating..." : "")}
+                      readOnly
+                      className="bg-gray-50"
+                      placeholder={isGeneratingInvoiceNumber ? "Generating..." : "Auto-generated"}
+                    />
                   </div>
                   
                   <div className="space-y-2">

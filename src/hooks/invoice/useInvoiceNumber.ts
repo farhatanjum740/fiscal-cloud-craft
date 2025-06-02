@@ -23,16 +23,17 @@ export const useInvoiceNumber = ({
     console.log("generateInvoiceNumber called, company:", company?.id);
     if (!company || !company.id) {
       console.log("No company data, cannot generate invoice number");
-      toast({
-        title: "Error",
-        description: "Company profile is required to generate invoice number",
-        variant: "destructive",
-      });
       return;
     }
     
     if (!invoice.financialYear) {
       console.log("No financial year set, cannot generate invoice number");
+      return;
+    }
+    
+    // Don't generate if invoice number already exists
+    if (invoice.invoiceNumber) {
+      console.log("Invoice number already exists:", invoice.invoiceNumber);
       return;
     }
     
@@ -43,6 +44,7 @@ export const useInvoiceNumber = ({
       console.log("Company ID:", company.id);
       
       // Call the database function to get the next invoice number
+      // This function will only increment the counter when actually called for saving
       const { data: invoiceNumberData, error: invoiceNumberError } = await supabase
         .rpc('get_next_invoice_number', {
           p_company_id: company.id,
@@ -66,11 +68,6 @@ export const useInvoiceNumber = ({
       // Store the generated number for future use within this session
       setGeneratedInvoiceNumber(invoiceNumber);
       
-      toast({
-        title: "Success",
-        description: "Invoice number generated successfully",
-      });
-      
     } catch (error: any) {
       console.error("Error generating invoice number:", error);
       toast({
@@ -81,7 +78,7 @@ export const useInvoiceNumber = ({
     } finally {
       setIsGeneratingInvoiceNumber(false);
     }
-  }, [company, invoice.financialYear, setInvoice, setIsGeneratingInvoiceNumber, setGeneratedInvoiceNumber]);
+  }, [company, invoice.financialYear, invoice.invoiceNumber, setInvoice, setIsGeneratingInvoiceNumber, setGeneratedInvoiceNumber]);
 
   return { generateInvoiceNumber };
 };
