@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -136,6 +135,15 @@ const InvoiceEditorContent = () => {
       return;
     }
     
+    if (!invoice.invoiceNumber) {
+      toast({
+        title: "Missing Invoice Number",
+        description: "Please generate an invoice number before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     saveInvoice();
   };
   
@@ -201,15 +209,23 @@ const InvoiceEditorContent = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                    <Input
-                      id="invoiceNumber"
-                      value={invoice.invoiceNumber}
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                    {isGeneratingInvoiceNumber && (
-                      <p className="text-xs text-muted-foreground">Generating invoice number...</p>
-                    )}
+                    <div className="flex gap-2">
+                      <Input
+                        id="invoiceNumber"
+                        value={invoice.invoiceNumber || ""}
+                        readOnly
+                        className="bg-gray-50"
+                        placeholder={isGeneratingInvoiceNumber ? "Generating..." : "Click Generate"}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={generateInvoiceNumber}
+                        disabled={isGeneratingInvoiceNumber || !company || !invoice.financialYear}
+                      >
+                        {isGeneratingInvoiceNumber ? "..." : "Generate"}
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
@@ -264,7 +280,7 @@ const InvoiceEditorContent = () => {
                   </Select>
                 </div>
 
-                {/* Template Display (Read-only) */}
+                {/* Template Display (Read-only) - COMPANY DEFAULT ENFORCED */}
                 <div className="space-y-2">
                   <Label htmlFor="template">Invoice Template</Label>
                   <Input
@@ -274,7 +290,7 @@ const InvoiceEditorContent = () => {
                     className="bg-gray-50"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Template is set by company settings. Contact admin to change.
+                    Template is set by company settings and cannot be changed at invoice level.
                   </p>
                 </div>
               </CardContent>

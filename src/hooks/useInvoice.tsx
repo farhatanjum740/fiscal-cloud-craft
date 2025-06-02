@@ -109,6 +109,14 @@ export const useInvoice = (id?: string) => {
     getAvailableFinancialYears();
   }, [getCurrentFinancialYear, getAvailableFinancialYears]);
 
+  // Auto-generate invoice number when financial year and company are available
+  useEffect(() => {
+    if (!id && company && invoice.financialYear && !invoice.invoiceNumber && !isGeneratingInvoiceNumber) {
+      console.log("Auto-generating invoice number...");
+      generateInvoiceNumber();
+    }
+  }, [company, invoice.financialYear, invoice.invoiceNumber, generateInvoiceNumber, isGeneratingInvoiceNumber, id]);
+
   const handleDateChange = (date: Date | null) => {
     if (date) {
       setInvoice(prev => ({ ...prev, invoiceDate: date }));

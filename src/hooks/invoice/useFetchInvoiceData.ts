@@ -60,19 +60,23 @@ export const useFetchInvoiceData = ({
       
       // Fetch company settings
       let defaultTemplate: InvoiceTemplate = 'standard';
+      let settingsData = null;
+      
       if (companyData) {
-        const { data: settingsData, error: settingsError } = await supabase
+        const { data: fetchedSettings, error: settingsError } = await supabase
           .from('company_settings')
           .select('*')
           .eq('company_id', companyData.id)
           .maybeSingle();
         
         if (settingsError) console.error('Error fetching company settings:', settingsError);
+        settingsData = fetchedSettings;
         setCompanySettings(settingsData);
         
         // Extract default template from settings
         if (settingsData?.default_template) {
           defaultTemplate = settingsData.default_template as InvoiceTemplate;
+          console.log("Using company default template:", defaultTemplate);
         }
       }
       
@@ -94,10 +98,11 @@ export const useFetchInvoiceData = ({
             invoiceDate: new Date(invoiceData.invoice_date),
             dueDate: invoiceData.due_date ? new Date(invoiceData.due_date) : new Date(new Date().setDate(new Date().getDate() + 30)),
             financialYear: invoiceData.financial_year,
-            template: (invoiceData.template as InvoiceTemplate) || defaultTemplate,
+            // Always use company default template, not stored template
+            template: defaultTemplate,
             status: invoiceData.status || 'paid',
-            termsAndConditions: invoiceData.terms_and_conditions || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
-            notes: invoiceData.notes || "",
+            termsAndConditions: invoiceData.terms_and_conditions || settingsData?.default_terms || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
+            notes: invoiceData.notes || settingsData?.default_notes || "",
             items: Array.isArray(invoiceData.invoice_items) ? invoiceData.invoice_items.map((item: any) => ({
               id: item.id,
               productId: item.product_id,
@@ -112,10 +117,13 @@ export const useFetchInvoiceData = ({
           }));
         }
       } else {
-        // For new invoices, apply the default template from company settings
+        // For new invoices, always apply the company default template
+        console.log("Setting template for new invoice:", defaultTemplate);
         setInvoice(prev => ({
           ...prev,
-          template: defaultTemplate
+          template: defaultTemplate,
+          termsAndConditions: settingsData?.default_terms || "1. Payment is due within 30 days from the date of invoice.\n2. Please include the invoice number as reference when making payment.",
+          notes: settingsData?.default_notes || ""
         }));
       }
     } catch (error: any) {
