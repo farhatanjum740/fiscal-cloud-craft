@@ -67,11 +67,32 @@ export const useSaveInvoice = ({
 
     setLoading(true);
     try {
+      let finalInvoiceNumber = invoice.invoiceNumber;
+      
+      // Only generate and increment counter for new invoices
+      if (!id) {
+        // Call the database function to get the next invoice number and increment counter
+        const { data: invoiceNumberData, error: invoiceNumberError } = await supabase
+          .rpc('get_next_invoice_number', {
+            p_company_id: company.id,
+            p_financial_year: invoice.financialYear,
+            p_prefix: ''
+          });
+          
+        if (invoiceNumberError) {
+          console.error("Error calling get_next_invoice_number:", invoiceNumberError);
+          throw invoiceNumberError;
+        }
+        
+        finalInvoiceNumber = invoiceNumberData;
+        console.log("Final invoice number from database:", finalInvoiceNumber);
+      }
+
       const invoiceData = {
         user_id: user.id,
         company_id: company.id,
         customer_id: invoice.customerId,
-        invoice_number: invoice.invoiceNumber,
+        invoice_number: finalInvoiceNumber,
         invoice_date: invoice.invoiceDate.toISOString().split('T')[0],
         due_date: invoice.dueDate ? invoice.dueDate.toISOString().split('T')[0] : null,
         financial_year: invoice.financialYear,
@@ -110,12 +131,6 @@ export const useSaveInvoice = ({
         
         if (error) throw error;
         savedInvoice = data;
-
-        // Update the company settings counter for new invoices only
-        await supabase.rpc('get_next_invoice_number', {
-          p_company_id: company.id,
-          p_financial_year: invoice.financialYear
-        });
       }
 
       // Save invoice items
