@@ -131,6 +131,19 @@ export const useSaveInvoice = ({
         
         if (error) throw error;
         savedInvoice = data;
+
+        // Increment usage for new invoices only
+        try {
+          await supabase.rpc('increment_usage', {
+            p_user_id: user.id,
+            p_company_id: company.id,
+            p_action_type: 'invoice'
+          });
+          console.log("Successfully incremented invoice usage");
+        } catch (usageError) {
+          console.error("Error incrementing invoice usage:", usageError);
+          // Don't fail the invoice creation if usage tracking fails
+        }
       }
 
       // Save invoice items

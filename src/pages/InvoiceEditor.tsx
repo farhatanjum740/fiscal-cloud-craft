@@ -24,6 +24,7 @@ import {
 import { Plus, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useInvoice } from "@/hooks/useInvoice";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 import { SubscriptionProvider } from "@/components/subscription/SubscriptionProvider";
 
 // Standard units commonly used in Indian businesses
@@ -59,6 +60,7 @@ const InvoiceEditorContent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkInvoiceLimit } = useUsageLimits();
   
   const {
     invoice,
@@ -114,7 +116,7 @@ const InvoiceEditorContent = () => {
     return 'Company Default Template';
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!invoice.customerId) {
       toast({
         title: "Missing Customer",
@@ -140,6 +142,14 @@ const InvoiceEditorContent = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Check usage limits for new invoices only
+    if (!id) {
+      const canCreate = await checkInvoiceLimit();
+      if (!canCreate) {
+        return; // User has reached their limit, error message already shown
+      }
     }
     
     saveInvoice();

@@ -63,6 +63,19 @@ export const useUsageLimits = () => {
     return await canPerformAction('credit_note', company.id);
   };
 
+  // Helper function to increment usage and refresh subscription data
+  const incrementUsageAndRefresh = async (actionType: 'invoice' | 'customer' | 'credit_note') => {
+    if (!user || !company) return false;
+    
+    try {
+      const success = await checkLimitAndAct(actionType, company.id);
+      return success;
+    } catch (error) {
+      console.error(`Error incrementing ${actionType} usage:`, error);
+      return false;
+    }
+  };
+
   return {
     checkCustomerLimit,
     checkInvoiceLimit,
@@ -70,6 +83,7 @@ export const useUsageLimits = () => {
     canCreateCustomer,
     canCreateInvoice,
     canCreateCreditNote,
+    incrementUsageAndRefresh,
     company,
     isCompanyLoaded: !!company
   };

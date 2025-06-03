@@ -3,10 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 import { useSubscriptionContext } from './SubscriptionProvider';
 
 const UsageDashboard = () => {
-  const { subscription, limits, usage, loading } = useSubscriptionContext();
+  const { subscription, limits, usage, loading, refetch } = useSubscriptionContext();
 
   if (loading) {
     return <div>Loading usage data...</div>;
@@ -26,13 +28,28 @@ const UsageDashboard = () => {
     return 'text-green-600';
   };
 
+  const handleRefresh = async () => {
+    await refetch();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Usage Dashboard</h2>
-        <Badge variant={plan === 'freemium' ? 'secondary' : 'default'}>
-          {planName} Plan
-        </Badge>
+        <div className="flex items-center gap-4">
+          <Badge variant={plan === 'freemium' ? 'secondary' : 'default'}>
+            {planName} Plan
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -54,6 +71,9 @@ const UsageDashboard = () => {
                   {getUsagePercentage(usage?.invoices_count || 0, limits?.invoices || 0).toFixed(1)}% used
                 </p>
               </div>
+            )}
+            {limits?.invoices === -1 && (
+              <p className="text-sm text-green-600 font-medium">Unlimited usage</p>
             )}
           </CardContent>
         </Card>
@@ -77,6 +97,9 @@ const UsageDashboard = () => {
                 </p>
               </div>
             )}
+            {limits?.customers === -1 && (
+              <p className="text-sm text-green-600 font-medium">Unlimited usage</p>
+            )}
           </CardContent>
         </Card>
 
@@ -99,6 +122,9 @@ const UsageDashboard = () => {
                 </p>
               </div>
             )}
+            {limits?.credit_notes === -1 && (
+              <p className="text-sm text-green-600 font-medium">Unlimited usage</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -115,6 +141,26 @@ const UsageDashboard = () => {
             <div>
               <strong>Priority Support:</strong> {limits?.priority_support ? 'Available' : 'Standard Support'}
             </div>
+            <div>
+              <strong>Users:</strong> {limits?.users === -1 ? 'Unlimited' : limits?.users || 0}
+            </div>
+            <div>
+              <strong>Current Period:</strong> {usage?.month_year || 'N/A'}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Usage Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p>• Usage limits reset monthly on the 1st of each month</p>
+            <p>• Unlimited features don't have monthly restrictions</p>
+            <p>• Usage data is updated in real-time when you create new records</p>
+            <p>• Contact support if you notice any discrepancies in usage tracking</p>
           </div>
         </CardContent>
       </Card>

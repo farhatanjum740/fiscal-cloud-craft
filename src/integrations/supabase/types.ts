@@ -817,6 +817,10 @@ export type Database = {
         Args: { p_user_id: string; p_company_id: string; p_action_type: string }
         Returns: undefined
       }
+      initialize_user_usage: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       subscription_plan: "freemium" | "premium" | "starter" | "professional"
