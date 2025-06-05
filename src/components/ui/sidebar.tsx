@@ -33,60 +33,62 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
   };
 
   return (
-    <div className="flex h-screen">
+    <>
       {/* Mobile Sidebar */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 bg-[#0d2252]">
-          <SheetHeader className="text-left">
-            <SheetTitle className="text-white">Menu</SheetTitle>
-            <SheetDescription className="text-gray-300">
-              Navigate through your dashboard.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="py-4">
-            {sidebarItems.map((item, index) => (
-              <NavLink
-                key={index}
-                to={item.path}
-                className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${isActive(item.path) ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'}`}
-              >
-                {item.icon}
-                <span>{item.title}</span>
-              </NavLink>
-            ))}
-            
-            <div className="mt-6 pt-4 border-t border-[#1a3b7a]">
-              <div className="px-4 text-sm font-medium text-gray-400 mb-2">Settings</div>
-              <NavLink
-                to="/app/settings/company"
-                className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${
-                  isActive("/app/settings/company") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
-                }`}
-              >
-                <Settings className="h-5 w-5" />
-                <span>Company Profile</span>
-              </NavLink>
-              <NavLink
-                to="/app/subscription"
-                className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${
-                  isActive("/app/subscription") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
-                }`}
-              >
-                <CreditCard className="h-5 w-5" />
-                <span>Subscription</span>
-              </NavLink>
+      <div className="md:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 bg-[#0d2252]">
+            <SheetHeader className="text-left">
+              <SheetTitle className="text-white">Menu</SheetTitle>
+              <SheetDescription className="text-gray-300">
+                Navigate through your dashboard.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="py-4">
+              {sidebarItems.map((item, index) => (
+                <NavLink
+                  key={index}
+                  to={item.path}
+                  className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${isActive(item.path) ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'}`}
+                >
+                  {item.icon}
+                  <span>{item.title}</span>
+                </NavLink>
+              ))}
+              
+              <div className="mt-6 pt-4 border-t border-[#1a3b7a]">
+                <div className="px-4 text-sm font-medium text-gray-400 mb-2">Settings</div>
+                <NavLink
+                  to="/app/settings/company"
+                  className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${
+                    isActive("/app/settings/company") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
+                  }`}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Company Profile</span>
+                </NavLink>
+                <NavLink
+                  to="/app/subscription"
+                  className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-[#14325e] ${
+                    isActive("/app/subscription") ? 'bg-[#1a3b7a] text-white' : 'text-gray-300'
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span>Subscription</span>
+                </NavLink>
+              </div>
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
+      </div>
 
       {/* Desktop Sidebar */}
-      <div className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 border-r border-[#1a3b7a] bg-[#0d2252] fixed h-full z-10`}>
+      <div className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 border-r border-[#1a3b7a] bg-[#0d2252] h-screen sticky top-0 z-10 hidden md:block`}>
         {/* Collapse/expand button */}
         <Button 
           variant="ghost" 
@@ -167,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ signOut }) => {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 
