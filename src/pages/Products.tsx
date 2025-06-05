@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -48,11 +47,16 @@ const Products = () => {
     const checkLimits = async () => {
       if (user) {
         const canAdd = await canCreateProduct();
+        console.log("Subscription limits:", limits);
+        console.log("Current usage:", usage);
+        console.log("Can create product:", canAdd);
+        console.log("Products count from usage:", usage?.products_count);
+        console.log("Product limit from limits:", limits?.products);
         setCanAddProduct(canAdd);
       }
     };
     checkLimits();
-  }, [user, canCreateProduct, usage]);
+  }, [user, canCreateProduct, usage, limits]);
   
   // Fetch products with proper error handling
   const { data: products, isLoading, error } = useQuery({
@@ -140,16 +144,37 @@ const Products = () => {
   const getUsageText = () => {
     if (!limits || !usage) return '';
     if (limits.products === -1) return 'Unlimited';
-    return `${usage.products_count || 0} / ${limits.products}`;
+    
+    // Use actual products count from the database instead of usage table
+    const actualCount = products?.length || 0;
+    console.log("Actual products count from DB:", actualCount);
+    return `${actualCount} / ${limits.products}`;
   };
 
   // Get usage color
   const getUsageColor = () => {
-    if (!limits || !usage || limits.products === -1) return 'text-green-600';
-    const percentage = (usage.products_count || 0) / limits.products * 100;
+    if (!limits || limits.products === -1) return 'text-green-600';
+    
+    // Use actual products count from the database
+    const actualCount = products?.length || 0;
+    const percentage = actualCount / limits.products * 100;
     if (percentage >= 90) return 'text-red-600';
     if (percentage >= 75) return 'text-orange-600';
     return 'text-green-600';
+  };
+
+  // Check if we should show limit warning
+  const shouldShowLimitWarning = () => {
+    if (!limits || limits.products === -1) return false;
+    const actualCount = products?.length || 0;
+    return actualCount >= limits.products;
+  };
+
+  // Check if button should be disabled
+  const isAddButtonDisabled = () => {
+    if (!limits || limits.products === -1) return false;
+    const actualCount = products?.length || 0;
+    return actualCount >= limits.products;
   };
   
   if (!user) {
@@ -170,19 +195,26 @@ const Products = () => {
             </div>
           )}
         </div>
-        <Link to="/app/products/new">
-          <Button disabled={!canAddProduct}>
+        {isAddButtonDisabled() ? (
+          <Button disabled>
             <Plus className="h-4 w-4 mr-2" />
             Add New Product
           </Button>
-        </Link>
+        ) : (
+          <Link to="/app/products/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Product
+            </Button>
+          </Link>
+        )}
       </div>
       
-      {!canAddProduct && limits && limits.products !== -1 && (
+      {shouldShowLimitWarning() && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="pt-6">
             <p className="text-sm text-orange-800">
-              You've reached your product limit ({limits.products} products). 
+              You've reached your product limit ({limits?.products} products). 
               Upgrade your plan to add more products.
             </p>
           </CardContent>

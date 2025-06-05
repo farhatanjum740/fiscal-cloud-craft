@@ -3,11 +3,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSubscriptionContext } from '@/components/subscription/SubscriptionProvider';
 import { useCompanyWithFallback } from '@/hooks/useCompanyWithFallback';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useUsageLimits = () => {
   const { user } = useAuth();
   const { company } = useCompanyWithFallback(user?.id);
-  const { checkLimitAndAct, canPerformAction } = useSubscriptionContext();
+  const { checkLimitAndAct, canPerformAction, limits } = useSubscriptionContext();
 
   const checkCustomerLimit = async (): Promise<boolean> => {
     if (!user || !company) {
@@ -77,8 +78,26 @@ export const useUsageLimits = () => {
   };
 
   const canCreateProduct = async (): Promise<boolean> => {
-    if (!user || !company) return false;
-    return await canPerformAction('product', company.id);
+    if (!user || !limits) return false;
+    
+    // If unlimited products, always allow
+    if (limits.products === -1) return true;
+    
+    try {
+      // Get actual count from database
+      const { count } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      console.log("Actual products count from DB in canCreateProduct:", count);
+      console.log("Product limit:", limits.products);
+      
+      return (count || 0) < limits.products;
+    } catch (error) {
+      console.error('Error checking product count:', error);
+      return false;
+    }
   };
 
   const canAccessApi = async (): Promise<boolean> => {
