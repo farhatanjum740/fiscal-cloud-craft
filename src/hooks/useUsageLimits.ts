@@ -48,6 +48,19 @@ export const useUsageLimits = () => {
     return await checkLimitAndAct('credit_note', company.id);
   };
 
+  const checkProductLimit = async (): Promise<boolean> => {
+    if (!user || !company) {
+      toast({
+        title: "Error",
+        description: "User or company data not available. Please ensure your profile is set up.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return await checkLimitAndAct('product', company.id);
+  };
+
   const canCreateCustomer = async (): Promise<boolean> => {
     if (!user || !company) return false;
     return await canPerformAction('customer', company.id);
@@ -63,8 +76,18 @@ export const useUsageLimits = () => {
     return await canPerformAction('credit_note', company.id);
   };
 
+  const canCreateProduct = async (): Promise<boolean> => {
+    if (!user || !company) return false;
+    return await canPerformAction('product', company.id);
+  };
+
+  const canAccessApi = async (): Promise<boolean> => {
+    if (!user || !company) return false;
+    return await canPerformAction('api_access', company.id);
+  };
+
   // Helper function to increment usage and refresh subscription data
-  const incrementUsageAndRefresh = async (actionType: 'invoice' | 'customer' | 'credit_note') => {
+  const incrementUsageAndRefresh = async (actionType: 'invoice' | 'customer' | 'credit_note' | 'product') => {
     if (!user || !company) return false;
     
     try {
@@ -80,9 +103,12 @@ export const useUsageLimits = () => {
     checkCustomerLimit,
     checkInvoiceLimit,
     checkCreditNoteLimit,
+    checkProductLimit,
     canCreateCustomer,
     canCreateInvoice,
     canCreateCreditNote,
+    canCreateProduct,
+    canAccessApi,
     incrementUsageAndRefresh,
     company,
     isCompanyLoaded: !!company

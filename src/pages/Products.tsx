@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { 
   Package,
   Plus,
@@ -29,13 +30,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSubscriptionContext } from "@/components/subscription/SubscriptionProvider";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 import type { Product } from "@/types";
 
 const Products = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { limits, usage } = useSubscriptionContext();
+  const { canCreateProduct } = useUsageLimits();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [canAddProduct, setCanAddProduct] = useState(false);
+  
+  // Check if user can add products
+  useEffect(() => {
+    const checkLimits = async () => {
+      if (user) {
+        const canAdd = await canCreateProduct();
+        setCanAddProduct(canAdd);
+      }
+    };
+    checkLimits();
+  }, [user, canCreateProduct, usage]);
   
   // Fetch products with proper error handling
   const { data: products, isLoading, error } = useQuery({
@@ -118,6 +135,22 @@ const Products = () => {
     (product.hsn_code && product.hsn_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
+
+  // Get usage display text
+  const getUsageText = () => {
+    if (!limits || !usage) return '';
+    if (limits.products === -1) return 'Unlimited';
+    return `${usage.products_count || 0} / ${limits.products}`;
+  };
+
+  // Get usage color
+  const getUsageColor = () => {
+    if (!limits || !usage || limits.products === -1) return 'text-green-600';
+    const percentage = (usage.products_count || 0) / limits.products * 100;
+    if (percentage >= 90) return 'text-red-600';
+    if (percentage >= 75) return 'text-orange-600';
+    return 'text-green-600';
+  };
   
   if (!user) {
     return <div className="flex justify-center items-center h-64">Please log in to view products</div>;
@@ -126,14 +159,35 @@ const Products = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Products & Services</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Products & Services</h1>
+          {limits && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-sm text-muted-foreground">Usage:</span>
+              <Badge variant="outline" className={getUsageColor()}>
+                {getUsageText()}
+              </Badge>
+            </div>
+          )}
+        </div>
         <Link to="/app/products/new">
-          <Button>
+          <Button disabled={!canAddProduct}>
             <Plus className="h-4 w-4 mr-2" />
             Add New Product
           </Button>
         </Link>
       </div>
+      
+      {!canAddProduct && limits && limits.products !== -1 && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <p className="text-sm text-orange-800">
+              You've reached your product limit ({limits.products} products). 
+              Upgrade your plan to add more products.
+            </p>
+          </CardContent>
+        </Card>
+      )}
       
       <Card>
         <CardHeader>

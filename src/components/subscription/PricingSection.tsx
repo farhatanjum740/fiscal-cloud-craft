@@ -23,9 +23,11 @@ const PricingSection = () => {
         { name: '50 Invoices per month', included: true },
         { name: '5 Customers', included: true },
         { name: '10 Credit Notes per month', included: true },
+        { name: '5 Products', included: true },
         { name: '1 User', included: true },
         { name: 'Basic Templates', included: true },
         { name: 'GST Reports', included: false },
+        { name: 'API Access', included: false },
         { name: 'Priority Support', included: false },
       ],
       planType: 'freemium' as const,
@@ -40,9 +42,11 @@ const PricingSection = () => {
         { name: 'Unlimited Invoices', included: true },
         { name: '50 Customers', included: true },
         { name: 'Unlimited Credit Notes', included: true },
+        { name: '10 Products', included: true },
         { name: '3 Users', included: true },
         { name: 'All Templates', included: true },
         { name: 'GST Reports', included: false },
+        { name: 'API Access', included: false },
         { name: 'Priority Support', included: true },
       ],
       planType: 'starter' as const,
@@ -57,9 +61,11 @@ const PricingSection = () => {
         { name: 'Unlimited Invoices', included: true },
         { name: 'Unlimited Customers', included: true },
         { name: 'Unlimited Credit Notes', included: true },
+        { name: 'Unlimited Products', included: true },
         { name: 'Unlimited Users', included: true },
         { name: 'All Templates', included: true },
         { name: 'GST Reports', included: true },
+        { name: 'API Access', included: true },
         { name: 'Priority Support', included: true },
       ],
       planType: 'professional' as const,
@@ -188,6 +194,7 @@ const PricingSection = () => {
       <div className="text-center text-sm text-muted-foreground">
         <p>All plans include secure data storage, regular backups, and 99.9% uptime guarantee.</p>
         <p className="mt-2">GST will be added to the final amount as per Indian tax regulations.</p>
+        <p className="mt-2">API access is available for Professional plan users with comprehensive documentation and support.</p>
       </div>
     </div>
   );

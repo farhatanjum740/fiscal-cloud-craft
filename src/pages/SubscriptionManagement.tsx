@@ -8,6 +8,7 @@ import UsageDashboard from '@/components/subscription/UsageDashboard';
 import TeamManagement from '@/components/team/TeamManagement';
 import GSTReportGenerator from '@/components/gst/GSTReportGenerator';
 import PricingSection from '@/components/subscription/PricingSection';
+import ApiManagement from '@/components/api/ApiManagement';
 import { useSubscriptionContext } from '@/components/subscription/SubscriptionProvider';
 
 const SubscriptionContent = () => {
@@ -27,6 +28,9 @@ const SubscriptionContent = () => {
           {limits?.reports && (
             <TabsTrigger value="reports">GST Reports</TabsTrigger>
           )}
+          {limits?.api_access && (
+            <TabsTrigger value="api">API Access</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="usage">
@@ -44,6 +48,12 @@ const SubscriptionContent = () => {
         {limits?.reports && (
           <TabsContent value="reports">
             <GSTReportGenerator />
+          </TabsContent>
+        )}
+
+        {limits?.api_access && (
+          <TabsContent value="api">
+            <ApiManagement />
           </TabsContent>
         )}
       </Tabs>

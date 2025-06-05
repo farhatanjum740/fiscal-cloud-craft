@@ -52,7 +52,7 @@ const UsageDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Invoices</CardTitle>
@@ -127,6 +127,31 @@ const UsageDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Products</CardTitle>
+            <CardDescription>
+              {limits?.products === -1 ? 'Unlimited' : `${usage?.products_count || 0} / ${limits?.products || 0}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {limits?.products !== -1 && (
+              <div className="space-y-2">
+                <Progress 
+                  value={getUsagePercentage(usage?.products_count || 0, limits?.products || 0)} 
+                  className="h-2"
+                />
+                <p className={`text-xs ${getUsageColor(getUsagePercentage(usage?.products_count || 0, limits?.products || 0))}`}>
+                  {getUsagePercentage(usage?.products_count || 0, limits?.products || 0).toFixed(1)}% used
+                </p>
+              </div>
+            )}
+            {limits?.products === -1 && (
+              <p className="text-sm text-green-600 font-medium">Unlimited usage</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -140,6 +165,9 @@ const UsageDashboard = () => {
             </div>
             <div>
               <strong>Priority Support:</strong> {limits?.priority_support ? 'Available' : 'Standard Support'}
+            </div>
+            <div>
+              <strong>API Access:</strong> {limits?.api_access ? 'Available' : 'Not Available'}
             </div>
             <div>
               <strong>Users:</strong> {limits?.users === -1 ? 'Unlimited' : limits?.users || 0}

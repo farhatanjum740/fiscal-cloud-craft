@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          api_key: string
+          company_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          key_name: string
+          last_used_at: string | null
+          rate_limit: number | null
+          scopes: string[] | null
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          company_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name: string
+          last_used_at?: string | null
+          rate_limit?: number | null
+          scopes?: string[] | null
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name?: string
+          last_used_at?: string | null
+          rate_limit?: number | null
+          scopes?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_usage_logs: {
+        Row: {
+          api_key_id: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          ip_address: unknown | null
+          method: string
+          response_time_ms: number | null
+          status_code: number
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          ip_address?: unknown | null
+          method: string
+          response_time_ms?: number | null
+          status_code: number
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          ip_address?: unknown | null
+          method?: string
+          response_time_ms?: number | null
+          status_code?: number
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           address_line1: string | null
@@ -745,6 +820,7 @@ export type Database = {
           id: string
           invoices_count: number | null
           month_year: string
+          products_count: number | null
           updated_at: string | null
           user_id: string
         }
@@ -756,6 +832,7 @@ export type Database = {
           id?: string
           invoices_count?: number | null
           month_year: string
+          products_count?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -767,6 +844,7 @@ export type Database = {
           id?: string
           invoices_count?: number | null
           month_year?: string
+          products_count?: number | null
           updated_at?: string | null
           user_id?: string
         }

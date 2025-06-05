@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -23,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 
 // Common GST rates in India
 const gstRates = [
@@ -50,6 +50,7 @@ const ProductEditor = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { checkProductLimit, canCreateProduct } = useUsageLimits();
   const isEditing = !!id;
   
   const [product, setProduct] = useState({
@@ -89,6 +90,14 @@ const ProductEditor = () => {
     mutationFn: async (data: any) => {
       if (!user) throw new Error('User not authenticated');
       
+      // Check product limit for new products
+      if (!isEditing) {
+        const canCreate = await canCreateProduct();
+        if (!canCreate) {
+          throw new Error('Product limit reached for your current plan');
+        }
+      }
+      
       let result;
       if (isEditing) {
         result = await supabase
@@ -104,6 +113,22 @@ const ProductEditor = () => {
       }
       
       if (result.error) throw result.error;
+
+      // Increment usage for new products only
+      if (!isEditing) {
+        try {
+          await supabase.rpc('increment_usage', {
+            p_user_id: user.id,
+            p_company_id: data.company_id || user.id, // fallback for company_id
+            p_action_type: 'product'
+          });
+          console.log("Successfully incremented product usage");
+        } catch (usageError) {
+          console.error("Error incrementing product usage:", usageError);
+          // Don't fail the product creation if usage tracking fails
+        }
+      }
+
       return result.data;
     },
     onSuccess: () => {
@@ -117,11 +142,11 @@ const ProductEditor = () => {
       
       navigate("/app/products");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error saving product:', error);
       toast({
         title: "Error",
-        description: `Failed to ${isEditing ? 'update' : 'create'} product. Please try again.`,
+        description: error.message || `Failed to ${isEditing ? 'update' : 'create'} product. Please try again.`,
         variant: "destructive",
       });
       setLoading(false);
@@ -158,7 +183,7 @@ const ProductEditor = () => {
     }));
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate the form
     if (!product.name) {
       toast({
