@@ -3,7 +3,6 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyWithFallback } from '@/hooks/useCompanyWithFallback';
-import { SubscriptionProvider } from '@/components/subscription/SubscriptionProvider';
 import UsageDashboard from '@/components/subscription/UsageDashboard';
 import TeamManagement from '@/components/team/TeamManagement';
 import GSTReportGenerator from '@/components/gst/GSTReportGenerator';
@@ -11,7 +10,7 @@ import PricingSection from '@/components/subscription/PricingSection';
 import ApiManagement from '@/components/api/ApiManagement';
 import { useSubscriptionContext } from '@/components/subscription/SubscriptionProvider';
 
-const SubscriptionContent = () => {
+const SubscriptionManagement = () => {
   const { user } = useAuth();
   const { company } = useCompanyWithFallback(user?.id);
   const { limits } = useSubscriptionContext();
@@ -58,14 +57,6 @@ const SubscriptionContent = () => {
         )}
       </Tabs>
     </div>
-  );
-};
-
-const SubscriptionManagement = () => {
-  return (
-    <SubscriptionProvider>
-      <SubscriptionContent />
-    </SubscriptionProvider>
   );
 };
 
