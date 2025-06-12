@@ -55,16 +55,19 @@ export interface Customer {
   category?: string;
 }
 
+// Using the database schema format to match what Supabase returns
 export interface Product {
   id: string;
-  userId: string;
+  user_id: string;
   name: string;
   description?: string;
-  hsnCode: string;
+  hsn_code: string;
   price: number;
   unit: string;
-  gstRate: number;
+  gst_rate: number;
   category?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Using the FrontendInvoiceItem type from supabase-types.ts
@@ -127,3 +130,6 @@ export interface CreditNoteItem {
   unit: string;
   gstRate: number;
 }
+
+// Export SubscriptionLimits from the subscription types
+export type { SubscriptionLimits } from './subscription';

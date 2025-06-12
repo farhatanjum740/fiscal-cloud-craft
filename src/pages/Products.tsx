@@ -28,7 +28,7 @@ const Products = () => {
     user
   } = useProductsData();
   
-  // Filter products based on search
+  // Filter products based on search - using correct property names
   const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (product.hsn_code && product.hsn_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
