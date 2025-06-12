@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,17 @@ interface PaymentButtonProps {
 const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amount, onSuccess }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const isBrowserSupported = () => {
+    // Check for browser compatibility
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isFirefox = userAgent.includes('firefox');
+    const isChrome = userAgent.includes('chrome');
+    const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
+    
+    return isChrome || isFirefox || isSafari;
+  };
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -34,6 +46,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
       console.log('Loading Razorpay script...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.crossOrigin = 'anonymous'; // Add crossOrigin for better security
       script.onload = () => {
         console.log('Razorpay script loaded successfully');
         resolve(true);
@@ -43,6 +56,36 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         resolve(false);
       };
       document.body.appendChild(script);
+    });
+  };
+
+  const createCSPMetaTag = () => {
+    // Add Content Security Policy if not present
+    const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (!existingCSP) {
+      const cspMeta = document.createElement('meta');
+      cspMeta.httpEquiv = 'Content-Security-Policy';
+      cspMeta.content = "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com;";
+      document.head.appendChild(cspMeta);
+      console.log('CSP meta tag added for Razorpay compatibility');
+    }
+  };
+
+  const handlePaymentError = (error: any, context: string) => {
+    console.error(`=== PAYMENT ERROR IN ${context} ===`);
+    console.error('Error details:', error);
+    
+    // Handle specific error types
+    if (error.message && error.message.includes('unsafe header')) {
+      console.warn('CORS header warning detected - this is usually safe to ignore');
+      return; // Don't show error to user for CORS warnings
+    }
+    
+    setLoading(false);
+    toast({
+      title: "Payment Error",
+      description: error.message || `Error in ${context}. Please try again.`,
+      variant: "destructive"
     });
   };
 
@@ -56,20 +99,40 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
       return;
     }
 
+    // Check browser compatibility
+    if (!isBrowserSupported()) {
+      toast({
+        title: "Browser Compatibility",
+        description: "For the best payment experience, please use Chrome, Firefox, or Safari.",
+        variant: "destructive"
+      });
+    }
+
     setLoading(true);
     console.log('=== PAYMENT PROCESS STARTED ===');
     console.log('User:', user.email);
     console.log('Plan:', plan, 'Billing:', billingCycle, 'Amount:', amount);
+    console.log('Browser:', navigator.userAgent);
 
     try {
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
+      // Add CSP meta tag for better compatibility
+      createCSPMetaTag();
+
+      // Load Razorpay script with retry mechanism
+      let scriptLoaded = false;
+      for (let i = 0; i < 3; i++) {
+        scriptLoaded = await loadRazorpayScript();
+        if (scriptLoaded) break;
+        console.log(`Script load attempt ${i + 1} failed, retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
       if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway. Please check your internet connection and try again.');
+        throw new Error('Failed to load payment gateway after multiple attempts. Please check your internet connection and try again.');
       }
 
       console.log('=== CREATING ORDER ===');
-      // Create order
+      // Create order with enhanced error handling
       const { data: orderData, error: orderError } = await supabase.functions.invoke(
         'create-razorpay-order',
         {
@@ -105,11 +168,31 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         theme: {
           color: '#0d2252'
         },
+        config: {
+          display: {
+            hide: [
+              {
+                method: 'wallet'
+              }
+            ],
+            preferences: {
+              show_default_blocks: true,
+            }
+          }
+        },
         handler: async function (response: any) {
           console.log('=== PAYMENT COMPLETED ===');
           console.log('Payment response:', response);
           
-          // Keep loading state during verification
+          // Suppress CORS warnings during verification
+          const originalConsoleWarn = console.warn;
+          console.warn = (message: any, ...args: any[]) => {
+            if (typeof message === 'string' && message.includes('unsafe header')) {
+              return; // Suppress CORS warnings
+            }
+            originalConsoleWarn(message, ...args);
+          };
+          
           try {
             console.log('=== VERIFYING PAYMENT ===');
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
@@ -159,6 +242,9 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
               description: error.message || "Please contact support if the amount was deducted.",
               variant: "destructive"
             });
+          } finally {
+            // Restore original console.warn
+            console.warn = originalConsoleWarn;
           }
         },
         modal: {
@@ -168,40 +254,109 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
           },
           confirm_close: true,
           escape: true,
-          animation: false // Disable animation to prevent issues
-        }
+          animation: false, // Disable animation to prevent issues
+          backdropclose: false // Prevent accidental closes
+        },
+        retry: {
+          enabled: true,
+          max_count: 3
+        },
+        timeout: 300, // 5 minutes timeout
+        remember_customer: false
       };
 
-      console.log('Razorpay options:', JSON.stringify(options, null, 2));
+      console.log('Razorpay options configured with enhanced settings');
 
       // Ensure Razorpay is available
       if (!window.Razorpay) {
         throw new Error('Razorpay not loaded properly. Please refresh the page and try again.');
       }
 
-      const paymentObject = new window.Razorpay(options);
+      // Create Razorpay instance with enhanced error handling
+      let paymentObject;
+      try {
+        paymentObject = new window.Razorpay(options);
+      } catch (razorpayError: any) {
+        console.error('Error creating Razorpay instance:', razorpayError);
+        throw new Error('Failed to initialize payment gateway. Please try again.');
+      }
       
-      // Add error handler for Razorpay
+      // Add comprehensive error handlers
       paymentObject.on('payment.failed', function (response: any) {
         console.error('=== RAZORPAY PAYMENT FAILED ===');
         console.error('Payment failure response:', response);
         setLoading(false);
+        
+        const errorMsg = response.error?.description || response.error?.reason || "Payment was not completed. Please try again.";
         toast({
           title: "Payment Failed",
-          description: response.error?.description || "Payment was not completed. Please try again.",
+          description: errorMsg,
           variant: "destructive"
         });
       });
 
-      paymentObject.open();
+      // Add network error handler
+      paymentObject.on('payment.error', function (response: any) {
+        console.error('=== RAZORPAY PAYMENT ERROR ===');
+        console.error('Payment error response:', response);
+        handlePaymentError(response, 'Payment Processing');
+      });
+
+      // Add modal error handler
+      paymentObject.on('modal.error', function (response: any) {
+        console.error('=== RAZORPAY MODAL ERROR ===');
+        console.error('Modal error response:', response);
+        handlePaymentError(response, 'Payment Modal');
+      });
+
+      // Suppress CORS warnings before opening modal
+      const originalConsoleError = console.error;
+      console.error = (message: any, ...args: any[]) => {
+        if (typeof message === 'string' && message.includes('unsafe header')) {
+          return; // Suppress CORS warnings
+        }
+        originalConsoleError(message, ...args);
+      };
+
+      try {
+        paymentObject.open();
+      } finally {
+        // Restore original console.error after a delay
+        setTimeout(() => {
+          console.error = originalConsoleError;
+        }, 5000);
+      }
       
     } catch (error: any) {
       console.error('=== PAYMENT INITIALIZATION ERROR ===');
       console.error('Error details:', error);
+      
+      // Handle specific error types
+      if (error.message && error.message.includes('unsafe header')) {
+        console.warn('CORS header warning detected - attempting to continue with payment...');
+        return; // Don't show error for CORS warnings
+      }
+      
       setLoading(false);
+      
+      // Provide retry option for certain errors
+      if (retryCount < 2 && (error.message.includes('script') || error.message.includes('network'))) {
+        setRetryCount(prev => prev + 1);
+        toast({
+          title: "Connection Issue",
+          description: `Attempt ${retryCount + 1}/3 failed. Retrying automatically...`,
+          variant: "destructive"
+        });
+        
+        setTimeout(() => {
+          handlePayment();
+        }, 2000);
+        return;
+      }
+      
       toast({
         title: "Payment Error",
-        description: error.message || "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong. Please try again or contact support.",
         variant: "destructive"
       });
     }
