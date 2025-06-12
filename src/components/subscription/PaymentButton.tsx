@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,7 +46,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
       console.log('Loading Razorpay script...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.crossOrigin = 'anonymous'; // Add crossOrigin for better security
+      script.crossOrigin = 'anonymous';
       script.onload = () => {
         console.log('Razorpay script loaded successfully');
         resolve(true);
@@ -59,15 +60,18 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
   };
 
   const createCSPMetaTag = () => {
-    // Add Content Security Policy if not present
+    // Remove existing CSP meta tag if present
     const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-    if (!existingCSP) {
-      const cspMeta = document.createElement('meta');
-      cspMeta.httpEquiv = 'Content-Security-Policy';
-      cspMeta.content = "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com;";
-      document.head.appendChild(cspMeta);
-      console.log('CSP meta tag added for Razorpay compatibility');
+    if (existingCSP) {
+      existingCSP.remove();
     }
+
+    // Add updated Content Security Policy that includes Supabase functions
+    const cspMeta = document.createElement('meta');
+    cspMeta.httpEquiv = 'Content-Security-Policy';
+    cspMeta.content = `default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://dfgjccuvsggfrxwharkp.supabase.co;`;
+    document.head.appendChild(cspMeta);
+    console.log('CSP meta tag updated for Razorpay and Supabase compatibility');
   };
 
   const handlePaymentError = (error: any, context: string) => {
@@ -114,7 +118,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
     console.log('Browser:', navigator.userAgent);
 
     try {
-      // Add CSP meta tag for better compatibility
+      // Update CSP meta tag for better compatibility
       createCSPMetaTag();
 
       // Load Razorpay script with retry mechanism
@@ -253,14 +257,14 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
           },
           confirm_close: true,
           escape: true,
-          animation: false, // Disable animation to prevent issues
-          backdropclose: false // Prevent accidental closes
+          animation: false,
+          backdropclose: false
         },
         retry: {
           enabled: true,
           max_count: 3
         },
-        timeout: 300, // 5 minutes timeout
+        timeout: 300,
         remember_customer: false
       };
 
