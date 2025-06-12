@@ -25,6 +25,12 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
+      // Check if Razorpay is already loaded
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => resolve(true);
@@ -46,11 +52,15 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
     setLoading(true);
 
     try {
+      console.log('Starting payment process for:', { plan, billingCycle, amount });
+
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway');
+        throw new Error('Failed to load payment gateway. Please try again.');
       }
+
+      console.log('Razorpay script loaded successfully');
 
       // Create order
       const { data: orderData, error: orderError } = await supabase.functions.invoke(
@@ -60,7 +70,16 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         }
       );
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        throw new Error(orderError.message || 'Failed to create payment order');
+      }
+
+      if (!orderData?.order) {
+        throw new Error('Invalid order data received');
+      }
+
+      console.log('Order created successfully:', orderData.order.id);
 
       const options = {
         key: process.env.NODE_ENV === 'production' ? 'rzp_live_07WptSc4WNqInm' : 'rzp_test_07WptSc4WNqInm',
@@ -76,8 +95,11 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
           color: '#0d2252'
         },
         handler: async function (response: any) {
+          console.log('Payment completed, verifying...', response);
+          setLoading(true);
+          
           try {
-            const { error: verifyError } = await supabase.functions.invoke(
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
               'verify-razorpay-payment',
               {
                 body: {
@@ -90,38 +112,59 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
               }
             );
 
-            if (verifyError) throw verifyError;
+            if (verifyError) {
+              console.error('Payment verification error:', verifyError);
+              throw new Error(verifyError.message || 'Payment verification failed');
+            }
+
+            if (!verifyData?.success) {
+              throw new Error('Payment verification failed');
+            }
+
+            console.log('Payment verified successfully');
 
             toast({
               title: "Payment Successful!",
               description: "Your subscription has been activated.",
             });
 
-            onSuccess?.();
+            // Call success callback after a short delay to ensure toast is shown
+            setTimeout(() => {
+              onSuccess?.();
+            }, 1000);
+
           } catch (error: any) {
+            console.error('Payment verification failed:', error);
             toast({
               title: "Payment Verification Failed",
-              description: error.message,
+              description: error.message || "Please contact support if the amount was deducted.",
               variant: "destructive"
             });
+          } finally {
+            setLoading(false);
           }
         },
         modal: {
           ondismiss: function() {
+            console.log('Payment modal dismissed');
             setLoading(false);
-          }
+          },
+          confirm_close: true,
+          escape: true
         }
       };
 
+      console.log('Opening Razorpay checkout with options:', options);
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
+      
     } catch (error: any) {
+      console.error('Payment initialization error:', error);
       toast({
         title: "Payment Error",
-        description: error.message,
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setLoading(false);
     }
   };
