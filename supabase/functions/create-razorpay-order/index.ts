@@ -37,8 +37,8 @@ serve(async (req) => {
 
     // Corrected plan pricing in INR (paise)
     const pricing = {
-      starter: { monthly: 49900, yearly: 499000 }, // ₹499/month, ₹4990/year
-      professional: { monthly: 99900, yearly: 999000 } // ₹999/month, ₹9990/year
+      starter: { monthly: 14900, yearly: 149000 }, // ₹149/month, ₹1490/year (10% discount)
+      professional: { monthly: 29900, yearly: 299000 } // ₹299/month, ₹2990/year (10% discount)
     };
 
     if (!pricing[plan as keyof typeof pricing]) {
@@ -58,11 +58,19 @@ serve(async (req) => {
 
     console.log("Creating Razorpay order with key:", razorpayKeyId);
 
+    // Create a shorter receipt that fits within 40 characters
+    // Format: ord_[first8chars]_[timestamp_last8]
+    const userIdShort = user.id.replace(/-/g, '').substring(0, 8);
+    const timestamp = Date.now().toString().slice(-8);
+    const receipt = `ord_${userIdShort}_${timestamp}`;
+    
+    console.log("Generated receipt:", receipt, "Length:", receipt.length);
+
     // Create Razorpay order
     const orderData = {
       amount,
       currency: 'INR',
-      receipt: `order_${user.id}_${Date.now()}`,
+      receipt,
       notes: {
         user_id: user.id,
         plan,
