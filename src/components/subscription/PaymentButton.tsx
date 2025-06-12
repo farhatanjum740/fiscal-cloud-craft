@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,8 +33,8 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
     return isChrome || isFirefox || isSafari;
   };
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
       // Check if Razorpay is already loaded
       if (window.Razorpay) {
         console.log('Razorpay already loaded');
