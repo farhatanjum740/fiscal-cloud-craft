@@ -35,15 +35,16 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           console.log("Setting default template to:", template);
           setDefaultTemplate(template);
           
-          // For settings mode, always use the database value as selected
-          if (forSettings) {
-            console.log("Settings mode: using database template as selected:", template);
+          // For settings mode, only set as selected if it's the initial load
+          // (when selectedTemplate is still 'standard' and currentTemplate is undefined)
+          if (forSettings && !currentTemplate && selectedTemplate === 'standard') {
+            console.log("Settings mode initial load: using database template as selected:", template);
             setSelectedTemplate(template);
-          } else if (!currentTemplate) {
+          } else if (!forSettings && !currentTemplate) {
             // For non-settings mode, only set as selected if no current template is provided
             console.log("No current template, using default:", template);
             setSelectedTemplate(template);
-          } else {
+          } else if (!forSettings && currentTemplate) {
             console.log("Using current template:", currentTemplate);
             setSelectedTemplate(currentTemplate);
           }
@@ -52,8 +53,8 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           const fallbackTemplate = 'standard';
           setDefaultTemplate(fallbackTemplate);
           
-          // For settings mode, always sync selected with default
-          if (forSettings || !currentTemplate) {
+          // For settings mode, only set selected on initial load
+          if ((forSettings && !currentTemplate && selectedTemplate === 'standard') || (!forSettings && !currentTemplate)) {
             setSelectedTemplate(fallbackTemplate);
           }
         }
@@ -63,7 +64,7 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
     };
 
     fetchDefaultTemplate();
-  }, [companyId, currentTemplate, forSettings]);
+  }, [companyId]); // Removed currentTemplate and forSettings from dependencies to prevent re-runs
 
   const updateDefaultTemplate = async (template: InvoiceTemplate) => {
     if (!companyId) return false;
