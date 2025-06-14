@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting payment verification...");
+    console.log("=== PAYMENT VERIFICATION STARTED ===");
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -36,17 +36,19 @@ serve(async (req) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, billingCycle } = await req.json();
     console.log("Payment verification data:", { razorpay_order_id, razorpay_payment_id, plan, billingCycle });
 
-    // Use test credentials in development/test mode
-    const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
-    const razorpayKeySecret = isProduction 
-      ? Deno.env.get('RAZORPAY_KEY_SECRET')
-      : Deno.env.get('RAZORPAY_TEST_KEY_SECRET');
+    // Force test mode - always use test credentials for now
+    const isTestMode = true;
+    console.log("FORCED TEST MODE - Using test credentials for verification");
 
-    console.log("Using", isProduction ? "PRODUCTION" : "TEST", "mode for verification");
+    const razorpayKeySecret = isTestMode 
+      ? Deno.env.get('RAZORPAY_TEST_KEY_SECRET')
+      : Deno.env.get('RAZORPAY_KEY_SECRET');
+
+    console.log("Test Key Secret available:", !!razorpayKeySecret);
 
     if (!razorpayKeySecret) {
-      console.error("Razorpay secret not configured for", isProduction ? "production" : "test", "mode");
-      throw new Error('Razorpay secret not configured');
+      console.error("Razorpay test secret not configured");
+      throw new Error('Razorpay test secret not configured');
     }
 
     // Verify payment signature
@@ -71,10 +73,11 @@ serve(async (req) => {
 
     if (expectedSignature !== razorpay_signature) {
       console.error("Payment signature verification failed");
-      throw new Error('Payment verification failed');
+      console.error("This might be due to test/production key mismatch");
+      throw new Error('Payment verification failed - signature mismatch');
     }
 
-    console.log("Payment signature verified successfully");
+    console.log("✅ Payment signature verified successfully");
 
     // Calculate subscription dates
     const startDate = new Date();
@@ -96,7 +99,7 @@ serve(async (req) => {
     if (deactivateError) {
       console.error("Error deactivating existing subscriptions:", deactivateError);
     } else {
-      console.log("Existing subscriptions deactivated");
+      console.log("✅ Existing subscriptions deactivated");
     }
 
     // Create new subscription
@@ -119,7 +122,7 @@ serve(async (req) => {
       throw subscriptionError;
     }
 
-    console.log("New subscription created successfully");
+    console.log("✅ New subscription created successfully");
 
     // Record payment history with correct amounts
     const amount = plan === 'starter' 
@@ -142,18 +145,26 @@ serve(async (req) => {
     if (paymentError) {
       console.error("Error recording payment history:", paymentError);
     } else {
-      console.log("Payment history recorded successfully");
+      console.log("✅ Payment history recorded successfully");
     }
 
-    console.log("Payment verification completed successfully");
+    console.log("🎉 Payment verification completed successfully");
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error verifying payment:', error);
+    console.error('💥 === PAYMENT VERIFICATION ERROR ===');
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error object:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Payment verification failed. Check edge function logs for details.'
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
