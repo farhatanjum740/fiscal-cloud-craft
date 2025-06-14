@@ -96,14 +96,14 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
       console.log("Successfully updated default template");
       toast({
         title: "Success",
-        description: "Default template updated successfully"
+        description: "Template updated - all invoices and credit notes will now use this template"
       });
       return true;
     } catch (error) {
       console.error('Error updating default template:', error);
       toast({
         title: "Error",
-        description: "Failed to update default template",
+        description: "Failed to update template",
         variant: "destructive"
       });
       return false;
@@ -112,11 +112,33 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
     }
   };
 
+  // New function to get the current company template for viewing
+  const getCurrentCompanyTemplate = async (companyId: string): Promise<InvoiceTemplate> => {
+    try {
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('default_template')
+        .eq('company_id', companyId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching company template:', error);
+        return 'standard';
+      }
+
+      return (data?.default_template as InvoiceTemplate) || 'standard';
+    } catch (error) {
+      console.error('Error fetching company template:', error);
+      return 'standard';
+    }
+  };
+
   return {
     selectedTemplate,
     setSelectedTemplate,
     defaultTemplate,
     updateDefaultTemplate,
+    getCurrentCompanyTemplate,
     loading
   };
 };

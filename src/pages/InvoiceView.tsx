@@ -22,7 +22,43 @@ const InvoiceView = () => {
   const [invoice, setInvoice] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [currentTemplate, setCurrentTemplate] = useState<InvoiceTemplate>('standard');
   const [loading, setLoading] = useState(true);
+
+  // Fetch company's current default template
+  useEffect(() => {
+    const fetchCompanyTemplate = async () => {
+      if (!company?.id) return;
+
+      try {
+        console.log("Fetching company template for company:", company.id);
+        
+        const { data: settings, error } = await supabase
+          .from('company_settings')
+          .select('default_template')
+          .eq('company_id', company.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching company template:', error);
+          return;
+        }
+
+        if (settings?.default_template) {
+          const template = settings.default_template as InvoiceTemplate;
+          console.log("Using company default template:", template);
+          setCurrentTemplate(template);
+        } else {
+          console.log("No company template found, using standard");
+          setCurrentTemplate('standard');
+        }
+      } catch (error) {
+        console.error('Error fetching company template:', error);
+      }
+    };
+
+    fetchCompanyTemplate();
+  }, [company?.id]);
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -42,8 +78,6 @@ const InvoiceView = () => {
         if (invoiceError) throw invoiceError;
 
         console.log("Fetched invoice data:", invoiceData);
-        console.log("Invoice template from database:", invoiceData.template);
-        
         setInvoice(invoiceData);
 
         // Fetch customer
@@ -157,13 +191,7 @@ const InvoiceView = () => {
     items: items
   };
 
-  // Get the template from the invoice - ensure it's a valid template, with proper fallback
-  const validTemplates: InvoiceTemplate[] = ['standard', 'tally', 'busy', 'zoho', 'classic'];
-  const template = validTemplates.includes(invoice.template as InvoiceTemplate) 
-    ? (invoice.template as InvoiceTemplate) 
-    : 'standard';
-
-  console.log("Final template being used:", template);
+  console.log("Rendering invoice with current company template:", currentTemplate);
 
   return (
     <div className="space-y-6">
@@ -214,7 +242,7 @@ const InvoiceView = () => {
       />
 
       <TemplateRenderer 
-        template={template}
+        template={currentTemplate}
         invoice={invoiceWithItems}
         customer={customer}
         company={company}
