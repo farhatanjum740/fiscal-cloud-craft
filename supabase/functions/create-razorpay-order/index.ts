@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting Razorpay order creation...");
+    console.log("=== RAZORPAY ORDER CREATION STARTED ===");
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -21,56 +21,66 @@ serve(async (req) => {
     );
 
     const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData } = await supabaseClient.auth.getUser(token);
-    const user = userData.user;
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      throw new Error('Authentication required');
+    }
 
-    if (!user) {
-      console.error("User not authenticated");
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    if (userError || !userData.user) {
+      console.error("User authentication failed:", userError);
       throw new Error('User not authenticated');
     }
 
-    console.log("User authenticated:", user.id);
+    const user = userData.user;
+    console.log("User authenticated successfully:", user.id);
 
-    const { plan, billingCycle } = await req.json();
-    console.log("Plan:", plan, "Billing cycle:", billingCycle);
+    const requestBody = await req.json();
+    const { plan, billingCycle } = requestBody;
+    console.log("Request data:", { plan, billingCycle });
+
+    if (!plan || !billingCycle) {
+      throw new Error('Missing required parameters: plan and billingCycle');
+    }
 
     // Pricing in INR (paise)
     const pricing = {
-      starter: { monthly: 14900, yearly: 149000 }, // ₹149/month, ₹1490/year (10% discount)
-      professional: { monthly: 29900, yearly: 299000 } // ₹299/month, ₹2990/year (10% discount)
+      starter: { monthly: 14900, yearly: 149000 }, // ₹149/month, ₹1490/year
+      professional: { monthly: 29900, yearly: 299000 } // ₹299/month, ₹2990/year
     };
 
     if (!pricing[plan as keyof typeof pricing]) {
-      throw new Error('Invalid plan selected');
+      throw new Error(`Invalid plan selected: ${plan}`);
     }
 
     const amount = pricing[plan as keyof typeof pricing][billingCycle as 'monthly' | 'yearly'];
     console.log("Amount to charge:", amount, "paise (₹" + (amount / 100) + ")");
 
-    // Use test credentials in development/test mode
-    const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
-    const razorpayKeyId = isProduction 
-      ? Deno.env.get('RAZORPAY_KEY_ID')
-      : Deno.env.get('RAZORPAY_TEST_KEY_ID');
-    const razorpayKeySecret = isProduction 
-      ? Deno.env.get('RAZORPAY_KEY_SECRET')
-      : Deno.env.get('RAZORPAY_TEST_KEY_SECRET');
+    // Force test mode for now - always use test credentials
+    const isTestMode = true;
+    console.log("FORCED TEST MODE - Using test credentials");
 
-    console.log("Using", isProduction ? "PRODUCTION" : "TEST", "mode");
-    console.log("Razorpay Key ID:", razorpayKeyId?.substring(0, 12) + "...");
+    const razorpayKeyId = Deno.env.get('RAZORPAY_TEST_KEY_ID');
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_TEST_KEY_SECRET');
+
+    console.log("Test Key ID available:", !!razorpayKeyId);
+    console.log("Test Key Secret available:", !!razorpayKeySecret);
 
     if (!razorpayKeyId || !razorpayKeySecret) {
-      console.error("Razorpay credentials not configured for", isProduction ? "production" : "test", "mode");
-      throw new Error('Razorpay credentials not configured');
+      console.error("Test Razorpay credentials missing");
+      console.error("Key ID exists:", !!razorpayKeyId);
+      console.error("Key Secret exists:", !!razorpayKeySecret);
+      throw new Error('Razorpay test credentials not configured properly');
     }
 
-    // Create a shorter receipt that fits within 40 characters
+    // Create shorter receipt
     const userIdShort = user.id.replace(/-/g, '').substring(0, 8);
     const timestamp = Date.now().toString().slice(-8);
-    const receipt = `ord_${userIdShort}_${timestamp}`;
+    const receipt = `test_${userIdShort}_${timestamp}`;
     
-    console.log("Generated receipt:", receipt, "Length:", receipt.length);
+    console.log("Generated receipt:", receipt);
 
     // Create Razorpay order
     const orderData = {
@@ -81,44 +91,60 @@ serve(async (req) => {
         user_id: user.id,
         plan,
         billing_cycle: billingCycle,
-        mode: isProduction ? 'production' : 'test'
+        mode: 'test',
+        environment: 'development'
       },
     };
 
-    console.log("Order data:", orderData);
+    console.log("Creating Razorpay order with data:", JSON.stringify(orderData, null, 2));
+
+    const authString = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
+    console.log("Using auth string (first 20 chars):", authString.substring(0, 20));
 
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${btoa(`${razorpayKeyId}:${razorpayKeySecret}`)}`,
+        'Authorization': `Basic ${authString}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(orderData),
     });
 
     console.log("Razorpay API response status:", response.status);
+    console.log("Razorpay API response headers:", Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log("Razorpay API response body:", responseText);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Razorpay API error:", errorText);
-      throw new Error(`Failed to create Razorpay order: ${errorText}`);
+      console.error("Razorpay API error - Status:", response.status);
+      console.error("Razorpay API error - Body:", responseText);
+      throw new Error(`Razorpay API error (${response.status}): ${responseText}`);
     }
 
-    const order = await response.json();
+    const order = JSON.parse(responseText);
     console.log("Razorpay order created successfully:", order.id);
 
-    // Return order with the key for frontend use
-    return new Response(JSON.stringify({ 
+    const result = { 
       order,
       key: razorpayKeyId,
-      mode: isProduction ? 'production' : 'test'
-    }), {
+      mode: 'test'
+    };
+
+    console.log("Returning result:", JSON.stringify(result, null, 2));
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error creating Razorpay order:', error);
+    console.error('=== ERROR CREATING RAZORPAY ORDER ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Check edge function logs for more information'
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

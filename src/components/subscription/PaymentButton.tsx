@@ -26,21 +26,20 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
   const loadRazorpayScript = (): Promise<boolean> => {
     return new Promise<boolean>((resolve) => {
       if (window.Razorpay) {
-        console.log('Razorpay already loaded');
+        console.log('✅ Razorpay already loaded');
         resolve(true);
         return;
       }
 
-      console.log('Loading Razorpay script...');
+      console.log('📥 Loading Razorpay script...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.crossOrigin = 'anonymous';
       script.onload = () => {
-        console.log('Razorpay script loaded successfully');
+        console.log('✅ Razorpay script loaded successfully');
         resolve(true);
       };
       script.onerror = (error) => {
-        console.error('Failed to load Razorpay script:', error);
+        console.error('❌ Failed to load Razorpay script:', error);
         resolve(false);
       };
       document.body.appendChild(script);
@@ -50,52 +49,74 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
   const handlePayment = async () => {
     if (!user) {
       toast({
-        title: "Error",
-        description: "Please log in to continue",
+        title: "Authentication Required",
+        description: "Please log in to continue with payment",
         variant: "destructive"
       });
       return;
     }
 
     setLoading(true);
-    console.log('=== PAYMENT PROCESS STARTED ===');
+    console.log('🚀 === PAYMENT PROCESS STARTED ===');
+    console.log('Plan:', plan, 'Billing:', billingCycle, 'Amount:', amount);
 
     try {
-      // Load Razorpay script
+      // Step 1: Load Razorpay script
+      console.log('⏳ Step 1: Loading Razorpay script...');
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway. Please check your internet connection and try again.');
+        throw new Error('Failed to load Razorpay. Please check your internet connection and try again.');
       }
 
-      console.log('=== CREATING ORDER ===');
-      
-      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+      // Step 2: Create Razorpay order
+      console.log('⏳ Step 2: Creating Razorpay order...');
+      console.log('Making request to create-razorpay-order function with:', { plan, billingCycle });
+
+      const { data: orderResponse, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: { plan, billingCycle }
       });
 
-      console.log('Order response:', { orderData, orderError });
+      console.log('📦 Order response received:', orderResponse);
+      console.log('❌ Order error (if any):', orderError);
 
       if (orderError) {
-        console.error('Order creation error:', orderError);
-        throw new Error(`Order creation failed: ${orderError.message || 'Unknown error'}`);
+        console.error('💥 Order creation failed:', orderError);
+        throw new Error(`Order creation failed: ${orderError.message || JSON.stringify(orderError)}`);
       }
 
-      if (!orderData?.order || !orderData?.key) {
-        console.error('Invalid order data:', orderData);
-        throw new Error('Invalid order data received from server');
+      if (!orderResponse) {
+        console.error('💥 No order response received');
+        throw new Error('No response received from payment service');
       }
 
-      console.log('Order created successfully:', orderData.order.id);
-      console.log('Using Razorpay mode:', orderData.mode);
-      console.log('=== OPENING RAZORPAY CHECKOUT ===');
+      if (orderResponse.error) {
+        console.error('💥 Order response contains error:', orderResponse.error);
+        throw new Error(`Payment service error: ${orderResponse.error}`);
+      }
 
-      const options = {
-        key: orderData.key, // Dynamic key from backend
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
+      if (!orderResponse.order || !orderResponse.key) {
+        console.error('💥 Invalid order response structure:', orderResponse);
+        throw new Error('Invalid payment data received from server');
+      }
+
+      const { order, key, mode } = orderResponse;
+      console.log('✅ Order created successfully:');
+      console.log('- Order ID:', order.id);
+      console.log('- Amount:', order.amount);
+      console.log('- Currency:', order.currency);
+      console.log('- Razorpay Key:', key);
+      console.log('- Mode:', mode);
+
+      // Step 3: Initialize Razorpay checkout
+      console.log('⏳ Step 3: Opening Razorpay checkout...');
+
+      const razorpayOptions = {
+        key: key,
+        amount: order.amount,
+        currency: order.currency,
         name: 'InvoiceHub',
         description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle}`,
-        order_id: orderData.order.id,
+        order_id: order.id,
         prefill: {
           email: user.email,
         },
@@ -103,11 +124,11 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
           color: '#0d2252'
         },
         handler: async function (response: any) {
-          console.log('=== PAYMENT COMPLETED ===');
+          console.log('🎉 === PAYMENT COMPLETED ===');
           console.log('Payment response:', response);
           
           try {
-            console.log('=== VERIFYING PAYMENT ===');
+            console.log('⏳ Verifying payment...');
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
               'verify-razorpay-payment',
               {
@@ -121,19 +142,20 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
               }
             );
 
-            console.log('Verification response:', { verifyData, verifyError });
+            console.log('📦 Verification response:', verifyData);
+            console.log('❌ Verification error (if any):', verifyError);
 
             if (verifyError) {
-              console.error('Payment verification error:', verifyError);
+              console.error('💥 Payment verification failed:', verifyError);
               throw new Error(`Payment verification failed: ${verifyError.message || 'Unknown error'}`);
             }
 
             if (!verifyData?.success) {
-              console.error('Payment verification returned false');
+              console.error('💥 Payment verification returned false');
               throw new Error('Payment verification failed - invalid signature');
             }
 
-            console.log('=== PAYMENT VERIFIED SUCCESSFULLY ===');
+            console.log('✅ Payment verified successfully!');
 
             toast({
               title: "Payment Successful!",
@@ -146,7 +168,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
             }, 1000);
 
           } catch (error: any) {
-            console.error('=== PAYMENT VERIFICATION FAILED ===');
+            console.error('💥 === PAYMENT VERIFICATION FAILED ===');
             console.error('Error details:', error);
             setLoading(false);
             toast({
@@ -158,7 +180,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         },
         modal: {
           ondismiss: function() {
-            console.log('=== PAYMENT MODAL DISMISSED ===');
+            console.log('❌ Payment modal dismissed by user');
             setLoading(false);
           },
           escape: true,
@@ -166,18 +188,20 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         }
       };
 
+      console.log('🎯 Razorpay options:', razorpayOptions);
+
       if (!window.Razorpay) {
-        throw new Error('Razorpay not loaded properly. Please refresh the page and try again.');
+        throw new Error('Razorpay not properly loaded. Please refresh and try again.');
       }
 
-      const paymentObject = new window.Razorpay(options);
+      const paymentObject = new window.Razorpay(razorpayOptions);
       
       paymentObject.on('payment.failed', function (response: any) {
-        console.error('=== RAZORPAY PAYMENT FAILED ===');
-        console.error('Payment failure response:', response);
+        console.error('💥 === RAZORPAY PAYMENT FAILED ===');
+        console.error('Failure response:', response);
         setLoading(false);
         
-        const errorMsg = response.error?.description || response.error?.reason || "Payment was not completed. Please try again.";
+        const errorMsg = response.error?.description || response.error?.reason || "Payment failed. Please try again.";
         toast({
           title: "Payment Failed",
           description: errorMsg,
@@ -185,11 +209,16 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         });
       });
 
+      console.log('🚀 Opening Razorpay checkout...');
       paymentObject.open();
       
     } catch (error: any) {
-      console.error('=== PAYMENT INITIALIZATION ERROR ===');
-      console.error('Error details:', error);
+      console.error('💥 === PAYMENT INITIALIZATION ERROR ===');
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Full error object:', error);
+      
       setLoading(false);
       
       toast({
@@ -207,11 +236,16 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
       className="w-full"
     >
       {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        <>
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          Processing...
+        </>
       ) : (
-        <CreditCard className="h-4 w-4 mr-2" />
+        <>
+          <CreditCard className="h-4 w-4 mr-2" />
+          Pay ₹{amount} (Test Mode)
+        </>
       )}
-      {loading ? 'Processing...' : `Pay ₹${amount}`}
     </Button>
   );
 };
