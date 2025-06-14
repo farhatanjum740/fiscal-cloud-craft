@@ -4,7 +4,7 @@ import { InvoiceTemplate } from '@/types/invoice-templates';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-export const useInvoiceTemplate = (companyId?: string, currentTemplate?: InvoiceTemplate) => {
+export const useInvoiceTemplate = (companyId?: string, currentTemplate?: InvoiceTemplate, forSettings: boolean = false) => {
   const [selectedTemplate, setSelectedTemplate] = useState<InvoiceTemplate>(currentTemplate || 'standard');
   const [defaultTemplate, setDefaultTemplate] = useState<InvoiceTemplate>('standard');
   const [loading, setLoading] = useState(false);
@@ -34,8 +34,13 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           const template = data.default_template as InvoiceTemplate;
           console.log("Setting default template to:", template);
           setDefaultTemplate(template);
-          // Only set as selected template if no current template is provided
-          if (!currentTemplate) {
+          
+          // For settings mode, always use the database value as selected
+          if (forSettings) {
+            console.log("Settings mode: using database template as selected:", template);
+            setSelectedTemplate(template);
+          } else if (!currentTemplate) {
+            // For non-settings mode, only set as selected if no current template is provided
             console.log("No current template, using default:", template);
             setSelectedTemplate(template);
           } else {
@@ -44,9 +49,12 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           }
         } else {
           console.log("No default template found, using standard");
-          // If no current template is provided, use standard
-          if (!currentTemplate) {
-            setSelectedTemplate('standard');
+          const fallbackTemplate = 'standard';
+          setDefaultTemplate(fallbackTemplate);
+          
+          // For settings mode, always sync selected with default
+          if (forSettings || !currentTemplate) {
+            setSelectedTemplate(fallbackTemplate);
           }
         }
       } catch (error) {
@@ -55,7 +63,7 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
     };
 
     fetchDefaultTemplate();
-  }, [companyId, currentTemplate]);
+  }, [companyId, currentTemplate, forSettings]);
 
   const updateDefaultTemplate = async (template: InvoiceTemplate) => {
     if (!companyId) return false;
@@ -92,7 +100,12 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
         if (error) throw error;
       }
 
+      // Update both states to reflect the saved value
       setDefaultTemplate(template);
+      if (forSettings) {
+        setSelectedTemplate(template);
+      }
+      
       console.log("Successfully updated default template");
       toast({
         title: "Success",

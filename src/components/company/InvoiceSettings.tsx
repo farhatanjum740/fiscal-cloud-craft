@@ -13,12 +13,8 @@ interface InvoiceSettingsProps {
 }
 
 export const InvoiceSettings: React.FC<InvoiceSettingsProps> = ({ companyId }) => {
-  const { defaultTemplate, updateDefaultTemplate, loading } = useInvoiceTemplate(companyId);
-  const [selectedTemplate, setSelectedTemplate] = useState<InvoiceTemplate>(defaultTemplate);
-
-  useEffect(() => {
-    setSelectedTemplate(defaultTemplate);
-  }, [defaultTemplate]);
+  // Use the hook in settings mode (forSettings = true)
+  const { selectedTemplate, setSelectedTemplate, defaultTemplate, updateDefaultTemplate, loading } = useInvoiceTemplate(companyId, undefined, true);
 
   const handleTemplateSelect = (template: InvoiceTemplate) => {
     setSelectedTemplate(template);
