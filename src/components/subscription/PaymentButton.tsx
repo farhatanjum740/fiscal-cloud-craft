@@ -64,7 +64,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway. Please refresh the page and try again.');
+        throw new Error('Failed to load payment gateway. Please check your internet connection and try again.');
       }
 
       console.log('=== CREATING ORDER ===');
@@ -80,16 +80,17 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         throw new Error(`Order creation failed: ${orderError.message || 'Unknown error'}`);
       }
 
-      if (!orderData?.order) {
+      if (!orderData?.order || !orderData?.key) {
         console.error('Invalid order data:', orderData);
         throw new Error('Invalid order data received from server');
       }
 
       console.log('Order created successfully:', orderData.order.id);
+      console.log('Using Razorpay mode:', orderData.mode);
       console.log('=== OPENING RAZORPAY CHECKOUT ===');
 
       const options = {
-        key: process.env.NODE_ENV === 'production' ? 'rzp_live_07WptSc4WNqInm' : 'rzp_test_07WptSc4WNqInm',
+        key: orderData.key, // Dynamic key from backend
         amount: orderData.order.amount,
         currency: orderData.order.currency,
         name: 'InvoiceHub',

@@ -35,7 +35,7 @@ serve(async (req) => {
     const { plan, billingCycle } = await req.json();
     console.log("Plan:", plan, "Billing cycle:", billingCycle);
 
-    // Corrected plan pricing in INR (paise)
+    // Pricing in INR (paise)
     const pricing = {
       starter: { monthly: 14900, yearly: 149000 }, // ₹149/month, ₹1490/year (10% discount)
       professional: { monthly: 29900, yearly: 299000 } // ₹299/month, ₹2990/year (10% discount)
@@ -48,18 +48,24 @@ serve(async (req) => {
     const amount = pricing[plan as keyof typeof pricing][billingCycle as 'monthly' | 'yearly'];
     console.log("Amount to charge:", amount, "paise (₹" + (amount / 100) + ")");
 
-    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
-    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    // Use test credentials in development/test mode
+    const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
+    const razorpayKeyId = isProduction 
+      ? Deno.env.get('RAZORPAY_KEY_ID')
+      : Deno.env.get('RAZORPAY_TEST_KEY_ID');
+    const razorpayKeySecret = isProduction 
+      ? Deno.env.get('RAZORPAY_KEY_SECRET')
+      : Deno.env.get('RAZORPAY_TEST_KEY_SECRET');
+
+    console.log("Using", isProduction ? "PRODUCTION" : "TEST", "mode");
+    console.log("Razorpay Key ID:", razorpayKeyId?.substring(0, 12) + "...");
 
     if (!razorpayKeyId || !razorpayKeySecret) {
-      console.error("Razorpay credentials not configured");
+      console.error("Razorpay credentials not configured for", isProduction ? "production" : "test", "mode");
       throw new Error('Razorpay credentials not configured');
     }
 
-    console.log("Creating Razorpay order with key:", razorpayKeyId);
-
     // Create a shorter receipt that fits within 40 characters
-    // Format: ord_[first8chars]_[timestamp_last8]
     const userIdShort = user.id.replace(/-/g, '').substring(0, 8);
     const timestamp = Date.now().toString().slice(-8);
     const receipt = `ord_${userIdShort}_${timestamp}`;
@@ -75,6 +81,7 @@ serve(async (req) => {
         user_id: user.id,
         plan,
         billing_cycle: billingCycle,
+        mode: isProduction ? 'production' : 'test'
       },
     };
 
@@ -100,7 +107,12 @@ serve(async (req) => {
     const order = await response.json();
     console.log("Razorpay order created successfully:", order.id);
 
-    return new Response(JSON.stringify({ order }), {
+    // Return order with the key for frontend use
+    return new Response(JSON.stringify({ 
+      order,
+      key: razorpayKeyId,
+      mode: isProduction ? 'production' : 'test'
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

@@ -36,9 +36,16 @@ serve(async (req) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, billingCycle } = await req.json();
     console.log("Payment verification data:", { razorpay_order_id, razorpay_payment_id, plan, billingCycle });
 
-    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    // Use test credentials in development/test mode
+    const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
+    const razorpayKeySecret = isProduction 
+      ? Deno.env.get('RAZORPAY_KEY_SECRET')
+      : Deno.env.get('RAZORPAY_TEST_KEY_SECRET');
+
+    console.log("Using", isProduction ? "PRODUCTION" : "TEST", "mode for verification");
+
     if (!razorpayKeySecret) {
-      console.error("Razorpay secret not configured");
+      console.error("Razorpay secret not configured for", isProduction ? "production" : "test", "mode");
       throw new Error('Razorpay secret not configured');
     }
 
@@ -114,10 +121,10 @@ serve(async (req) => {
 
     console.log("New subscription created successfully");
 
-    // Record payment history
+    // Record payment history with correct amounts
     const amount = plan === 'starter' 
-      ? (billingCycle === 'yearly' ? 1341 : 149)  // Updated to match the pricing
-      : (billingCycle === 'yearly' ? 2691 : 299);
+      ? (billingCycle === 'yearly' ? 1490 : 149)
+      : (billingCycle === 'yearly' ? 2990 : 299);
 
     console.log("Recording payment history with amount:", amount);
 
