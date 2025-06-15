@@ -67,39 +67,86 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
   }, [companyId]); // Only re-run when companyId changes
 
   const updateDefaultTemplate = async (template: InvoiceTemplate) => {
-    if (!companyId) return false;
+    if (!companyId) {
+      console.error("No company ID provided for template update");
+      return false;
+    }
 
     setLoading(true);
     try {
-      console.log("Updating default template to:", template);
+      console.log("Starting template update process for:", template);
       
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        console.error("Error getting user:", userError);
+        throw new Error("User authentication failed");
+      }
+
+      console.log("User authenticated, proceeding with template update");
+
       // Check if company_settings record exists
-      const { data: existingSettings } = await supabase
+      const { data: existingSettings, error: fetchError } = await supabase
         .from('company_settings')
-        .select('id')
+        .select('id, default_template')
         .eq('company_id', companyId)
         .maybeSingle();
 
+      if (fetchError) {
+        console.error("Error fetching existing settings:", fetchError);
+        throw fetchError;
+      }
+
+      console.log("Existing settings:", existingSettings);
+
+      let updateResult;
+
       if (existingSettings) {
+        console.log("Updating existing company settings record");
         // Update existing record
-        const { error } = await supabase
+        const { data: updateData, error: updateError } = await supabase
           .from('company_settings')
           .update({ default_template: template })
-          .eq('company_id', companyId);
+          .eq('company_id', companyId)
+          .select('default_template')
+          .single();
 
-        if (error) throw error;
+        if (updateError) {
+          console.error("Error updating company settings:", updateError);
+          throw updateError;
+        }
+
+        updateResult = updateData;
+        console.log("Update successful, returned data:", updateData);
       } else {
+        console.log("Creating new company settings record");
         // Create new record
-        const { error } = await supabase
+        const { data: insertData, error: insertError } = await supabase
           .from('company_settings')
           .insert({
             company_id: companyId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: userData.user.id,
             default_template: template
-          });
+          })
+          .select('default_template')
+          .single();
 
-        if (error) throw error;
+        if (insertError) {
+          console.error("Error creating company settings:", insertError);
+          throw insertError;
+        }
+
+        updateResult = insertData;
+        console.log("Insert successful, returned data:", insertData);
       }
+
+      // Verify the update was successful
+      if (updateResult?.default_template !== template) {
+        console.error("Database update verification failed. Expected:", template, "Got:", updateResult?.default_template);
+        throw new Error("Database update verification failed");
+      }
+
+      console.log("Database update verified successfully");
 
       // Update both states to reflect the saved value
       setDefaultTemplate(template);
@@ -107,14 +154,14 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
         setSelectedTemplate(template);
       }
       
-      console.log("Successfully updated default template");
+      console.log("Local state updated successfully");
       toast({
         title: "Success",
         description: "Template updated - all invoices and credit notes will now use this template"
       });
       return true;
     } catch (error) {
-      console.error('Error updating default template:', error);
+      console.error('Error in updateDefaultTemplate:', error);
       toast({
         title: "Error",
         description: "Failed to update template",
