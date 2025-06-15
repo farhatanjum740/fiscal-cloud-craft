@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/Invoices";
 import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceView from "./pages/InvoiceView";
+import CreditNotes from "./pages/CreditNotes";
 import CreditNoteEditor from "./pages/CreditNoteEditor";
 import CreditNoteView from "./pages/CreditNoteView";
 import Customers from "./pages/Customers";
@@ -135,6 +136,7 @@ function App() {
                       </Route>
                       
                       <Route path="credit-notes">
+                        <Route index element={<CreditNotes />} />
                         <Route path="new" element={<CreditNoteEditor />} />
                         <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
                         <Route path="edit/:id" element={<CreditNoteEditor />} />

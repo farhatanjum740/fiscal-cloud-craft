@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import CreditNoteLoading from "./CreditNoteLoading";
 import { InvoiceTemplate } from "@/types/invoice-templates";
 import CreditNoteTemplateRenderer from "@/components/credit-notes/templates/CreditNoteTemplateRenderer";
 import { useTemplatesByPlan } from '@/hooks/useTemplatesByPlan';
+import { useSubscriptionContext } from '@/components/subscription/SubscriptionProvider';
 
 const CreditNoteViewPage = () => {
   const { id } = useParams();
@@ -25,6 +27,14 @@ const CreditNoteViewPage = () => {
   const [customer, setCustomer] = useState<any>(null);
   const [currentTemplate, setCurrentTemplate] = useState<InvoiceTemplate>('standard');
   const [loading, setLoading] = useState(true);
+
+  // Get subscription context for debugging
+  const { subscription, limits } = useSubscriptionContext();
+
+  console.log("=== CREDIT NOTE VIEW DEBUG INFO ===");
+  console.log("Subscription data:", subscription);
+  console.log("Limits data:", limits);
+  console.log("Company ID:", company?.id);
 
   // Fetch company's current default template
   useEffect(() => {
@@ -44,6 +54,8 @@ const CreditNoteViewPage = () => {
           console.error('Error fetching company template:', error);
           return;
         }
+
+        console.log("Company settings data:", settings);
 
         if (settings?.default_template) {
           const template = settings.default_template as InvoiceTemplate;
@@ -149,6 +161,9 @@ const CreditNoteViewPage = () => {
 
   const { getAvailableTemplates } = useTemplatesByPlan();
 
+  console.log("Available templates:", getAvailableTemplates());
+  console.log("Current template:", currentTemplate);
+
   if (loading) {
     return <CreditNoteLoading />;
   }
@@ -178,6 +193,9 @@ const CreditNoteViewPage = () => {
   const renderTemplate = allowedTemplates.includes(currentTemplate)
     ? currentTemplate
     : 'standard';
+
+  console.log("Final render template:", renderTemplate);
+  console.log("Allowed templates:", allowedTemplates);
 
   return (
     <div className="space-y-6">
