@@ -5,6 +5,7 @@ export interface SubscriptionLimits {
   credit_notes: number; // -1 for unlimited
   products: number; // -1 for unlimited
   users: number; // -1 for unlimited
+  templates: number; // Number of available templates
   reports: boolean;
   priority_support: boolean;
   api_access: boolean;

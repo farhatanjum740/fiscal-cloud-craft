@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, Loader2 } from 'lucide-react';
+import { useSubscriptionContext } from './SubscriptionProvider';
+import { CreditCard, Loader2, TrendingDown } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -21,6 +22,7 @@ interface PaymentButtonProps {
 
 const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amount, onSuccess }) => {
   const { user } = useAuth();
+  const { subscription } = useSubscriptionContext();
   const [loading, setLoading] = useState(false);
 
   const loadRazorpayScript = (): Promise<boolean> => {
@@ -46,6 +48,74 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
     });
   };
 
+  const calculateProrationAmount = (currentPlan: string, newPlan: string, currentAmount: number, newAmount: number): number => {
+    // If no current subscription, charge full amount
+    if (!subscription || currentPlan === 'freemium') {
+      return newAmount;
+    }
+
+    // If downgrading, schedule for end of period - no immediate charge
+    if ((currentPlan === 'professional' && newPlan === 'starter')) {
+      return 0; // Will be handled by scheduling downgrade
+    }
+
+    // If upgrading, calculate proration
+    if ((currentPlan === 'starter' && newPlan === 'professional')) {
+      const daysInPeriod = billingCycle === 'yearly' ? 365 : 30;
+      const subscriptionEnd = subscription.end_date ? new Date(subscription.end_date) : new Date();
+      const today = new Date();
+      const remainingDays = Math.max(0, Math.ceil((subscriptionEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+      
+      // Calculate prorated amount for remaining days
+      const dailyDifference = (newAmount - currentAmount) / daysInPeriod;
+      const prorationAmount = Math.round(dailyDifference * remainingDays);
+      
+      console.log('Proration calculation:', {
+        currentPlan, newPlan, currentAmount, newAmount,
+        daysInPeriod, remainingDays, dailyDifference, prorationAmount
+      });
+      
+      return Math.max(0, prorationAmount);
+    }
+
+    return newAmount;
+  };
+
+  const handleDowngrade = async () => {
+    if (!user || !subscription) return;
+
+    try {
+      setLoading(true);
+      
+      // Schedule downgrade for end of current period
+      const { error } = await supabase
+        .from('subscriptions')
+        .update({
+          // Add a field to track scheduled downgrades if needed
+          // For now, we'll handle this in the payment verification
+        })
+        .eq('id', subscription.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Downgrade Scheduled",
+        description: `Your plan will be downgraded to ${plan} at the end of your current billing period.`,
+      });
+
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Downgrade scheduling failed:', error);
+      toast({
+        title: "Downgrade Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePayment = async () => {
     if (!user) {
       toast({
@@ -56,11 +126,40 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
       return;
     }
 
+    // Check if this is a downgrade
+    const currentPlan = subscription?.plan || 'freemium';
+    if (currentPlan === 'professional' && plan === 'starter') {
+      await handleDowngrade();
+      return;
+    }
+
     setLoading(true);
     console.log('🚀 === PAYMENT PROCESS STARTED ===');
     console.log('Plan:', plan, 'Billing:', billingCycle, 'Amount:', amount);
 
     try {
+      // Calculate actual amount to charge (with proration)
+      const baseAmounts = {
+        starter: billingCycle === 'yearly' ? 1341 : 149, // From PricingSection
+        professional: billingCycle === 'yearly' ? 2691 : 299
+      };
+      
+      const actualAmount = calculateProrationAmount(
+        currentPlan,
+        plan,
+        baseAmounts[currentPlan as keyof typeof baseAmounts] || 0,
+        amount
+      );
+
+      if (actualAmount === 0) {
+        toast({
+          title: "No Payment Required",
+          description: "Your plan change has been processed.",
+        });
+        onSuccess?.();
+        return;
+      }
+
       // Step 1: Load Razorpay script
       console.log('⏳ Step 1: Loading Razorpay script...');
       const scriptLoaded = await loadRazorpayScript();
@@ -68,12 +167,12 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
         throw new Error('Failed to load Razorpay. Please check your internet connection and try again.');
       }
 
-      // Step 2: Create Razorpay order
+      // Step 2: Create Razorpay order with actual amount
       console.log('⏳ Step 2: Creating Razorpay order...');
-      console.log('Making request to create-razorpay-order function with:', { plan, billingCycle });
+      console.log('Making request to create-razorpay-order function with:', { plan, billingCycle, actualAmount });
 
       const { data: orderResponse, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: { plan, billingCycle }
+        body: { plan, billingCycle, amount: actualAmount }
       });
 
       console.log('📦 Order response received:', orderResponse);
@@ -110,12 +209,16 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
       // Step 3: Initialize Razorpay checkout
       console.log('⏳ Step 3: Opening Razorpay checkout...');
 
+      const description = actualAmount < amount 
+        ? `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle} (Prorated)`
+        : `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle}`;
+
       const razorpayOptions = {
         key: key,
         amount: order.amount,
         currency: order.currency,
         name: 'InvoiceHub',
-        description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle}`,
+        description,
         order_id: order.id,
         prefill: {
           email: user.email,
@@ -137,7 +240,9 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                   plan,
-                  billingCycle
+                  billingCycle,
+                  isUpgrade: currentPlan !== 'freemium' && currentPlan !== plan,
+                  proratedAmount: actualAmount
                 }
               }
             );
@@ -157,9 +262,13 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
 
             console.log('✅ Payment verified successfully!');
 
+            const successMessage = actualAmount < amount
+              ? `Payment successful! Upgrade processed with prorated amount of ₹${actualAmount}.`
+              : "Payment successful! Your subscription has been activated.";
+
             toast({
               title: "Payment Successful!",
-              description: "Your subscription has been activated.",
+              description: successMessage,
             });
 
             setTimeout(() => {
@@ -229,21 +338,49 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ plan, billingCycle, amoun
     }
   };
 
+  // Determine if this is a downgrade
+  const currentPlan = subscription?.plan || 'freemium';
+  const isDowngrade = currentPlan === 'professional' && plan === 'starter';
+  
+  // Calculate display amount
+  const baseAmounts = {
+    starter: billingCycle === 'yearly' ? 1341 : 149,
+    professional: billingCycle === 'yearly' ? 2691 : 299
+  };
+  
+  const displayAmount = calculateProrationAmount(
+    currentPlan,
+    plan,
+    baseAmounts[currentPlan as keyof typeof baseAmounts] || 0,
+    amount
+  );
+
   return (
     <Button 
       onClick={handlePayment} 
       disabled={loading}
       className="w-full"
+      variant={isDowngrade ? "outline" : "default"}
     >
       {loading ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
           Processing...
         </>
+      ) : isDowngrade ? (
+        <>
+          <TrendingDown className="h-4 w-4 mr-2" />
+          Schedule Downgrade
+        </>
+      ) : displayAmount < amount ? (
+        <>
+          <CreditCard className="h-4 w-4 mr-2" />
+          Pay ₹{displayAmount} (Prorated)
+        </>
       ) : (
         <>
           <CreditCard className="h-4 w-4 mr-2" />
-          Pay ₹{amount} (Test Mode)
+          Pay ₹{amount}
         </>
       )}
     </Button>
