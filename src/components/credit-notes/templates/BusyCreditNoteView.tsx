@@ -18,57 +18,58 @@ const BusyCreditNoteView: React.FC<BusyCreditNoteViewProps> = ({
 }) => {
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString("en-IN");
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date as any)) return "";
+      return date.toLocaleDateString("en-IN");
+    } catch {
+      return "";
+    }
   };
 
   const formatCurrency = (amount: number) => {
     return `₹${amount?.toFixed(2) || '0.00'}`;
   };
 
+  // Busy: blue-to-blue gradient header, white rounded cards, blue summary, modern table
   return (
     <div className="max-w-4xl mx-auto bg-white shadow-lg">
-      {/* Busy Header with Gradient */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-lg">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">CREDIT NOTE</h1>
-            <p className="text-blue-100 mt-1">Credit Note Number: {creditNote.creditNoteNumber || 'DRAFT'}</p>
+            <p className="text-blue-100 mt-1">Credit Note #: {creditNote.creditNoteNumber || 'DRAFT'}</p>
+            <div className="text-base mb-0">Date: {formatDate(creditNote.creditNoteDate)}</div>
+            <div className="text-xs">Reference Invoice: {invoice?.invoice_number || 'N/A'}</div>
+            <div className="text-xs">Invoice Date: {formatDate(invoice?.invoice_date)}</div>
+            {creditNote.reason && <div className="text-xs">Reason: {creditNote.reason}</div>}
           </div>
-          <div className="text-right">
-            <div className="bg-white bg-opacity-20 rounded-lg p-3">
-              <div className="text-lg font-semibold">Date</div>
-              <div className="text-xl">{formatDate(creditNote.creditNoteDate)}</div>
+          {/* Company at header right */}
+          <div className="text-right flex flex-col items-end gap-2">
+            {company?.logo && (
+              <img
+                src={company.logo}
+                alt={`${company.name} logo`}
+                className="h-10 w-auto object-contain"
+              />
+            )}
+            <div>
+              <div className="text-base font-bold">{company?.name}</div>
+              <div className="text-xs text-gray-200">{company?.address}</div>
+              {company?.city && <div className="text-xs text-gray-200">{company.city}, {company?.state} - {company?.pincode}</div>}
+              <div className="text-xs text-gray-200">GSTIN: {company?.gstin}</div>
+              {company?.phone && <div className="text-xs text-gray-200">Phone: {company.phone}</div>}
+              {company?.email && <div className="text-xs text-gray-200">Email: {company.email}</div>}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Company and Customer Cards */}
+      {/* Customer & Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50">
-        {/* From Card */}
         <div className="bg-white rounded-lg shadow-md p-5 border-l-4 border-blue-500">
           <h3 className="font-bold text-blue-700 text-lg mb-3 flex items-center">
             <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-            CREDIT FROM
-          </h3>
-          <div className="space-y-2 text-gray-700">
-            <div className="font-bold text-lg text-gray-900">{company?.name || 'Company Name'}</div>
-            {company?.address && <div className="text-sm">{company.address}</div>}
-            {company?.city && <div className="text-sm">{company.city}, {company?.state} {company?.pincode}</div>}
-            {company?.gstin && (
-              <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs inline-block">
-                GSTIN: {company.gstin}
-              </div>
-            )}
-            {company?.phone && <div className="text-sm">📞 {company.phone}</div>}
-            {company?.email && <div className="text-sm">✉️ {company.email}</div>}
-          </div>
-        </div>
-
-        {/* To Card */}
-        <div className="bg-white rounded-lg shadow-md p-5 border-l-4 border-orange-500">
-          <h3 className="font-bold text-orange-700 text-lg mb-3 flex items-center">
-            <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
             CREDIT TO
           </h3>
           <div className="space-y-2 text-gray-700">
@@ -76,7 +77,7 @@ const BusyCreditNoteView: React.FC<BusyCreditNoteViewProps> = ({
             {customer?.address && <div className="text-sm">{customer.address}</div>}
             {customer?.city && <div className="text-sm">{customer.city}, {customer?.state} {customer?.pincode}</div>}
             {customer?.gstin && (
-              <div className="bg-orange-50 text-orange-700 px-2 py-1 rounded text-xs inline-block">
+              <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs inline-block">
                 GSTIN: {customer.gstin}
               </div>
             )}
@@ -84,33 +85,11 @@ const BusyCreditNoteView: React.FC<BusyCreditNoteViewProps> = ({
             {customer?.email && <div className="text-sm">✉️ {customer.email}</div>}
           </div>
         </div>
-      </div>
-
-      {/* Credit Note Details Card */}
-      <div className="mx-6 mb-6">
-        <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded p-3 text-center shadow-sm">
-              <div className="text-xs text-gray-500 uppercase">Reference Invoice</div>
-              <div className="font-bold text-blue-600">{invoice?.invoice_number || 'N/A'}</div>
-            </div>
-            <div className="bg-white rounded p-3 text-center shadow-sm">
-              <div className="text-xs text-gray-500 uppercase">Invoice Date</div>
-              <div className="font-bold">{formatDate(invoice?.invoice_date)}</div>
-            </div>
-            <div className="bg-white rounded p-3 text-center shadow-sm">
-              <div className="text-xs text-gray-500 uppercase">Credit Reason</div>
-              <div className="font-bold text-green-600">{creditNote.reason || 'N/A'}</div>
-            </div>
-            <div className="bg-white rounded p-3 text-center shadow-sm">
-              <div className="text-xs text-gray-500 uppercase">Status</div>
-              <div className="font-bold text-purple-600">{creditNote.status?.toUpperCase()}</div>
-            </div>
-          </div>
+        <div>
+          {/* No need for extra info card, header already includes it */}
         </div>
       </div>
-
-      {/* Items Table with Modern Design */}
+      {/* Table */}
       <div className="mx-6 mb-6">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4">
@@ -155,8 +134,7 @@ const BusyCreditNoteView: React.FC<BusyCreditNoteViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Totals Card */}
+      {/* Totals */}
       <div className="mx-6 mb-6">
         <div className="flex justify-end">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 shadow-lg w-full max-w-sm">
@@ -178,7 +156,6 @@ const BusyCreditNoteView: React.FC<BusyCreditNoteViewProps> = ({
           </div>
         </div>
       </div>
-
       {/* Footer */}
       <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-6 rounded-b-lg">
         <div className="text-center">

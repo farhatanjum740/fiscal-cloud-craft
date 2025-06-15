@@ -18,98 +18,73 @@ const ZohoCreditNoteView: React.FC<ZohoCreditNoteViewProps> = ({
 }) => {
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString("en-IN");
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date as any)) return "";
+      return date.toLocaleDateString("en-IN");
+    } catch {
+      return "";
+    }
   };
 
   const formatCurrency = (amount: number) => {
     return `₹${amount?.toFixed(2) || '0.00'}`;
   };
 
+  // Clean, gray/blue accent, sleek
   return (
     <div className="max-w-4xl mx-auto bg-white">
-      {/* Zoho Header with Blue Accent */}
+      {/* Zoho Header with Blue Gradient */}
       <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-6 mb-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-light">Credit Note</h1>
-            <div className="text-blue-100 mt-2">
-              #{creditNote.creditNoteNumber || 'DRAFT'}
-            </div>
+            <h1 className="text-3xl font-light">CREDIT NOTE</h1>
+            <div className="text-blue-100 mt-2">#{creditNote.creditNoteNumber || 'DRAFT'}</div>
+            <div className="text-blue-100 mt-2">Date: {formatDate(creditNote.creditNoteDate)}</div>
+            <div className="text-blue-100 mt-2">Reference Invoice: {invoice?.invoice_number || "N/A"}</div>
+            <div className="text-blue-100 mt-2">Invoice Date: {formatDate(invoice?.invoice_date)}</div>
+            {creditNote.reason && <div className="text-blue-100 mt-2">Reason: {creditNote.reason}</div>}
           </div>
           <div className="text-right">
-            <div className="text-sm text-blue-100">Date</div>
-            <div className="text-xl font-light">{formatDate(creditNote.creditNoteDate)}</div>
+            {company?.logo && (
+              <img
+                src={company.logo}
+                alt={`${company.name} logo`}
+                className="h-12 w-auto object-contain mb-3 ml-auto"
+              />
+            )}
+            <div className="text-xl font-light">{company?.name}</div>
+            <div className="text-sm text-blue-100">{company?.address}</div>
+            <div className="text-sm text-blue-100">
+              {company?.city}, {company?.state} - {company?.pincode}
+            </div>
+            {company?.gstin && <div className="text-sm text-blue-100">GSTIN: {company.gstin}</div>}
+            {company?.email && <div className="text-sm text-blue-100">Email: {company.email}</div>}
+            {company?.phone && <div className="text-sm text-blue-100">Phone: {company.phone}</div>}
           </div>
         </div>
       </div>
 
-      {/* Modern Company Section */}
+      {/* Customer Card */}
       <div className="px-6 mb-8">
         <div className="bg-gray-50 rounded-lg p-6">
-          <h2 className="text-2xl font-light text-gray-800 mb-3">{company?.name || 'Company Name'}</h2>
+          <h2 className="text-2xl font-light text-gray-800 mb-3">Bill To</h2>
           <div className="text-gray-600 space-y-1">
-            {company?.address && <div>{company.address}</div>}
-            {company?.city && <div>{company.city}, {company?.state} {company?.pincode}</div>}
-            <div className="flex gap-4 mt-3">
-              {company?.gstin && (
-                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                  GSTIN: {company.gstin}
-                </span>
-              )}
-              {company?.phone && (
-                <span className="text-gray-500 text-sm">📞 {company.phone}</span>
-              )}
-              {company?.email && (
-                <span className="text-gray-500 text-sm">✉️ {company.email}</span>
-              )}
-            </div>
+            <div className="font-medium text-gray-900">{customer?.name || 'Customer Name'}</div>
+            {customer?.address && <div className="text-gray-600 text-sm">{customer.address}</div>}
+            {customer?.city && <div className="text-gray-600 text-sm">{customer.city}, {customer?.state} {customer?.pincode}</div>}
+            {customer?.gstin && (
+              <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs inline-block">
+                GSTIN: {customer.gstin}
+              </div>
+            )}
+            {customer?.email && <div className="text-gray-600 text-sm">Email: {customer.email}</div>}
+            {customer?.phone && <div className="text-gray-600 text-sm">Phone: {customer.phone}</div>}
           </div>
         </div>
       </div>
 
-      {/* Customer and Credit Details */}
-      <div className="px-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Customer Card */}
-          <div className="border-l-4 border-blue-400 pl-4">
-            <h3 className="text-lg font-medium text-gray-800 mb-3">Bill To</h3>
-            <div className="space-y-2">
-              <div className="font-medium text-gray-900">{customer?.name || 'Customer Name'}</div>
-              {customer?.address && <div className="text-gray-600 text-sm">{customer.address}</div>}
-              {customer?.city && <div className="text-gray-600 text-sm">{customer.city}, {customer?.state} {customer?.pincode}</div>}
-              {customer?.gstin && (
-                <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs inline-block">
-                  GSTIN: {customer.gstin}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Credit Details Card */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-600">Reference Invoice</span>
-              <span className="font-medium">{invoice?.invoice_number || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-600">Invoice Date</span>
-              <span className="font-medium">{formatDate(invoice?.invoice_date)}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-200">
-              <span className="text-gray-600">Credit Reason</span>
-              <span className="font-medium">{creditNote.reason || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600">Status</span>
-              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                {creditNote.status?.charAt(0).toUpperCase() + creditNote.status?.slice(1)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Items Table - Modern Zoho Style */}
+      {/* Items Table */}
       <div className="px-6 mb-8">
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
@@ -122,7 +97,7 @@ const ZohoCreditNoteView: React.FC<ZohoCreditNoteViewProps> = ({
                   <th className="text-left py-4 px-6 font-medium text-gray-700">Item & Description</th>
                   <th className="text-center py-4 px-6 font-medium text-gray-700">Qty</th>
                   <th className="text-right py-4 px-6 font-medium text-gray-700">Rate</th>
-                  <th className="text-right py-4 px-6 font-medium text-gray-700">Tax</th>
+                  <th className="text-right py-4 px-6 font-medium text-gray-700">Tax %</th>
                   <th className="text-right py-4 px-6 font-medium text-gray-700">Amount</th>
                 </tr>
               </thead>
@@ -151,7 +126,7 @@ const ZohoCreditNoteView: React.FC<ZohoCreditNoteViewProps> = ({
         </div>
       </div>
 
-      {/* Summary Section */}
+      {/* Summary */}
       <div className="px-6 mb-8">
         <div className="flex justify-end">
           <div className="w-full max-w-sm">
@@ -176,11 +151,10 @@ const ZohoCreditNoteView: React.FC<ZohoCreditNoteViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Footer */}
+      {/* Notes & Footer */}
       <div className="px-6 pb-6">
         <div className="bg-blue-50 rounded-lg p-6 text-center">
-          <div className="text-blue-700 font-medium mb-2">Credit Note</div>
+          <div className="text-blue-700 font-medium mb-2">CREDIT NOTE</div>
           <div className="text-gray-600 text-sm">
             This credit note has been generated digitally and is valid without signature.
           </div>
