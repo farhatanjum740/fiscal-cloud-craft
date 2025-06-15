@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { InvoiceTemplate } from '@/types/invoice-templates';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,26 +34,25 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           console.log("Setting default template to:", template);
           setDefaultTemplate(template);
           
-          // For settings mode, initialize with the database value.
-          // The previous check was too restrictive.
-          if (forSettings && !currentTemplate) {
-            console.log("Settings mode initial load: using database template as selected:", template);
+          // For settings mode: Always use the database value as the initial selection
+          // For non-settings mode: Only use database value if no current template is provided
+          if (forSettings) {
+            console.log("Settings mode: using database template as selected:", template);
             setSelectedTemplate(template);
-          } else if (!forSettings && !currentTemplate) {
-            // For non-settings mode, only set as selected if no current template is provided
-            console.log("No current template, using default:", template);
+          } else if (!currentTemplate) {
+            console.log("No current template provided, using database default:", template);
             setSelectedTemplate(template);
-          } else if (!forSettings && currentTemplate) {
-            console.log("Using current template:", currentTemplate);
+          } else {
+            console.log("Using provided current template:", currentTemplate);
             setSelectedTemplate(currentTemplate);
           }
         } else {
-          console.log("No default template found, using standard");
+          console.log("No default template found in database, using standard");
           const fallbackTemplate = 'standard';
           setDefaultTemplate(fallbackTemplate);
           
-          // Initialize with fallback if no template is set in DB
-          if ((forSettings && !currentTemplate) || (!forSettings && !currentTemplate)) {
+          // Only set as selected if no template is explicitly provided
+          if (!currentTemplate) {
             setSelectedTemplate(fallbackTemplate);
           }
         }
@@ -64,7 +62,7 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
     };
 
     fetchDefaultTemplate();
-  }, [companyId]); // Only re-run when companyId changes
+  }, [companyId, forSettings]); // Add forSettings to dependencies to re-run when mode changes
 
   const updateDefaultTemplate = async (template: InvoiceTemplate) => {
     if (!companyId) {
