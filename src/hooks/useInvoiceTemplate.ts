@@ -35,9 +35,9 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           console.log("Setting default template to:", template);
           setDefaultTemplate(template);
           
-          // For settings mode, only set as selected if it's the initial load
-          // (when selectedTemplate is still 'standard' and currentTemplate is undefined)
-          if (forSettings && !currentTemplate && selectedTemplate === 'standard') {
+          // For settings mode, initialize with the database value.
+          // The previous check was too restrictive.
+          if (forSettings && !currentTemplate) {
             console.log("Settings mode initial load: using database template as selected:", template);
             setSelectedTemplate(template);
           } else if (!forSettings && !currentTemplate) {
@@ -53,8 +53,8 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
           const fallbackTemplate = 'standard';
           setDefaultTemplate(fallbackTemplate);
           
-          // For settings mode, only set selected on initial load
-          if ((forSettings && !currentTemplate && selectedTemplate === 'standard') || (!forSettings && !currentTemplate)) {
+          // Initialize with fallback if no template is set in DB
+          if ((forSettings && !currentTemplate) || (!forSettings && !currentTemplate)) {
             setSelectedTemplate(fallbackTemplate);
           }
         }
@@ -64,7 +64,7 @@ export const useInvoiceTemplate = (companyId?: string, currentTemplate?: Invoice
     };
 
     fetchDefaultTemplate();
-  }, [companyId]); // Removed currentTemplate and forSettings from dependencies to prevent re-runs
+  }, [companyId]); // Only re-run when companyId changes
 
   const updateDefaultTemplate = async (template: InvoiceTemplate) => {
     if (!companyId) return false;
