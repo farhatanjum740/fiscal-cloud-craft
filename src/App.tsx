@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -33,6 +34,7 @@ import About from './pages/About';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import { AuthProvider } from "./contexts/AuthContext";
+import { SubscriptionProvider } from "./components/subscription/SubscriptionProvider";
 
 // Create a query client with enhanced error handling - updated for React Query v5
 const queryClient = new QueryClient({
@@ -107,59 +109,61 @@ function App() {
             <Sonner />
             <AppErrorBoundary>
               <AuthProvider>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/pricing" element={<Pricing />} />
-                  <Route path="/features" element={<Features />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/terms" element={<Terms />} />
-                  <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/gst-invoicing" element={<GstInvoicing />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/blog/:slug" element={<BlogPost />} />
-                  
-                  <Route path="/app" element={<AppLayout />}>
-                    <Route index element={<Dashboard />} />
+                <SubscriptionProvider>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/features" element={<Features />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/gst-invoicing" element={<GstInvoicing />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
                     
-                    <Route path="invoices">
-                      <Route index element={<Invoices />} />
-                      <Route path="new" element={<InvoiceEditor />} />
-                      <Route path="edit/:id" element={<InvoiceEditor />} />
-                      <Route path="view/:id" element={<InvoiceView />} />
-                    </Route>
-                    
-                    <Route path="credit-notes">
-                      <Route path="new" element={<CreditNoteEditor />} />
-                      <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
-                      <Route path="edit/:id" element={<CreditNoteEditor />} />
-                      <Route path="view/:id" element={<CreditNoteView />} />
-                    </Route>
-                    
-                    <Route path="customers">
-                      <Route index element={<Customers />} />
-                      <Route path="new" element={<CustomerEditor />} />
-                      <Route path="edit/:id" element={<CustomerEditor />} />
-                    </Route>
-                    
-                    <Route path="products">
-                      <Route index element={<Products />} />
-                      <Route path="new" element={<ProductEditor />} />
-                      <Route path="edit/:id" element={<ProductEditor />} />
-                    </Route>
+                    <Route path="/app" element={<AppLayout />}>
+                      <Route index element={<Dashboard />} />
+                      
+                      <Route path="invoices">
+                        <Route index element={<Invoices />} />
+                        <Route path="new" element={<InvoiceEditor />} />
+                        <Route path="edit/:id" element={<InvoiceEditor />} />
+                        <Route path="view/:id" element={<InvoiceView />} />
+                      </Route>
+                      
+                      <Route path="credit-notes">
+                        <Route path="new" element={<CreditNoteEditor />} />
+                        <Route path="new/:invoiceId" element={<CreditNoteEditor />} />
+                        <Route path="edit/:id" element={<CreditNoteEditor />} />
+                        <Route path="view/:id" element={<CreditNoteView />} />
+                      </Route>
+                      
+                      <Route path="customers">
+                        <Route index element={<Customers />} />
+                        <Route path="new" element={<CustomerEditor />} />
+                        <Route path="edit/:id" element={<CustomerEditor />} />
+                      </Route>
+                      
+                      <Route path="products">
+                        <Route index element={<Products />} />
+                        <Route path="new" element={<ProductEditor />} />
+                        <Route path="edit/:id" element={<ProductEditor />} />
+                      </Route>
 
-                    <Route path="reports" element={<Reports />} />
-                    <Route path="subscription" element={<SubscriptionManagement />} />
-                    
-                    <Route path="settings">
-                      <Route path="company" element={<CompanyProfile />} />
+                      <Route path="reports" element={<Reports />} />
+                      <Route path="subscription" element={<SubscriptionManagement />} />
+                      
+                      <Route path="settings">
+                        <Route path="company" element={<CompanyProfile />} />
+                      </Route>
                     </Route>
-                  </Route>
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                    
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </SubscriptionProvider>
               </AuthProvider>
             </AppErrorBoundary>
           </TooltipProvider>
