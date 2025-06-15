@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ import { useCompanyWithFallback } from "@/hooks/useCompanyWithFallback";
 import CreditNoteView from "@/components/credit-notes/view/CreditNoteView";
 import CreditNoteLoading from "./CreditNoteLoading";
 import { InvoiceTemplate } from "@/types/invoice-templates";
+import CreditNoteTemplateRenderer from "@/components/credit-notes/templates/CreditNoteTemplateRenderer";
+import { useTemplatesByPlan } from '@/hooks/useTemplatesByPlan';
 
 const CreditNoteViewPage = () => {
   const { id } = useParams();
@@ -146,6 +147,8 @@ const CreditNoteViewPage = () => {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  const { getAvailableTemplates } = useTemplatesByPlan();
+
   if (loading) {
     return <CreditNoteLoading />;
   }
@@ -169,6 +172,12 @@ const CreditNoteViewPage = () => {
   }
 
   console.log("Rendering credit note with current company template:", currentTemplate);
+
+  // Only use allowed templates per plan, fallback to 'standard' if needed
+  const allowedTemplates = getAvailableTemplates();
+  const renderTemplate = allowedTemplates.includes(currentTemplate)
+    ? currentTemplate
+    : 'standard';
 
   return (
     <div className="space-y-6">
@@ -208,7 +217,8 @@ const CreditNoteViewPage = () => {
         cancelledAt={creditNote.cancelled_at}
       />
 
-      <CreditNoteView 
+      <CreditNoteTemplateRenderer
+        template={renderTemplate}
         creditNote={creditNote}
         company={company}
         invoice={invoice}
