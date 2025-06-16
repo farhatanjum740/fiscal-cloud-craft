@@ -44,7 +44,13 @@ export const useUsageLimits = () => {
     }
 
     try {
-      return await checkLimitAndAct('invoice', company.id);
+      console.log('Checking invoice limit for user:', user.id, 'company:', company.id);
+      console.log('Current subscription plan:', subscription?.plan);
+      console.log('Current limits:', limits);
+      
+      const result = await checkLimitAndAct('invoice', company.id);
+      console.log('Invoice limit check result:', result);
+      return result;
     } catch (error) {
       console.error('Error checking invoice limit:', error);
       toast({

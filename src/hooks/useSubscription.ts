@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SubscriptionLimits, UserUsage, SubscriptionPlan } from '@/types/subscription';
@@ -13,14 +13,11 @@ export const useSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchSubscriptionData();
+  const fetchSubscriptionData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  }, [user]);
-
-  const fetchSubscriptionData = async () => {
-    if (!user) return;
 
     try {
       setError(null);
@@ -106,9 +103,13 @@ export const useSubscription = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const canPerformAction = async (actionType: string, companyId: string) => {
+  useEffect(() => {
+    fetchSubscriptionData();
+  }, [fetchSubscriptionData]);
+
+  const canPerformAction = useCallback(async (actionType: string, companyId: string): Promise<boolean> => {
     if (!user) {
       console.log('No user found for action check');
       return false;
@@ -145,9 +146,9 @@ export const useSubscription = () => {
       }
       return false;
     }
-  };
+  }, [user, subscription]);
 
-  const incrementUsage = async (actionType: string, companyId: string) => {
+  const incrementUsage = useCallback(async (actionType: string, companyId: string) => {
     if (!user) return;
 
     try {
@@ -170,9 +171,9 @@ export const useSubscription = () => {
       console.error('Error incrementing usage:', error);
       throw error;
     }
-  };
+  }, [user, fetchSubscriptionData]);
 
-  const checkLimitAndAct = async (actionType: string, companyId: string) => {
+  const checkLimitAndAct = useCallback(async (actionType: string, companyId: string): Promise<boolean> => {
     try {
       const canAct = await canPerformAction(actionType, companyId);
       
@@ -201,7 +202,7 @@ export const useSubscription = () => {
       });
       return false;
     }
-  };
+  }, [canPerformAction, incrementUsage, subscription]);
 
   return {
     subscription,
