@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 import { useSubscriptionContext } from './SubscriptionProvider';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const UsageDashboard = () => {
-  const { subscription, limits, usage, loading, refetch } = useSubscriptionContext();
+  const { subscription, limits, usage, loading, error, refetch } = useSubscriptionContext();
 
   if (loading) {
     return <div>Loading usage data...</div>;
@@ -29,6 +30,7 @@ const UsageDashboard = () => {
   };
 
   const handleRefresh = async () => {
+    console.log('Refreshing subscription data...');
     await refetch();
   };
 
@@ -51,6 +53,15 @@ const UsageDashboard = () => {
           </Button>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Error loading subscription data: {error}. Some features may not work correctly.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -175,6 +186,9 @@ const UsageDashboard = () => {
             <div>
               <strong>Current Period:</strong> {usage?.month_year || 'N/A'}
             </div>
+            <div>
+              <strong>Plan Status:</strong> {subscription?.active ? 'Active' : 'Inactive'}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -188,7 +202,11 @@ const UsageDashboard = () => {
             <p>• Usage limits reset monthly on the 1st of each month</p>
             <p>• Unlimited features don't have monthly restrictions</p>
             <p>• Usage data is updated in real-time when you create new records</p>
+            <p>• Professional plan users have unlimited access to all features</p>
             <p>• Contact support if you notice any discrepancies in usage tracking</p>
+            {error && (
+              <p className="text-red-600">• ⚠️ There's an issue with subscription data loading. Some limits may not work correctly.</p>
+            )}
           </div>
         </CardContent>
       </Card>

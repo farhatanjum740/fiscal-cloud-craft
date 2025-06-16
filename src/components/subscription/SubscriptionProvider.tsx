@@ -8,6 +8,7 @@ interface SubscriptionContextType {
   limits: SubscriptionLimits | null;
   usage: UserUsage | null;
   loading: boolean;
+  error: string | null;
   canPerformAction: (actionType: string, companyId: string) => Promise<boolean>;
   checkLimitAndAct: (actionType: string, companyId: string) => Promise<boolean>;
   refetch: () => void;

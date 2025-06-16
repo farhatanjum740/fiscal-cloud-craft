@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 export const useUsageLimits = () => {
   const { user } = useAuth();
   const { company } = useCompanyWithFallback(user?.id);
-  const { checkLimitAndAct, canPerformAction, limits } = useSubscriptionContext();
+  const { checkLimitAndAct, canPerformAction, limits, subscription, error } = useSubscriptionContext();
 
   const checkCustomerLimit = async (): Promise<boolean> => {
     if (!user || !company) {
@@ -20,7 +20,17 @@ export const useUsageLimits = () => {
       return false;
     }
 
-    return await checkLimitAndAct('customer', company.id);
+    try {
+      return await checkLimitAndAct('customer', company.id);
+    } catch (error) {
+      console.error('Error checking customer limit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check customer limit. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const checkInvoiceLimit = async (): Promise<boolean> => {
@@ -33,7 +43,17 @@ export const useUsageLimits = () => {
       return false;
     }
 
-    return await checkLimitAndAct('invoice', company.id);
+    try {
+      return await checkLimitAndAct('invoice', company.id);
+    } catch (error) {
+      console.error('Error checking invoice limit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check invoice limit. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const checkCreditNoteLimit = async (): Promise<boolean> => {
@@ -46,7 +66,17 @@ export const useUsageLimits = () => {
       return false;
     }
 
-    return await checkLimitAndAct('credit_note', company.id);
+    try {
+      return await checkLimitAndAct('credit_note', company.id);
+    } catch (error) {
+      console.error('Error checking credit note limit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check credit note limit. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const checkProductLimit = async (): Promise<boolean> => {
@@ -59,22 +89,50 @@ export const useUsageLimits = () => {
       return false;
     }
 
-    return await checkLimitAndAct('product', company.id);
+    try {
+      return await checkLimitAndAct('product', company.id);
+    } catch (error) {
+      console.error('Error checking product limit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check product limit. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const canCreateCustomer = async (): Promise<boolean> => {
     if (!user || !company) return false;
-    return await canPerformAction('customer', company.id);
+    
+    try {
+      return await canPerformAction('customer', company.id);
+    } catch (error) {
+      console.error('Error checking customer permission:', error);
+      return subscription?.plan === 'professional'; // Fallback for professional users
+    }
   };
 
   const canCreateInvoice = async (): Promise<boolean> => {
     if (!user || !company) return false;
-    return await canPerformAction('invoice', company.id);
+    
+    try {
+      return await canPerformAction('invoice', company.id);
+    } catch (error) {
+      console.error('Error checking invoice permission:', error);
+      return subscription?.plan === 'professional'; // Fallback for professional users
+    }
   };
 
   const canCreateCreditNote = async (): Promise<boolean> => {
     if (!user || !company) return false;
-    return await canPerformAction('credit_note', company.id);
+    
+    try {
+      return await canPerformAction('credit_note', company.id);
+    } catch (error) {
+      console.error('Error checking credit note permission:', error);
+      return subscription?.plan === 'professional'; // Fallback for professional users
+    }
   };
 
   const canCreateProduct = async (): Promise<boolean> => {
@@ -85,10 +143,15 @@ export const useUsageLimits = () => {
     
     try {
       // Get actual count from database
-      const { count } = await supabase
+      const { count, error } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error checking product count:', error);
+        return subscription?.plan === 'professional'; // Fallback for professional users
+      }
       
       console.log("Actual products count from DB in canCreateProduct:", count);
       console.log("Product limit:", limits.products);
@@ -96,13 +159,19 @@ export const useUsageLimits = () => {
       return (count || 0) < limits.products;
     } catch (error) {
       console.error('Error checking product count:', error);
-      return false;
+      return subscription?.plan === 'professional'; // Fallback for professional users
     }
   };
 
   const canAccessApi = async (): Promise<boolean> => {
     if (!user || !company) return false;
-    return await canPerformAction('api_access', company.id);
+    
+    try {
+      return await canPerformAction('api_access', company.id);
+    } catch (error) {
+      console.error('Error checking API access permission:', error);
+      return subscription?.plan === 'professional'; // Fallback for professional users
+    }
   };
 
   // Helper function to increment usage and refresh subscription data
@@ -130,6 +199,7 @@ export const useUsageLimits = () => {
     canAccessApi,
     incrementUsageAndRefresh,
     company,
-    isCompanyLoaded: !!company
+    isCompanyLoaded: !!company,
+    subscriptionError: error
   };
 };
