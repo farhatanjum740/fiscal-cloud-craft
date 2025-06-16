@@ -195,9 +195,14 @@ export const useSubscription = () => {
       return true;
     } catch (error) {
       console.error('Error in checkLimitAndAct:', error);
+      
+      // More specific error handling
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Detailed error:', errorMessage);
+      
       toast({
         title: "Error",
-        description: "There was an error checking subscription limits. Please try again.",
+        description: `Failed to check subscription limits: ${errorMessage}. Please try again.`,
         variant: "destructive"
       });
       return false;

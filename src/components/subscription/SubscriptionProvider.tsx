@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionLimits, UserUsage } from '@/types/subscription';
 
@@ -27,8 +27,8 @@ export const useSubscriptionContext = () => {
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const subscriptionData = useSubscription();
 
-  // Provide fallback values to prevent context from breaking
-  const contextValue = {
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     subscription: subscriptionData.subscription,
     limits: subscriptionData.limits,
     usage: subscriptionData.usage,
@@ -37,7 +37,16 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     canPerformAction: subscriptionData.canPerformAction,
     checkLimitAndAct: subscriptionData.checkLimitAndAct,
     refetch: subscriptionData.refetch
-  };
+  }), [
+    subscriptionData.subscription,
+    subscriptionData.limits,
+    subscriptionData.usage,
+    subscriptionData.loading,
+    subscriptionData.error,
+    subscriptionData.canPerformAction,
+    subscriptionData.checkLimitAndAct,
+    subscriptionData.refetch
+  ]);
 
   return (
     <SubscriptionContext.Provider value={contextValue}>

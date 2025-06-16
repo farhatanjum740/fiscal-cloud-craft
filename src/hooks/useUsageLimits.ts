@@ -48,11 +48,24 @@ export const useUsageLimits = () => {
       console.log('Current subscription plan:', subscription?.plan);
       console.log('Current limits:', limits);
       
+      // For professional users, always allow invoice creation
+      if (subscription?.plan === 'professional') {
+        console.log('Professional user detected, allowing invoice creation without limit check');
+        return true;
+      }
+      
       const result = await checkLimitAndAct('invoice', company.id);
       console.log('Invoice limit check result:', result);
       return result;
     } catch (error) {
       console.error('Error checking invoice limit:', error);
+      
+      // Fallback for professional users
+      if (subscription?.plan === 'professional') {
+        console.log('Error occurred but user is professional, allowing invoice creation');
+        return true;
+      }
+      
       toast({
         title: "Error",
         description: "Failed to check invoice limit. Please try again.",
