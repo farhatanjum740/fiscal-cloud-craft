@@ -2,7 +2,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -75,13 +75,64 @@
     --ring: 212.7 26.8% 83.9%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
   }
+  
   body {
     @apply bg-background text-foreground;
+    /* Mobile-first typography */
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Mobile-first headings */
+  h1 { @apply text-mobile-h1 sm:text-2xl md:text-3xl; }
+  h2 { @apply text-mobile-h2 sm:text-xl md:text-2xl; }
+  h3 { @apply text-mobile-h3 sm:text-lg md:text-xl; }
+  
+  /* Touch-friendly interactive elements */
+  button, input, select, textarea {
+    @apply min-h-touch;
+  }
+  
+  /* Mobile-optimized form inputs */
+  input, textarea, select {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+}
+
+/* Mobile-first component utilities */
+@layer components {
+  .mobile-card {
+    @apply bg-card rounded-lg border p-4 shadow-sm;
+  }
+  
+  .mobile-button {
+    @apply h-touch px-4 rounded-lg font-medium transition-colors;
+  }
+  
+  .mobile-input {
+    @apply h-touch px-3 rounded-lg border bg-background text-base;
+  }
+  
+  /* Mobile-first table alternatives */
+  .mobile-table-card {
+    @apply mobile-card space-y-2 hover:shadow-md transition-shadow;
+  }
+  
+  .mobile-table-row {
+    @apply flex justify-between items-center py-1;
+  }
+  
+  .mobile-table-label {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+  
+  .mobile-table-value {
+    @apply text-sm font-medium;
   }
 }
 
@@ -104,6 +155,28 @@
 
 [data-scope="sidebar"] [data-part="footer"] {
   @apply border-t border-[#1a3b7a];
+}
+
+/* Enhanced mobile-first responsive design */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+  
+  /* Stack elements vertically on mobile */
+  .mobile-stack > * + * {
+    @apply mt-4;
+  }
+  
+  /* Hide non-essential elements on mobile */
+  .mobile-hide {
+    @apply hidden;
+  }
+  
+  /* Mobile-optimized spacing */
+  .mobile-spacing {
+    @apply space-y-4;
+  }
 }
 
 /* Enhanced print styles for A4 page */

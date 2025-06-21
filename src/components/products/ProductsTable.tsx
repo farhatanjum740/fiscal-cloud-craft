@@ -3,13 +3,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  MobileTable,
+  MobileTableBody,
+  MobileTableCell,
+  MobileTableHead,
+  MobileTableHeader,
+  MobileTableRow,
+} from '@/components/ui/mobile-table';
 import { Edit, Trash2 } from 'lucide-react';
 import type { Product } from '@/types';
 
@@ -32,67 +32,81 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
 }) => {
   return (
     <div className="rounded-md border overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>HSN/SAC Code</TableHead>
-            <TableHead>Price (₹)</TableHead>
-            <TableHead>GST Rate (%)</TableHead>
-            <TableHead>Unit</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      <MobileTable>
+        <MobileTableHeader>
+          <MobileTableRow>
+            <MobileTableHead>Name</MobileTableHead>
+            <MobileTableHead>HSN/SAC Code</MobileTableHead>
+            <MobileTableHead>Price (₹)</MobileTableHead>
+            <MobileTableHead>GST Rate (%)</MobileTableHead>
+            <MobileTableHead hideOnMobile>Unit</MobileTableHead>
+            <MobileTableHead hideOnMobile>Category</MobileTableHead>
+            <MobileTableHead className="text-right">Actions</MobileTableHead>
+          </MobileTableRow>
+        </MobileTableHeader>
+        <MobileTableBody>
           {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center h-32">
+            <MobileTableRow>
+              <MobileTableCell className="text-center h-32 col-span-full">
                 Loading products...
-              </TableCell>
-            </TableRow>
+              </MobileTableCell>
+            </MobileTableRow>
           ) : error ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center h-32 text-red-500">
+            <MobileTableRow>
+              <MobileTableCell className="text-center h-32 text-red-500 col-span-full">
                 Failed to load products. Please refresh the page.
-              </TableCell>
-            </TableRow>
+              </MobileTableCell>
+            </MobileTableRow>
           ) : filteredProducts.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center h-32">
+            <MobileTableRow>
+              <MobileTableCell className="text-center h-32 col-span-full">
                 {products?.length === 0 ? "No products found. Create your first product!" : "No products match your search."}
-              </TableCell>
-            </TableRow>
+              </MobileTableCell>
+            </MobileTableRow>
           ) : (
             filteredProducts.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.hsn_code}</TableCell>
-                <TableCell>{product.price.toLocaleString()}</TableCell>
-                <TableCell>{product.gst_rate}%</TableCell>
-                <TableCell>{product.unit}</TableCell>
-                <TableCell>{product.category}</TableCell>
-                <TableCell className="text-right space-x-1">
-                  <Link to={`/app/products/edit/${product.id}`}>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Edit className="h-4 w-4" />
+              <MobileTableRow key={product.id}>
+                <MobileTableCell label="Name" className="font-medium">
+                  {product.name}
+                </MobileTableCell>
+                <MobileTableCell label="HSN/SAC">
+                  {product.hsn_code}
+                </MobileTableCell>
+                <MobileTableCell label="Price">
+                  ₹{product.price.toLocaleString()}
+                </MobileTableCell>
+                <MobileTableCell label="GST Rate">
+                  {product.gst_rate}%
+                </MobileTableCell>
+                <MobileTableCell label="Unit" hideOnMobile>
+                  {product.unit}
+                </MobileTableCell>
+                <MobileTableCell label="Category" hideOnMobile>
+                  {product.category}
+                </MobileTableCell>
+                <MobileTableCell label="Actions" className="text-right">
+                  <div className="flex justify-end space-x-1">
+                    <Link to={`/app/products/edit/${product.id}`}>
+                      <Button variant="ghost" size="sm" className="h-touch w-touch p-0">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-touch w-touch p-0 text-red-500 hover:text-red-600"
+                      onClick={() => onDeleteProduct(product.id)}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </Link>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                    onClick={() => onDeleteProduct(product.id)}
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
+                  </div>
+                </MobileTableCell>
+              </MobileTableRow>
             ))
           )}
-        </TableBody>
-      </Table>
+        </MobileTableBody>
+      </MobileTable>
     </div>
   );
 };
