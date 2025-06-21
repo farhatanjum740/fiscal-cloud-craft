@@ -39,9 +39,9 @@ export const useSubscriptionValidation = () => {
         return true;
       }
 
-      // Check current usage against limits
-      const currentUsage = usage?.[`${actionType}s_count` as keyof typeof usage] || 0;
-      const limit = limits?.[`${actionType}s` as keyof typeof limits] || 0;
+      // Check current usage against limits with proper type conversion
+      const currentUsage = Number(usage?.[`${actionType}s_count` as keyof typeof usage] || 0);
+      const limit = Number(limits?.[`${actionType}s` as keyof typeof limits] || 0);
 
       console.log(`Validating ${actionType}: current usage = ${currentUsage}, limit = ${limit}`);
 
@@ -84,9 +84,10 @@ export const useSubscriptionValidation = () => {
       await refetch();
 
       if (showSuccessToast) {
+        const remaining = Math.max(0, limit - currentUsage - 1);
         toast({
           title: "Action Allowed",
-          description: `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} created successfully. ${limit - currentUsage - 1} remaining.`,
+          description: `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} created successfully. ${remaining} remaining.`,
         });
       }
 
@@ -119,8 +120,8 @@ export const useSubscriptionValidation = () => {
     // Professional users can always perform actions
     if (subscription?.plan === 'professional') return true;
 
-    const currentUsage = usage?.[`${actionType}s_count` as keyof typeof usage] || 0;
-    const limit = limits[`${actionType}s` as keyof typeof limits] || 0;
+    const currentUsage = Number(usage?.[`${actionType}s_count` as keyof typeof usage] || 0);
+    const limit = Number(limits[`${actionType}s` as keyof typeof limits] || 0);
 
     // Unlimited limit
     if (limit === -1) return true;
@@ -134,10 +135,10 @@ export const useSubscriptionValidation = () => {
   ): number => {
     if (!limits) return 0;
     
-    const limit = limits[`${actionType}s` as keyof typeof limits] || 0;
+    const limit = Number(limits[`${actionType}s` as keyof typeof limits] || 0);
     if (limit === -1) return -1; // Unlimited
     
-    const currentUsage = usage?.[`${actionType}s_count` as keyof typeof usage] || 0;
+    const currentUsage = Number(usage?.[`${actionType}s_count` as keyof typeof usage] || 0);
     return Math.max(0, limit - currentUsage);
   }, [limits, usage]);
 
