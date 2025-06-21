@@ -46,24 +46,24 @@ export const useTeamManagement = (companyId: string) => {
       // Get company owner
       const { data: companyData } = await supabase
         .from('companies')
-        .select(`
-          id,
-          user_id,
-          profiles!companies_user_id_fkey (
-            id,
-            full_name
-          )
-        `)
+        .select('id, user_id')
         .eq('id', companyId)
         .single();
 
       if (companyData) {
+        // Get the owner's profile info
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', companyData.user_id)
+          .maybeSingle();
+
         const owner: TeamMember = {
           id: 'owner',
           user_id: companyData.user_id,
           company_id: companyId,
           role: 'owner',
-          full_name: companyData.profiles?.full_name || 'Company Owner',
+          full_name: profileData?.full_name || 'Company Owner',
           email: '', // We don't expose email for privacy
           joined_at: new Date().toISOString(),
           is_active: true
@@ -89,23 +89,30 @@ export const useTeamManagement = (companyId: string) => {
     try {
       const { data: invitationsData } = await supabase
         .from('team_invitations')
-        .select(`
-          *,
-          profiles!team_invitations_invited_by_fkey (
-            full_name
-          )
-        `)
+        .select('*')
         .eq('company_id', companyId)
         .is('accepted_at', null);
 
       if (invitationsData) {
+        // Get invited_by user profiles separately
+        const inviterIds = [...new Set(invitationsData.map(inv => inv.invited_by))];
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', inviterIds);
+
+        const profilesMap = profilesData?.reduce((acc, profile) => {
+          acc[profile.id] = profile.full_name;
+          return acc;
+        }, {} as Record<string, string>) || {};
+
         const formattedInvitations: TeamInvitation[] = invitationsData.map(inv => ({
           id: inv.id,
           company_id: inv.company_id,
           email: inv.email,
           role: inv.role as UserRole,
           invited_by: inv.invited_by,
-          invited_by_name: inv.profiles?.full_name || 'Unknown',
+          invited_by_name: profilesMap[inv.invited_by] || 'Unknown',
           expires_at: inv.expires_at,
           created_at: inv.created_at,
           token: inv.token
