@@ -2,12 +2,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Plus, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
-import type { Product, SubscriptionLimits } from '@/types';
+import { useSubscriptionValidation } from '@/hooks/useSubscriptionValidation';
+import type { Product } from '@/types';
 
 interface ProductsHeaderProps {
-  limits: SubscriptionLimits | null;
+  limits: any;
   products: Product[] | undefined;
   isAddButtonDisabled: boolean;
 }
@@ -17,50 +18,71 @@ const ProductsHeader: React.FC<ProductsHeaderProps> = ({
   products,
   isAddButtonDisabled
 }) => {
-  const getUsageText = () => {
-    if (!limits || !products) return '';
-    if (limits.products === -1) return 'Unlimited';
-    
-    const actualCount = products.length || 0;
-    return `${actualCount} / ${limits.products}`;
-  };
+  const { checkCanPerformAction, getRemainingCount, subscription } = useSubscriptionValidation();
+  const [canAdd, setCanAdd] = React.useState(false);
 
-  const getUsageColor = () => {
-    if (!limits || limits.products === -1) return 'text-green-600';
-    
-    const actualCount = products?.length || 0;
-    const percentage = actualCount / limits.products * 100;
-    if (percentage >= 90) return 'text-red-600';
-    if (percentage >= 75) return 'text-orange-600';
-    return 'text-green-600';
-  };
+  React.useEffect(() => {
+    const checkPermission = async () => {
+      const result = await checkCanPerformAction('product');
+      setCanAdd(result);
+    };
+    checkPermission();
+  }, [checkCanPerformAction]);
+
+  const remainingProducts = getRemainingCount('product');
+  const isUnlimited = limits?.products === -1;
+  const planName = subscription?.plan ? subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) : 'Current';
 
   return (
-    <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-3xl font-bold">Products & Services</h1>
-        {limits && (
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-sm text-muted-foreground">Usage:</span>
-            <Badge variant="outline" className={getUsageColor()}>
-              {getUsageText()}
-            </Badge>
-          </div>
-        )}
+    <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="space-y-1">
+        <div className="flex items-center space-x-2">
+          <Package className="h-5 w-5 text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Products</h1>
+        </div>
+        <p className="text-muted-foreground text-sm sm:text-base">
+          Manage your products and services
+        </p>
       </div>
-      {isAddButtonDisabled ? (
-        <Button disabled>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Product
-        </Button>
-      ) : (
+      
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+        {/* Usage Information */}
+        <div className="flex flex-col space-y-1 sm:items-end">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">
+              {products?.length || 0} products
+            </span>
+            {!isUnlimited && (
+              <Badge variant="outline" className="text-xs">
+                {remainingProducts} remaining
+              </Badge>
+            )}
+            {isUnlimited && (
+              <Badge variant="secondary" className="text-xs">
+                Unlimited
+              </Badge>
+            )}
+          </div>
+          
+          {!canAdd && !isUnlimited && (
+            <p className="text-xs text-red-600">
+              Limit reached for {planName} plan
+            </p>
+          )}
+        </div>
+
+        {/* Add Button */}
         <Link to="/app/products/new">
-          <Button>
+          <Button 
+            disabled={!canAdd}
+            className="w-full sm:w-auto"
+            size="sm"
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Add New Product
+            Add Product
           </Button>
         </Link>
-      )}
+      </div>
     </div>
   );
 };
