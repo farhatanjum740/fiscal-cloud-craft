@@ -32,7 +32,7 @@ export const useSoftDelete = (options: SoftDeleteOptions) => {
     try {
       // Get current record for audit trail
       const { data: currentRecord, error: fetchError } = await supabase
-        .from(table)
+        .from(table as any)
         .select('*')
         .eq(idField, id)
         .single();
@@ -50,7 +50,7 @@ export const useSoftDelete = (options: SoftDeleteOptions) => {
 
       // Perform soft delete
       const { error: updateError } = await supabase
-        .from(table)
+        .from(table as any)
         .update(updateData)
         .eq(idField, id);
 
@@ -86,7 +86,7 @@ export const useSoftDelete = (options: SoftDeleteOptions) => {
     try {
       // Get current record for audit trail
       const { data: currentRecord, error: fetchError } = await supabase
-        .from(table)
+        .from(table as any)
         .select('*')
         .eq(idField, id)
         .single();
@@ -103,7 +103,7 @@ export const useSoftDelete = (options: SoftDeleteOptions) => {
 
       // Restore record
       const { error: updateError } = await supabase
-        .from(table)
+        .from(table as any)
         .update(updateData)
         .eq(idField, id);
 

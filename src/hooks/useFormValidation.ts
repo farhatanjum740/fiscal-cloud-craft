@@ -12,7 +12,7 @@ export interface ValidationResult<T> {
   isValid: boolean;
   errors: Partial<Record<keyof T, string>>;
   fieldErrors: (field: keyof T) => string | null;
-  validateField: (field: keyof T, value: any) => void;
+  validateField: (field: keyof T, value: any, data?: T) => string | null;
   validateAll: (data: T) => boolean;
   clearErrors: () => void;
   clearFieldError: (field: keyof T) => void;

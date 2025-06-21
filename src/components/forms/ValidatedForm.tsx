@@ -69,14 +69,14 @@ export function ValidatedForm<T extends Record<string, any>>({
                   placeholder={field.placeholder}
                   disabled={field.disabled}
                   className="min-h-[80px] resize-none"
-                  onBlur={() => validation.validateField(field.name as keyof T, formField.value, form.getValues())}
+                  onBlur={() => validation.validateField(field.name as keyof T, formField.value)}
                 />
               ) : field.type === 'select' ? (
                 <Select
                   value={formField.value}
                   onValueChange={(value) => {
                     formField.onChange(value);
-                    validation.validateField(field.name as keyof T, value, form.getValues());
+                    validation.validateField(field.name as keyof T, value);
                   }}
                   disabled={field.disabled}
                 >
@@ -97,7 +97,7 @@ export function ValidatedForm<T extends Record<string, any>>({
                   type={field.type}
                   placeholder={field.placeholder}
                   disabled={field.disabled}
-                  onBlur={() => validation.validateField(field.name as keyof T, formField.value, form.getValues())}
+                  onBlur={() => validation.validateField(field.name as keyof T, formField.value)}
                 />
               )}
             </FormControl>
